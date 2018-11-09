@@ -40,7 +40,8 @@ public interface IExtractionDAO {
 	public String insertFileMetadata(Connection conn, FileInfoDto fileInfoDto) throws SQLException;
 	public String putFile(Connection conn,FileInfoDto fileInfoDto) throws SQLException, SftpException;
 	public FileInfoDto getFileInfoObject(Connection conn, String fileList) throws SQLException;
-	public String insertHDFSMetadata(Connection conn, HDFSMetadataDto hdfsDto)throws SQLException;;
+	public String insertHDFSMetadata(Connection conn, HDFSMetadataDto hdfsDto)throws SQLException;
+	public HDFSMetadataDto getHDFSInfoObject(Connection conn, String fileList)throws SQLException;
 	
 	
 	

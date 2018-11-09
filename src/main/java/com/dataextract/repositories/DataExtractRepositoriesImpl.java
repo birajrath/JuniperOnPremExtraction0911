@@ -278,6 +278,14 @@ public class DataExtractRepositoriesImpl implements DataExtractRepositories {
 		conn=ConnectionUtils.connectToOracle(OracleConstants.ORACLE_IP_PORT_SID, OracleConstants.ORACLE_USER_NAME, OracleConstants.ORACLE_PASSWORD);
 		return extractionDao.insertHDFSMetadata(conn, hdfsDto);
 	}
+
+	@Override
+	public HDFSMetadataDto getHDFSInfoObject(String fileList) throws SQLException {
+		Connection conn=null;
+		conn=ConnectionUtils.connectToOracle(OracleConstants.ORACLE_IP_PORT_SID, OracleConstants.ORACLE_USER_NAME, OracleConstants.ORACLE_PASSWORD);
+		//conn= ConnectionUtils.connectToMySql(MySQLConstants.MYSQLIP, MySQLConstants.MYSQLPORT, MySQLConstants.DB,MySQLConstants.USER , MySQLConstants.PASSWORD);
+		return extractionDao.getHDFSInfoObject(conn,fileList);
+	}
 }
 
 

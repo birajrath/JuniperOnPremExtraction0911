@@ -49,6 +49,7 @@ public String addFileDetails(FileInfoDto fileInfoDto) throws SQLException;
 public String putFile(FileInfoDto fileInfoDto) throws SQLException, SftpException;
 public FileInfoDto getFileInfoObject(String fileList) throws SQLException;
 public String addHDFSDetails(HDFSMetadataDto hdfsDto) throws SQLException;
+public HDFSMetadataDto getHDFSInfoObject(String fileList)throws SQLException;;
 
 
 

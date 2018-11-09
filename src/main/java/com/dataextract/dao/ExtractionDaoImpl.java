@@ -3,9 +3,6 @@ package com.dataextract.dao;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.sql.Connection;
-
-
-import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -24,11 +21,8 @@ import org.springframework.stereotype.Component;
 
 import com.dataextract.constants.NifiConstants;
 import com.dataextract.constants.OracleConstants;
-import com.dataextract.constants.OracleConstants;
 import com.dataextract.dto.BatchExtractDto;
 import com.dataextract.dto.ConnectionDto;
-import com.dataextract.dto.DataExtractDto;
-import com.dataextract.dto.ExtractStatusDto;
 import com.dataextract.dto.FieldMetadataDto;
 import com.dataextract.dto.FileInfoDto;
 import com.dataextract.dto.FileMetadataDto;
@@ -1590,6 +1584,34 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 			conn.close();
 		}
 
+	}
+
+
+	@Override
+	public HDFSMetadataDto getHDFSInfoObject(Connection conn, String fileList) throws SQLException {
+		HDFSMetadataDto hdfsInfoDto= new HDFSMetadataDto();
+		ArrayList<HDFSMetadataDto> fileMetadataArr=new ArrayList<HDFSMetadataDto>();
+		String[] fileIds=fileList.split(",");
+		try {
+			for(String fileId:fileIds) {
+				String query="select src_sys_id,hdfs_path from "+OracleConstants.HDFSDETAILSTABLE+" where hdfs_id="+fileId;
+				Statement statement=conn.createStatement();
+				ResultSet rs = statement.executeQuery(query);
+				if(rs.isBeforeFirst()) {
+					rs.next();
+					String srcSysId=rs.getString(1);
+					hdfsInfoDto.setSrc_sys_id(Integer.parseInt(srcSysId));
+					hdfsInfoDto.setHdfsPath(rs.getString(2));
+					fileMetadataArr.add(hdfsInfoDto);
+				}
+			}
+		}catch(SQLException e) {
+			e.printStackTrace();
+		}finally {
+			conn.close();
+		}
+
+return hdfsInfoDto;
 	}
 }
 

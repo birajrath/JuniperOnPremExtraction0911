@@ -608,8 +608,17 @@ public class DataExtractController {
 		}
 		if(!(rtExtractDto.getSrsSysDto().getFileList()==null||rtExtractDto.getSrsSysDto().getFileList().isEmpty())) {
 			String fileList=rtExtractDto.getSrsSysDto().getFileList();
+			
+			
+			
 			rtExtractDto.setFileInfoDto(dataExtractRepositories.getFileInfoObject(fileList));
 		}
+		
+		/*String fileList=rtExtractDto.getSrsSysDto().getFileList();
+		rtExtractDto.setFileInfoDto(dataExtractRepositories.getHDFSInfoObject(fileList);*/
+		
+		
+		
 		
 		try {
 			 response=dataExtractRepositories.realTimeExtract(rtExtractDto);

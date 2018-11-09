@@ -8,6 +8,7 @@ public class RealTimeExtractDto {
 	SrcSysDto srsSysDto;
 	TableInfoDto tableInfoDto;
 	FileInfoDto fileInfoDto;
+	//HDFSMetadataDto hdfsInfoDto;
 	ArrayList<TargetDto> targetArr;
 	
 	
@@ -41,6 +42,12 @@ public class RealTimeExtractDto {
 	public void setTableInfoDto(TableInfoDto tableInfoDto) {
 		this.tableInfoDto = tableInfoDto;
 	}
+	/*public HDFSMetadataDto getHdfsInfoDto() {
+		return hdfsInfoDto;
+	}
+	public void setHdfsInfoDto(HDFSMetadataDto hdfsInfoDto) {
+		this.hdfsInfoDto = hdfsInfoDto;
+	}*/
 	
 	
 

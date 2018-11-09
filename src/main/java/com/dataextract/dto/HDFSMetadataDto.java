@@ -4,6 +4,7 @@ public class HDFSMetadataDto {
 	
 	int src_sys_id;
 	String hdfsPath;
+	
 
 	public String getHdfsPath() {
 		return hdfsPath;
