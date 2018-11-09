@@ -240,7 +240,7 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 								+OracleConstants.QUOTE+target.getSystem()+OracleConstants.QUOTE
 								);
 			}
-			else if(target.getTarget_type().equalsIgnoreCase("unix")) {
+			 if(target.getTarget_type().equalsIgnoreCase("unix")) {
 				insertTargetDetails=OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.TAREGTTABLE)
 						.replace("{$columns}", "target_unique_name,target_type,drive_id,data_path,system")
 						.replace("{$data}", OracleConstants.QUOTE + target.getTarget_unique_name()+OracleConstants.QUOTE+OracleConstants.COMMA
@@ -315,6 +315,14 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 						+"target_hdfs_path="+OracleConstants.QUOTE+target.getTarget_hdfs_path()+OracleConstants.QUOTE+OracleConstants.COMMA
 						+"system="+OracleConstants.QUOTE+target.getSystem()+OracleConstants.QUOTE
 						+" where target_id="+target.getTarget_id();
+			}
+			else if(target.getTarget_type().equalsIgnoreCase("unix")) {
+				updateTargetMaster="update "+OracleConstants.TAREGTTABLE 
+						+" set target_unique_name="+OracleConstants.QUOTE+target.getTarget_unique_name()+OracleConstants.QUOTE+OracleConstants.COMMA
+						+"drive_id="+OracleConstants.QUOTE+target.getDrive_id()+OracleConstants.QUOTE+OracleConstants.COMMA
+						+"data_path="+OracleConstants.QUOTE+target.getData_path()+OracleConstants.QUOTE+OracleConstants.COMMA
+						+"system="+OracleConstants.QUOTE+target.getSystem()+OracleConstants.QUOTE
+								+" where target_id="+target.getTarget_id();
 			}
 			try {	
 				Statement statement = conn.createStatement();
