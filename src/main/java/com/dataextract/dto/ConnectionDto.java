@@ -14,6 +14,7 @@ public class ConnectionDto {
 	int drive_id;
 	String data_path;
 	int connId;
+	String system;
 	
 	
 	
@@ -91,4 +92,11 @@ public class ConnectionDto {
 	public void setDbName(String dbName) {
 		this.dbName = dbName;
 	}
+	public String getSystem() {
+		return system;
+	}
+	public void setSystem(String system) {
+		this.system = system;
+	}
+	
 }

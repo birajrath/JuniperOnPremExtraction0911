@@ -13,6 +13,7 @@ public class TargetDto {
 	String target_password;
 	String target_hdfs_path;
 	int target_id;
+	String system;
 	
 	
 	
@@ -76,6 +77,12 @@ public class TargetDto {
 	}
 	public void setTarget_bucket(String target_bucket) {
 		this.target_bucket = target_bucket;
+	}
+	public String getSystem() {
+		return system;
+	}
+	public void setSystem(String system) {
+		this.system = system;
 	}
 	
 	

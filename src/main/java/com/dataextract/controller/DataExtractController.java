@@ -68,7 +68,7 @@ public class DataExtractController {
 		ConnectionDto connDto = new ConnectionDto();
 		int connectionId=0;
 		
-		if(requestDto.getBody().get("data").get("connection_type").equalsIgnoreCase("ORACLE")) {
+		if(requestDto.getBody().get("data").get("connection_type").equalsIgnoreCase("ORACLE")||requestDto.getBody().get("data").get("connection_type").equalsIgnoreCase("HADOOP")) {
 			
 			System.out.println("oracle system");
 			connDto.setConn_name(requestDto.getBody().get("data").get("connection_name"));
@@ -79,12 +79,14 @@ public class DataExtractController {
 			connDto.setPassword(requestDto.getBody().get("data").get("password"));
 			connDto.setDbName(requestDto.getBody().get("data").get("db_name"));
 			connDto.setServiceName(requestDto.getBody().get("data").get("service_name"));
+			connDto.setSystem(requestDto.getBody().get("data").get("system"));
 		}
 		if(requestDto.getBody().get("data").get("connection_type").equalsIgnoreCase("UNIX")) {
 			connDto.setConn_name(requestDto.getBody().get("data").get("connection_name"));
 			connDto.setConn_type(requestDto.getBody().get("data").get("connection_type"));
 			connDto.setDrive_id(Integer.parseInt(requestDto.getBody().get("data").get("drive_id")));
 			connDto.setData_path(requestDto.getBody().get("data").get("data_path"));
+			connDto.setSystem(requestDto.getBody().get("data").get("system"));
 		}
 		
 		if(requestDto.getBody().get("data").get("connection_type").equalsIgnoreCase("TERADATA")) {
@@ -98,6 +100,7 @@ public class DataExtractController {
 			connDto.setPassword("cdc1");
 			connDto.setServiceName("PDB1.611065800.oraclecloud.internal");
 			connDto.setDbName(requestDto.getBody().get("data").get("db_name"));
+			connDto.setSystem(requestDto.getBody().get("data").get("system"));
 		}
 		
 		try {
@@ -142,6 +145,7 @@ public class DataExtractController {
 		connDto.setConnId(Integer.parseInt(requestDto.getBody().get("data").get("conn")));
 		connDto.setConn_name(requestDto.getBody().get("data").get("connection_name"));
 		connDto.setConn_type(requestDto.getBody().get("data").get("connection_type"));
+		connDto.setSystem(requestDto.getBody().get("data").get("system"));
 		
 		if(connDto.getConn_type().equalsIgnoreCase("ORACLE")) {
 			
@@ -240,6 +244,7 @@ public class DataExtractController {
 				target.setTarget_project(requestDto.getBody().get("data").get("target_project"+i));
 				target.setService_account(requestDto.getBody().get("data").get("service_account"+i));
 				target.setTarget_bucket(requestDto.getBody().get("data").get("target_bucket"+i));
+				target.setSystem(requestDto.getBody().get("data").get("system"));
 			}
 			if(requestDto.getBody().get("data").get("target_type"+i).equalsIgnoreCase("hdfs")){
 				target.setTarget_unique_name(requestDto.getBody().get("data").get("target_unique_name"+i));
@@ -248,6 +253,7 @@ public class DataExtractController {
 				target.setTarget_user(requestDto.getBody().get("data").get("username"+i));
 				target.setTarget_password(requestDto.getBody().get("data").get("password"+i));
 				target.setTarget_hdfs_path(requestDto.getBody().get("data").get("hadoop_path"+i));
+				target.setSystem(requestDto.getBody().get("data").get("system"));
 			}
 			
 			targetArr.add(target);

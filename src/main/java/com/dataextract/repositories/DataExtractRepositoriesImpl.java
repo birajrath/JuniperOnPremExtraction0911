@@ -24,7 +24,6 @@ import com.dataextract.dto.RealTimeExtractDto;
 import com.dataextract.dto.SrcSysDto;
 import com.dataextract.dto.TableInfoDto;
 import com.dataextract.dto.TargetDto;
-import com.dataextract.fetchdata.ExtractJava;
 import com.dataextract.util.ConnectionUtils;
 import com.jcraft.jsch.ChannelSftp;
 import com.jcraft.jsch.JSch;
@@ -45,8 +44,7 @@ public class DataExtractRepositoriesImpl implements DataExtractRepositories {
 	IExtractionDAO extractionDao;
 	//public IExtractionDAO iExtractionDAO;
 	
-	@Autowired
-	ExtractJava extractJava;
+
 
 	@Override
 	public int addConnectionDetails(ConnectionDto dto) throws SQLException {
@@ -230,7 +228,7 @@ public class DataExtractRepositoriesImpl implements DataExtractRepositories {
 			
 			
 			
-			if(dto.getConn_type().equalsIgnoreCase("ORACLE"))
+			if(dto.getConn_type().equalsIgnoreCase("ORACLE")||dto.getConn_type().equalsIgnoreCase("HADOOP"))
 			{
 				
 				

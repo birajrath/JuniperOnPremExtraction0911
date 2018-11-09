@@ -60,10 +60,10 @@ private ScheduleUtils scheduleUtils;
 	 public  int  insertConnectionMetadata(Connection conn, ConnectionDto dto) throws SQLException  {
 		
 		String insertQuery="";
-		if(dto.getConn_type().equalsIgnoreCase("ORACLE")) 
+		if(dto.getConn_type().equalsIgnoreCase("ORACLE")||dto.getConn_type().equalsIgnoreCase("HADOOP")) 
 		{
 					insertQuery=OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.CONNECTIONTABLE)
-					.replace("{$columns}", "connection_name,connection_type,host_name,port_no,username,password,database_name,service_name")
+					.replace("{$columns}", "connection_name,connection_type,host_name,port_no,username,password,database_name,service_name,system")
 					.replace("{$data}",OracleConstants.QUOTE+dto.getConn_name()+OracleConstants.QUOTE+OracleConstants.COMMA
 							+OracleConstants.QUOTE+dto.getConn_type()+OracleConstants.QUOTE+OracleConstants.COMMA
 							+OracleConstants.QUOTE+dto.getHostName()+OracleConstants.QUOTE+OracleConstants.COMMA
@@ -71,21 +71,23 @@ private ScheduleUtils scheduleUtils;
 							+OracleConstants.QUOTE+dto.getUserName()+OracleConstants.QUOTE+OracleConstants.COMMA
 							+OracleConstants.QUOTE+dto.getPassword()+OracleConstants.QUOTE+OracleConstants.COMMA
 							+OracleConstants.QUOTE+dto.getDbName()+OracleConstants.QUOTE+OracleConstants.COMMA
-							+OracleConstants.QUOTE+dto.getServiceName()+OracleConstants.QUOTE);
+							+OracleConstants.QUOTE+dto.getServiceName()+OracleConstants.QUOTE+OracleConstants.COMMA
+							+OracleConstants.QUOTE+dto.getSystem()+OracleConstants.QUOTE);
 		}
 		if(dto.getConn_type().equalsIgnoreCase("UNIX")) {
 			
 			insertQuery=OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.CONNECTIONTABLE)
-					.replace("{$columns}", "connection_name,connection_type,drive_id,path")
+					.replace("{$columns}", "connection_name,connection_type,drive_id,path,system")
 					.replace("{$data}",OracleConstants.QUOTE+dto.getConn_name()+OracleConstants.QUOTE+OracleConstants.COMMA
 							+OracleConstants.QUOTE+dto.getConn_type()+OracleConstants.QUOTE+OracleConstants.COMMA
 							+dto.getDrive_id()+OracleConstants.COMMA
-							+OracleConstants.QUOTE+dto.getData_path()+OracleConstants.QUOTE);
+							+OracleConstants.QUOTE+dto.getData_path()+OracleConstants.QUOTE+OracleConstants.COMMA
+							+OracleConstants.QUOTE+dto.getSystem()+OracleConstants.QUOTE);
 		}
 		if(dto.getConn_type().equalsIgnoreCase("TERADATA")) 
 		{
 					insertQuery=OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.CONNECTIONTABLE)
-					.replace("{$columns}", "connection_name,connection_type,host_name,port_no,username,password,database_name,service_name")
+					.replace("{$columns}", "connection_name,connection_type,host_name,port_no,username,password,database_name,service_name,system")
 					.replace("{$data}",OracleConstants.QUOTE+dto.getConn_name()+OracleConstants.QUOTE+OracleConstants.COMMA
 							+OracleConstants.QUOTE+dto.getConn_type()+OracleConstants.QUOTE+OracleConstants.COMMA
 							+OracleConstants.QUOTE+dto.getHostName()+OracleConstants.QUOTE+OracleConstants.COMMA
@@ -93,7 +95,8 @@ private ScheduleUtils scheduleUtils;
 							+OracleConstants.QUOTE+dto.getUserName()+OracleConstants.QUOTE+OracleConstants.COMMA
 							+OracleConstants.QUOTE+dto.getPassword()+OracleConstants.QUOTE+OracleConstants.COMMA
 							+OracleConstants.QUOTE+dto.getDbName()+OracleConstants.QUOTE+OracleConstants.COMMA
-							+OracleConstants.QUOTE+dto.getServiceName()+OracleConstants.QUOTE);
+							+OracleConstants.QUOTE+dto.getServiceName()+OracleConstants.QUOTE+OracleConstants.COMMA
+							+OracleConstants.QUOTE+dto.getSystem()+OracleConstants.QUOTE);
 		}
 		
 		try {	
@@ -139,7 +142,7 @@ private ScheduleUtils scheduleUtils;
 		
 		String updateConnectionMaster="";
 		
-		if(connDto.getConn_type().equalsIgnoreCase("ORACLE")) {
+		if(connDto.getConn_type().equalsIgnoreCase("ORACLE")||connDto.getConn_type().equalsIgnoreCase("HADOOP")) {
 			
 					updateConnectionMaster="update "+OracleConstants.CONNECTIONTABLE
 					+" set connection_name="+OracleConstants.QUOTE+connDto.getConn_name()+OracleConstants.QUOTE+OracleConstants.COMMA
@@ -149,7 +152,8 @@ private ScheduleUtils scheduleUtils;
 					+"username="+OracleConstants.QUOTE+connDto.getUserName()+OracleConstants.QUOTE+OracleConstants.COMMA
 					+"password="+OracleConstants.QUOTE+connDto.getPassword()+OracleConstants.QUOTE+OracleConstants.COMMA
 					+"database_name="+OracleConstants.QUOTE+connDto.getDbName()+OracleConstants.QUOTE+OracleConstants.COMMA
-					+"service_name="+OracleConstants.QUOTE+connDto.getServiceName()+OracleConstants.QUOTE
+					+"service_name="+OracleConstants.QUOTE+connDto.getServiceName()+OracleConstants.QUOTE+OracleConstants.COMMA
+					+"system="+OracleConstants.QUOTE+connDto.getSystem()+OracleConstants.QUOTE
 					+" where connection_id="+connDto.getConnId();
 		}
 		
@@ -159,7 +163,8 @@ private ScheduleUtils scheduleUtils;
 					+" set connection_name="+OracleConstants.QUOTE+connDto.getConn_name()+OracleConstants.QUOTE+OracleConstants.COMMA
 					+"connection_type="+OracleConstants.QUOTE+connDto.getConn_type()+OracleConstants.QUOTE+OracleConstants.COMMA
 					+"drive_id="+connDto.getDrive_id()+OracleConstants.COMMA
-					+"path="+OracleConstants.QUOTE+connDto.getData_path()+OracleConstants.QUOTE
+					+"path="+OracleConstants.QUOTE+connDto.getData_path()+OracleConstants.QUOTE+OracleConstants.COMMA
+					+"system="+OracleConstants.QUOTE+connDto.getSystem()+OracleConstants.QUOTE
 					+" where connection_id="+connDto.getConnId();
 		}
 				
@@ -213,23 +218,25 @@ private ScheduleUtils scheduleUtils;
 		for(TargetDto target:targetArr) {
 			if(target.getTarget_type().equalsIgnoreCase("gcs")) {
 				insertTargetDetails=OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.TAREGTTABLE)
-						.replace("{$columns}", "target_unique_name,target_type,target_project,service_account,target_bucket")
+						.replace("{$columns}", "target_unique_name,target_type,target_project,service_account,target_bucket,system")
 				        .replace("{$data}", OracleConstants.QUOTE + target.getTarget_unique_name()+OracleConstants.QUOTE+OracleConstants.COMMA
 				        		+OracleConstants.QUOTE+target.getTarget_type()+OracleConstants.QUOTE+OracleConstants.COMMA
 				        		+OracleConstants.QUOTE+target.getTarget_project()+OracleConstants.QUOTE+OracleConstants.COMMA
 				        		+OracleConstants.QUOTE+target.getService_account()+OracleConstants.QUOTE+OracleConstants.COMMA
-				        		+OracleConstants.QUOTE+target.getTarget_bucket()+OracleConstants.QUOTE
+				        		+OracleConstants.QUOTE+target.getTarget_bucket()+OracleConstants.QUOTE+OracleConstants.COMMA
+				        		+OracleConstants.QUOTE+target.getSystem()+OracleConstants.QUOTE
 				        		);
 			}
 			if(target.getTarget_type().equalsIgnoreCase("hdfs")) {
 				insertTargetDetails=OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.TAREGTTABLE)
-						.replace("{$columns}", "target_unique_name,target_type,target_knox_url,target_user,target_password,target_hdfs_path")
+						.replace("{$columns}", "target_unique_name,target_type,target_knox_url,target_user,target_password,target_hdfs_path,system")
 				        .replace("{$data}", OracleConstants.QUOTE + target.getTarget_unique_name()+OracleConstants.QUOTE+OracleConstants.COMMA
 				        		+OracleConstants.QUOTE+target.getTarget_type()+OracleConstants.QUOTE+OracleConstants.COMMA
 				        		+OracleConstants.QUOTE+target.getTarget_knox_url()+OracleConstants.QUOTE+OracleConstants.COMMA
 				        		+OracleConstants.QUOTE+target.getTarget_user()+OracleConstants.QUOTE+OracleConstants.COMMA
 				        		+OracleConstants.QUOTE+target.getTarget_password()+OracleConstants.QUOTE+OracleConstants.COMMA
-				        		+OracleConstants.QUOTE+target.getTarget_hdfs_path()+OracleConstants.QUOTE
+				        		+OracleConstants.QUOTE+target.getTarget_hdfs_path()+OracleConstants.QUOTE+OracleConstants.COMMA
+				        		+OracleConstants.QUOTE+target.getSystem()+OracleConstants.QUOTE
 				        		);
 			}
 			
@@ -284,7 +291,8 @@ private ScheduleUtils scheduleUtils;
 						+" set target_unique_name="+OracleConstants.QUOTE+target.getTarget_unique_name()+OracleConstants.QUOTE+OracleConstants.COMMA
 						+"target_project="+OracleConstants.QUOTE+target.getTarget_project()+OracleConstants.QUOTE+OracleConstants.COMMA
 						+"service_account="+OracleConstants.QUOTE+target.getService_account()+OracleConstants.QUOTE+OracleConstants.COMMA
-						+"target_bucket="+OracleConstants.QUOTE+target.getTarget_bucket()+OracleConstants.QUOTE
+						+"target_bucket="+OracleConstants.QUOTE+target.getTarget_bucket()+OracleConstants.QUOTE+OracleConstants.COMMA
+						+"system="+OracleConstants.QUOTE+target.getSystem()+OracleConstants.QUOTE
 						+" where target_id="+target.getTarget_id();
 			}
 			if(target.getTarget_type().equalsIgnoreCase("hdfs")) { 
@@ -293,7 +301,8 @@ private ScheduleUtils scheduleUtils;
 						+"target_knox_url="+OracleConstants.QUOTE+target.getTarget_knox_url()+OracleConstants.QUOTE+OracleConstants.COMMA
 						+"target_user="+OracleConstants.QUOTE+target.getTarget_user()+OracleConstants.QUOTE+OracleConstants.COMMA
 						+"target_password="+OracleConstants.QUOTE+target.getTarget_password()+OracleConstants.QUOTE+OracleConstants.COMMA
-						+"target_hdfs_path="+OracleConstants.QUOTE+target.getTarget_hdfs_path()+OracleConstants.QUOTE
+						+"target_hdfs_path="+OracleConstants.QUOTE+target.getTarget_hdfs_path()+OracleConstants.QUOTE+OracleConstants.COMMA
+						+"system="+OracleConstants.QUOTE+target.getSystem()+OracleConstants.QUOTE
 						+" where target_id="+target.getTarget_id();
 			}
 			try {	
