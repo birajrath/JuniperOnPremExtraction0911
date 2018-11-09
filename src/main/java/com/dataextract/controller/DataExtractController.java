@@ -303,6 +303,7 @@ public class DataExtractController {
 				target.setTarget_project(requestDto.getBody().get("data").get("target_project"+i));
 				target.setService_account(requestDto.getBody().get("data").get("service_account"+i));
 				target.setTarget_bucket(requestDto.getBody().get("data").get("target_bucket"+i));
+				target.setSystem(requestDto.getBody().get("data").get("system"+i));
 			}
 			if(requestDto.getBody().get("data").get("target_type"+i).equalsIgnoreCase("hdfs")){
 				target.setTarget_id(Integer.parseInt(requestDto.getBody().get("data").get("tgt"+i)));
@@ -312,6 +313,15 @@ public class DataExtractController {
 				target.setTarget_user(requestDto.getBody().get("data").get("username"+i));
 				target.setTarget_password(requestDto.getBody().get("data").get("password"+i));
 				target.setTarget_hdfs_path(requestDto.getBody().get("data").get("hadoop_path"+i));
+				target.setSystem(requestDto.getBody().get("data").get("system"+i));
+			}
+			if(requestDto.getBody().get("data").get("target_type"+i).equalsIgnoreCase("unix")){
+				target.setTarget_id(Integer.parseInt(requestDto.getBody().get("data").get("tgt"+i)));
+				target.setTarget_unique_name(requestDto.getBody().get("data").get("target_unique_name"+i));
+				target.setTarget_type(requestDto.getBody().get("data").get("target_type"+i));
+				target.setDrive_id(requestDto.getBody().get("data").get("drive_id"+i));
+				target.setData_path(requestDto.getBody().get("data").get("data_path"+i));
+				target.setSystem(requestDto.getBody().get("data").get("system"+i));
 			}
 			
 			targetArr.add(target);
