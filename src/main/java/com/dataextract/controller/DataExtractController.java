@@ -257,10 +257,13 @@ public class DataExtractController {
 				target.setSystem(requestDto.getBody().get("data").get("system"));
 			}
 			if(requestDto.getBody().get("data").get("target_type"+i).equalsIgnoreCase("unix")){
+				
+				System.out.println("unix target");
 				target.setTarget_unique_name(requestDto.getBody().get("data").get("target_unique_name"+i));
 				target.setTarget_type(requestDto.getBody().get("data").get("target_type"+i));
-				target.setTarget_knox_url(requestDto.getBody().get("data").get("drive_id"+i));
-				target.setTarget_user(requestDto.getBody().get("data").get("data_path"+i));
+				target.setDrive_id(requestDto.getBody().get("data").get("drive_id"+i));
+				target.setData_path(requestDto.getBody().get("data").get("data_path"+i));
+	
 				target.setSystem(requestDto.getBody().get("data").get("system"));
 			}
 			
@@ -570,15 +573,21 @@ public class DataExtractController {
 		String status="";
 		String message="";
 		String response="";
-		String src_sys_id_str= (String) requestDto.getBody().get("data").get("src_sys_id");
+		ArrayList<String> hdfsFileList=new ArrayList<String>();
+		String src_sys_id_str= requestDto.getBody().get("data").get("src_sys_id");
+		int counter= Integer.parseInt(requestDto.getBody().get("data").get("counter"));
 		int src_sys_id=Integer.parseInt(src_sys_id_str);
 		
 		HDFSMetadataDto hdfsDto = new HDFSMetadataDto();
 		hdfsDto.setSrc_sys_id(src_sys_id);
-		hdfsDto.setHdfsPath(requestDto.getBody().get("data").get("hdfs_path"));
+		for(int i=1;i<=counter;i++) {
+			hdfsFileList.add(requestDto.getBody().get("data").get("hdfs_path"+i));
+		}
+		hdfsDto.setHdfsPath(hdfsFileList);
             
 		response=dataExtractRepositories.addHDFSDetails(hdfsDto);
 		if(response.equalsIgnoreCase("Success")) {
+				status="success";
 				message="HDFS Metadata Added Successfully";
 			}
 			else {
@@ -607,16 +616,16 @@ public class DataExtractController {
 			rtExtractDto.setTableInfoDto(dataExtractRepositories.getTableInfoObject(tableList));
 		}
 		if(!(rtExtractDto.getSrsSysDto().getFileList()==null||rtExtractDto.getSrsSysDto().getFileList().isEmpty())) {
-			String fileList=rtExtractDto.getSrsSysDto().getFileList();
+			if(rtExtractDto.getConnDto().getConn_type().equalsIgnoreCase("UNIX")) {
+				String fileList=rtExtractDto.getSrsSysDto().getFileList();
+				rtExtractDto.setFileInfoDto(dataExtractRepositories.getFileInfoObject(fileList));
+			}
+			if(rtExtractDto.getConnDto().getConn_type().equalsIgnoreCase("HADOOP")) {
+				String fileList=rtExtractDto.getSrsSysDto().getFileList();
+				rtExtractDto.setHdfsInfoDto(dataExtractRepositories.getHDFSInfoObject(fileList));
+			}
 			
-			
-			
-			rtExtractDto.setFileInfoDto(dataExtractRepositories.getFileInfoObject(fileList));
 		}
-		
-		/*String fileList=rtExtractDto.getSrsSysDto().getFileList();
-		rtExtractDto.setFileInfoDto(dataExtractRepositories.getHDFSInfoObject(fileList);*/
-		
 		
 		
 		

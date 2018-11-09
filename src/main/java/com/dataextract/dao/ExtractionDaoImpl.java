@@ -534,53 +534,62 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 	}
 
 
-
-	@Override
+@Override
 	public String insertFileMetadata(Connection conn, FileInfoDto fileInfoDto) throws SQLException{
-
+	
 		StringBuffer fileList=new StringBuffer();
+		
 		String insertFileMaster="";
 		String sequence="";
 		for(FileMetadataDto file:fileInfoDto.getFileMetadataArr()) {
+			StringBuffer fieldList=new StringBuffer();
+			for(FieldMetadataDto field:fileInfoDto.getFieldMetadataArr()) {
+				
+				if(field.getFile_name().equalsIgnoreCase(file.getFile_name())) {
+					fieldList.append(field.getField_name()+",");
+				}
+			}
+			fieldList.setLength(fieldList.length()-1);
 			insertFileMaster=OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.FILEDETAILSTABLE)
-					.replace("{$columns}","src_sys_id,file_name,file_type,file_delimiter,header_count,trailer_count,avro_conv_flg" )
+					.replace("{$columns}","src_sys_id,file_name,file_type,file_delimiter,header_count,trailer_count,field_list,avro_conv_flg" )
 					.replace("{$data}",fileInfoDto.getSrc_sys_id() +OracleConstants.COMMA
 							+OracleConstants.QUOTE+file.getFile_name()+OracleConstants.QUOTE+OracleConstants.COMMA
 							+OracleConstants.QUOTE+file.getFile_type()+OracleConstants.QUOTE+OracleConstants.COMMA
 							+OracleConstants.QUOTE+file.getFile_delimiter()+OracleConstants.QUOTE+OracleConstants.COMMA
 							+file.getHeader_count()+OracleConstants.COMMA
 							+file.getTrailer_count()+OracleConstants.COMMA
+							+OracleConstants.QUOTE+fieldList+OracleConstants.QUOTE+OracleConstants.COMMA
 							+OracleConstants.QUOTE+file.getAvro_conv_flag()+OracleConstants.QUOTE
 							);
 			try {	
 				Statement statement = conn.createStatement();
 				System.out.println(insertFileMaster);
-				statement.executeUpdate(insertFileMaster);
-				String query=OracleConstants.GETSEQUENCEID.replace("${tableName}", OracleConstants.FILEDETAILSTABLE).replace("${columnName}", "FILE_ID");
-				System.out.println("query is "+query);
-				ResultSet rs=statement.executeQuery(query);
-				if(rs.isBeforeFirst()) {
-					rs.next();
-					sequence=rs.getString(1).split("\\.")[1];
-					//System.out.println("sequence is "+sequence);
-					//statement.executeQuery("select "+sequence+".nextval from dual");
-					rs=statement.executeQuery(OracleConstants.GETLASTROWID.replace("${id}", sequence));
-					if(rs.isBeforeFirst()) {
-						rs.next();
-						fileList.append(rs.getString(1)+",");
-					}
-				}
-
+				 statement.executeUpdate(insertFileMaster);
+				 String query=OracleConstants.GETSEQUENCEID.replace("${tableName}", OracleConstants.FILEDETAILSTABLE).replace("${columnName}", "FILE_ID");
+				 System.out.println("query is "+query);
+				 ResultSet rs=statement.executeQuery(query);
+				 if(rs.isBeforeFirst()) {
+					 rs.next();
+					 sequence=rs.getString(1).split("\\.")[1];
+					 //System.out.println("sequence is "+sequence);
+					 //statement.executeQuery("select "+sequence+".nextval from dual");
+					 rs=statement.executeQuery(OracleConstants.GETLASTROWID.replace("${id}", sequence));
+					 if(rs.isBeforeFirst()) {
+						 rs.next();
+						 fileList.append(rs.getString(1)+",");
+					 }
+				 }
+				
 			}catch (SQLException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 				//TODO: Log the error message
 				return e.getMessage();
-
-
+				
+				
 			}
-
-
+			
+			
 		}
 		fileList.setLength(fileList.length()-1);
 		String fileListStr=fileList.toString();
@@ -589,18 +598,18 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 			Statement statement = conn.createStatement();
 			statement.execute(updateExtractionMaster);
 			return "Success";
-
+			
 		}catch (SQLException e) {
 			// TODO Auto-generated catch block
 			//e.printStackTrace();
 			//TODO: Log the error message
 			return e.getMessage();
-
-
+			
+			
 		}finally {
 			conn.close();
 		}
-
+		
 	}
 
 	@Override
@@ -612,9 +621,9 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 		if(!data_path.equalsIgnoreCase("failed")) {
 			JSch obj_JSch = new JSch();
 			try {
-				obj_JSch.addIdentity("/Users/birajrath/.ssh/id_rsa");
+				obj_JSch.addIdentity("/home/birajrath2008/.ssh/id_rsa");
 				Session obj_Session = null;
-				obj_Session = obj_JSch.getSession("birajrath", NifiConstants.NIFINSTANCEIP);
+				obj_Session = obj_JSch.getSession("birajrath2008", NifiConstants.NIFINSTANCEIP);
 				obj_Session.setPort(22);
 				// obj_Session.setPassword(str_Password);
 				Properties obj_Properties = new Properties();
@@ -815,7 +824,7 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 		try {
 			for(String target:targets) {
 				TargetDto targetDto=new TargetDto();
-				query=" select target_unique_name,target_type,target_project,service_account,target_bucket,target_knox_url,target_user,target_password,target_hdfs_path from "+OracleConstants.TAREGTTABLE
+				query=" select target_unique_name,target_type,target_project,service_account,target_bucket,target_knox_url,target_user,target_password,target_hdfs_path,drive_id,data_path from "+OracleConstants.TAREGTTABLE
 						+ " where target_unique_name='"+target+"'";
 				rs = statement.executeQuery(query);
 				if(rs.isBeforeFirst()) {
@@ -835,6 +844,14 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 						targetDto.setTarget_password(rs.getString(8));
 						targetDto.setTarget_hdfs_path(rs.getString(9));
 					}
+					if(rs.getString(2).equalsIgnoreCase("unix")) {
+						targetDto.setTarget_unique_name(rs.getString(1));
+						targetDto.setTarget_type(rs.getString(2));
+						targetDto.setDrive_id(rs.getString(10));
+						targetDto.setData_path(rs.getString(11));
+						String drivePath=getDrivePath(conn,targetDto.getDrive_id());
+						targetDto.setFull_path(drivePath+targetDto.getData_path());
+					}
 
 
 
@@ -850,6 +867,19 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 
 
 		return targetArr;
+	}
+	
+	private String getDrivePath(Connection conn,String driveId) throws SQLException {
+		
+		String query3="select mounted_path from "+OracleConstants.DRIVETABLE+" where drive_id="+driveId;
+		String drivePath="";
+		Statement statement=conn.createStatement();
+		ResultSet rs=statement.executeQuery(query3);
+		if(rs.isBeforeFirst()) {
+			rs.next();
+			drivePath= rs.getString(1);
+		}
+		return drivePath;
 	}
 
 	@Override
@@ -891,7 +921,7 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 		String[] fileIds=fileList.split(",");
 		try {
 			for(String fileId:fileIds) {
-				String query="select file_name,file_type,file_delimiter,header_count,trailer_count,avro_conv_flg from "+OracleConstants.FILEDETAILSTABLE+" where file_id="+fileId;
+				String query="select file_name,file_type,file_delimiter,header_count,trailer_count,field_list,avro_conv_flg from "+OracleConstants.FILEDETAILSTABLE+" where file_id="+fileId;
 				Statement statement=conn.createStatement();
 				ResultSet rs = statement.executeQuery(query);
 				if(rs.isBeforeFirst()) {
@@ -902,23 +932,23 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 					fileMetadataDto.setFile_delimiter(rs.getString(3));
 					fileMetadataDto.setHeader_count(rs.getString(4));
 					fileMetadataDto.setTrailer_count(rs.getString(5));
-					fileMetadataDto.setAvro_conv_flag(rs.getString(6));
+					fileMetadataDto.setField_list(rs.getString(6));
+					fileMetadataDto.setAvro_conv_flag(rs.getString(7));
 					fileMetadataArr.add(fileMetadataDto);
 				}
-
-
+			
+				
 			}
 		}catch(SQLException e) {
 			e.printStackTrace();
 		}finally {
 			conn.close();
 		}
-
+		
 		fileInfoDto.setFileMetadataArr(fileMetadataArr);
 		return fileInfoDto;
-
+		
 	}
-
 
 	@Override
 	public  String pullData(RealTimeExtractDto rtExtractDto)  {
@@ -966,6 +996,24 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 				return e.getMessage();
 			}
 		}
+		if(rtExtractDto.getConnDto().getConn_type().equalsIgnoreCase("HADOOP")) {
+			Long runId=getRunId();
+			String date=getDate();
+			try {
+				dataPull_status= extract.callNifiHadoopRealTime(rtExtractDto,date,runId);
+				return "success";
+			} catch (UnsupportedOperationException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+				return e.getMessage();
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+				return e.getMessage();
+			}
+			
+		}
+		
 		return "Invalid source";
 
 	}
@@ -1534,37 +1582,40 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 		StringBuffer fileList=new StringBuffer();
 		String insertHDFSMaster="";
 		String sequence="";
-
-		insertHDFSMaster=OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.HDFSDETAILSTABLE)
-				.replace("{$columns}","src_sys_id,hdfs_path" )
-				.replace("{$data}",hdfsDto.getSrc_sys_id() +OracleConstants.COMMA
-						+OracleConstants.QUOTE+hdfsDto.getHdfsPath()+OracleConstants.QUOTE);
-		try {	
-			Statement statement = conn.createStatement();
-			System.out.println(insertHDFSMaster);
-			statement.executeUpdate(insertHDFSMaster);
-			String query=OracleConstants.GETSEQUENCEID.replace("${tableName}", OracleConstants.HDFSDETAILSTABLE).replace("${columnName}", "HDFS_ID");
-			System.out.println("query is "+query);
-			ResultSet rs=statement.executeQuery(query);
-			if(rs.isBeforeFirst()) {
-				rs.next();
-				sequence=rs.getString(1).split("\\.")[1];
-				//System.out.println("sequence is "+sequence);
-				//statement.executeQuery("select "+sequence+".nextval from dual");
-				rs=statement.executeQuery(OracleConstants.GETLASTROWID.replace("${id}", sequence));
+		for(String filePath:hdfsDto.getHdfsPath()) {
+			
+			insertHDFSMaster=OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.HDFSDETAILSTABLE)
+					.replace("{$columns}","src_sys_id,hdfs_path" )
+					.replace("{$data}",hdfsDto.getSrc_sys_id() +OracleConstants.COMMA
+							+OracleConstants.QUOTE+filePath+OracleConstants.QUOTE);
+			try {	
+				Statement statement = conn.createStatement();
+				System.out.println(insertHDFSMaster);
+				statement.executeUpdate(insertHDFSMaster);
+				String query=OracleConstants.GETSEQUENCEID.replace("${tableName}", OracleConstants.HDFSDETAILSTABLE).replace("${columnName}", "HDFS_ID");
+				System.out.println("query is "+query);
+				ResultSet rs=statement.executeQuery(query);
 				if(rs.isBeforeFirst()) {
 					rs.next();
-					fileList.append(rs.getString(1)+",");
+					sequence=rs.getString(1).split("\\.")[1];
+					//System.out.println("sequence is "+sequence);
+					//statement.executeQuery("select "+sequence+".nextval from dual");
+					rs=statement.executeQuery(OracleConstants.GETLASTROWID.replace("${id}", sequence));
+					if(rs.isBeforeFirst()) {
+						rs.next();
+						fileList.append(rs.getString(1)+",");
+					}
 				}
+
+			}catch (SQLException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+				//TODO: Log the error message
+				return e.getMessage();
 			}
 
-		}catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-			//TODO: Log the error message
-			return e.getMessage();
 		}
-
+		
 		fileList.setLength(fileList.length()-1);
 		String fileListStr=fileList.toString();
 		String updateExtractionMaster="update "+OracleConstants.EXTRACTIONTABLE+" set file_list='"+fileListStr+"' where src_sys_id="+hdfsDto.getSrc_sys_id();
@@ -1589,22 +1640,21 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 
 	@Override
 	public HDFSMetadataDto getHDFSInfoObject(Connection conn, String fileList) throws SQLException {
+		
 		HDFSMetadataDto hdfsInfoDto= new HDFSMetadataDto();
-		ArrayList<HDFSMetadataDto> fileMetadataArr=new ArrayList<HDFSMetadataDto>();
+		ArrayList<String> filePaths=new ArrayList<String>();
 		String[] fileIds=fileList.split(",");
 		try {
 			for(String fileId:fileIds) {
-				String query="select src_sys_id,hdfs_path from "+OracleConstants.HDFSDETAILSTABLE+" where hdfs_id="+fileId;
+				String query="select hdfs_path from "+OracleConstants.HDFSDETAILSTABLE+" where hdfs_id="+fileId;
 				Statement statement=conn.createStatement();
 				ResultSet rs = statement.executeQuery(query);
 				if(rs.isBeforeFirst()) {
 					rs.next();
-					String srcSysId=rs.getString(1);
-					hdfsInfoDto.setSrc_sys_id(Integer.parseInt(srcSysId));
-					hdfsInfoDto.setHdfsPath(rs.getString(2));
-					fileMetadataArr.add(hdfsInfoDto);
+					filePaths.add(rs.getString(1));
 				}
 			}
+			hdfsInfoDto.setHdfsPath(filePaths);
 		}catch(SQLException e) {
 			e.printStackTrace();
 		}finally {

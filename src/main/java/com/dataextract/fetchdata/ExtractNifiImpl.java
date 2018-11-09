@@ -208,7 +208,18 @@ private AuthUtils authUtils;
 		
 	}
 	
+	@Override
+	public String callNifiHadoopRealTime(RealTimeExtractDto rtExtractDto, String date, Long runId) throws UnsupportedOperationException, Exception {
+		String listener=NifiConstants.HADOOPLISTENER1;
+		JSONArray jsonArr=createHadoopJsonObject(rtExtractDto,date, runId);
+		invokeNifiFull(jsonArr,listener);
+		return "success";
+		
+	}
 	
+	
+	
+
 	private  int getRandomNumberInRange(int min, int max) {
 
 		if (min >= max) {
@@ -636,10 +647,13 @@ private AuthUtils authUtils;
 	private  JSONArray createUnixJsonObject(RealTimeExtractDto rtExtractDto,String date,Long runId) {
 
 		JSONArray arr = new JSONArray();
-		HashMap<String, JSONObject> map = new HashMap<String, JSONObject>();
 		for(FileMetadataDto file: rtExtractDto.getFileInfoDto().getFileMetadataArr()) {
 			JSONObject json=new JSONObject();
 			json.put("file_name", file.getFile_name());
+			json.put("avro_conv_flg", file.getAvro_conv_flag());
+			json.put("field_list", file.getField_list());
+			json.put("file_type", file.getFile_type());
+			json.put("file_delimiter", file.getFile_delimiter());
 			json.put("src_unique_name", rtExtractDto.getSrsSysDto().getSrc_unique_name());
 			json.put("country_code", rtExtractDto.getSrsSysDto().getCountry_code());
 			json.put("file_path", rtExtractDto.getSrsSysDto().getDataPath());
@@ -668,7 +682,44 @@ private AuthUtils authUtils;
 	
 		return arr;
 	}
+	
+	@SuppressWarnings("unchecked")	
+	private JSONArray createHadoopJsonObject(RealTimeExtractDto rtExtractDto, String date, Long runId) {
 		
+		JSONArray arr = new JSONArray();
+		for(String filePath: rtExtractDto.getHdfsInfoDto().getHdfsPath()) {
+			JSONObject json=new JSONObject();
+			json.put("file_path", filePath);
+			json.put("knox_url", "https://"+rtExtractDto.getConnDto().getHostName()+":"+rtExtractDto.getConnDto().getPort());
+			json.put("knox_user", rtExtractDto.getConnDto().getUserName());
+			json.put("knox_password", rtExtractDto.getConnDto().getPassword());
+			int i=1;
+			for(TargetDto tarDto: rtExtractDto.getTargetArr()) {
+				if(tarDto.getTarget_type().equalsIgnoreCase("gcs")) {
+					json.put("target_type"+Integer.toString(i), "gcs");
+					json.put("bucket"+Integer.toString(i), tarDto.getTarget_bucket());
+				}
+				if(tarDto.getTarget_type().equalsIgnoreCase("hdfs")) {
+					json.put("target_type"+Integer.toString(i), "hdfs");
+					json.put("knox_url"+Integer.toString(i), tarDto.getTarget_knox_url());
+					json.put("knox_user"+Integer.toString(i), tarDto.getTarget_user());
+					json.put("knox_password"+Integer.toString(i), tarDto.getTarget_password());
+					json.put("hdfs_path"+Integer.toString(i), tarDto.getTarget_hdfs_path());
+				}
+				if(tarDto.getTarget_type().equalsIgnoreCase("unix")) {
+					
+					json.put("target_unix_path"+Integer.toString(i), tarDto.getFull_path());
+					
+				}
+				
+				
+				i++;
+			}
+			arr.add(json);
+			
+		}
+		return arr;
+	}
 
 	
 	private  void invokeNifiFull(JSONArray arr,String  listenHttpUrl) throws UnsupportedOperationException, Exception {

@@ -1,15 +1,18 @@
 package com.dataextract.dto;
 
+import java.util.ArrayList;
+
 public class HDFSMetadataDto {
 	
 	int src_sys_id;
-	String hdfsPath;
+	ArrayList<String> hdfsPath;
 	
 
-	public String getHdfsPath() {
+	
+	public ArrayList<String> getHdfsPath() {
 		return hdfsPath;
 	}
-	public void setHdfsPath(String hdfsPath) {
+	public void setHdfsPath(ArrayList<String> hdfsPath) {
 		this.hdfsPath = hdfsPath;
 	}
 	public int getSrc_sys_id() {

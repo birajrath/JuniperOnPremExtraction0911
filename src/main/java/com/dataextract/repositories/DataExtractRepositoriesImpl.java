@@ -229,7 +229,7 @@ public class DataExtractRepositoriesImpl implements DataExtractRepositories {
 
 
 
-		if(dto.getConn_type().equalsIgnoreCase("ORACLE")||dto.getConn_type().equalsIgnoreCase("HADOOP"))
+		if(dto.getConn_type().equalsIgnoreCase("ORACLE"))
 		{
 
 
@@ -263,6 +263,10 @@ public class DataExtractRepositoriesImpl implements DataExtractRepositories {
 		if(dto.getConn_type().equalsIgnoreCase("UNIX")) {
 
 			return "success";
+		}
+		
+		if(dto.getConn_type().equalsIgnoreCase("HADOOP")) {
+				return "success";
 		}
 
 		return ("invalid source type");

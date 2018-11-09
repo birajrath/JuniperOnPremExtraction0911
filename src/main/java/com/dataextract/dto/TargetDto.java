@@ -16,10 +16,19 @@ public class TargetDto {
 	String system;
 	String drive_id;
 	String data_path;
+	String full_path;
 	
 	
 	
 	
+	
+	
+	public String getFull_path() {
+		return full_path;
+	}
+	public void setFull_path(String full_path) {
+		this.full_path = full_path;
+	}
 	public int getTarget_id() {
 		return target_id;
 	}

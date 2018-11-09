@@ -9,6 +9,7 @@ public class FileMetadataDto {
 	String file_delimiter;
 	String header_count;
 	String trailer_count;
+	String field_list;
 	String avro_conv_flag;
 	String application_user;
 	
@@ -16,6 +17,14 @@ public class FileMetadataDto {
 	
 	
 	
+	public String getField_list() {
+		return field_list;
+	}
+
+	public void setField_list(String field_list) {
+		this.field_list = field_list;
+	}
+
 	public String getApplication_user() {
 		return application_user;
 	}

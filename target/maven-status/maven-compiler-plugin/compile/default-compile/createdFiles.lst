@@ -1,11 +1,9 @@
 com/dataextract/controller/DataExtractController.class
 com/dataextract/dao/IExtractionDAO.class
-com/dataextract/fetchdata/ExportDataCallable$1.class
 com/dataextract/dto/NifiRequestDto.class
 com/dataextract/repositories/DataExtractRepositories.class
 com/dataextract/dto/SrcSysDto.class
 com/dataextract/constants/KmsConstants.class
-com/dataextract/fetchdata/ExtractJava.class
 com/dataextract/dto/Header.class
 com/dataextract/dto/RequestDto.class
 com/dataextract/constants/GenericConstants.class
@@ -13,12 +11,12 @@ com/dataextract/constants/NifiConstants.class
 com/dataextract/dto/FileMetadataDto.class
 com/dataextract/dto/RealTimeExtractDto.class
 com/dataextract/dto/TableInfoDto.class
-com/dataextract/fetchdata/ExportDataCallable.class
 com/dataextract/dao/ExtractionDaoImpl.class
 com/dataextract/constants/ComposerOperatorConstants.class
 com/dataextract/util/AuthUtils.class
 com/dataextract/util/ResponseUtil.class
 com/dataextract/dto/ExtractStatusDto.class
+com/dataextract/dto/HDFSMetadataDto.class
 com/dataextract/dto/TargetDto.class
 com/dataextract/repositories/DataExtractRepositoriesImpl.class
 com/dataextract/util/ScheduleUtils.class
@@ -32,7 +30,6 @@ com/dataextract/util/AuthUtilsImpl.class
 com/dataextract/dto/ExtracteRequestDto.class
 com/dataextract/dto/UnixDataRequestDto.class
 com/dataextract/driver/DataExtractionApplication.class
-com/dataextract/fetchdata/ExtractJavaImpl.class
 com/dataextract/fetchdata/UncheckedCloseable.class
 com/dataextract/dto/FieldMetadataDto.class
 com/dataextract/dto/ResponseDto.class

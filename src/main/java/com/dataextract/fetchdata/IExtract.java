@@ -19,5 +19,7 @@ public interface IExtract {
 	public  String callNifiDataRealTime(RealTimeExtractDto extractDto,String conn_string,String date,Long runId) throws UnsupportedOperationException, Exception;
 
 	public String callNifiUnixRealTime(RealTimeExtractDto rtExtractDto, String date, Long runId) throws UnsupportedOperationException, Exception;
+
+	public String callNifiHadoopRealTime(RealTimeExtractDto rtExtractDto, String date, Long runId) throws UnsupportedOperationException, Exception;
 	
 }
