@@ -1,0 +1,18 @@
+{
+	"header":{
+		"user_name":"user1",
+		"service_account":"Extraction_CDG_UK"
+			},
+	"body":{
+		"data":{
+			"connection_name":"conn1",
+			"connection_type":"oracle",
+			"host_name":"144.123.89.12",
+			"port":"1521",
+			"user_name":"args_loans",
+			"password": "cdg1",
+			"db_name":"db1",
+			"service_name":"gfhfhjfkd"
+			}
+	}
+}
