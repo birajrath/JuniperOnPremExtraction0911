@@ -9,6 +9,7 @@ import com.dataextract.dto.DataExtractDto;
 import com.dataextract.dto.ExtractStatusDto;
 import com.dataextract.dto.FileInfoDto;
 import com.dataextract.dto.FileMetadataDto;
+import com.dataextract.dto.HDFSMetadataDto;
 import com.dataextract.dto.RealTimeExtractDto;
 import com.dataextract.dto.SrcSysDto;
 import com.dataextract.dto.TableInfoDto;
@@ -39,6 +40,7 @@ public interface IExtractionDAO {
 	public String insertFileMetadata(Connection conn, FileInfoDto fileInfoDto) throws SQLException;
 	public String putFile(Connection conn,FileInfoDto fileInfoDto) throws SQLException, SftpException;
 	public FileInfoDto getFileInfoObject(Connection conn, String fileList) throws SQLException;
+	public String insertHDFSMetadata(Connection conn, HDFSMetadataDto hdfsDto)throws SQLException;;
 	
 	
 	

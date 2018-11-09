@@ -30,6 +30,7 @@ import com.dataextract.dto.ExtracteRequestDto;
 import com.dataextract.dto.FieldMetadataDto;
 import com.dataextract.dto.FileInfoDto;
 import com.dataextract.dto.FileMetadataDto;
+import com.dataextract.dto.HDFSMetadataDto;
 import com.dataextract.dto.NifiRequestDto;
 import com.dataextract.dto.RealTimeExtractDto;
 import com.dataextract.dto.RequestDto;
@@ -255,6 +256,13 @@ public class DataExtractController {
 				target.setTarget_hdfs_path(requestDto.getBody().get("data").get("hadoop_path"+i));
 				target.setSystem(requestDto.getBody().get("data").get("system"));
 			}
+			if(requestDto.getBody().get("data").get("target_type"+i).equalsIgnoreCase("unix")){
+				target.setTarget_unique_name(requestDto.getBody().get("data").get("target_unique_name"+i));
+				target.setTarget_type(requestDto.getBody().get("data").get("target_type"+i));
+				target.setTarget_knox_url(requestDto.getBody().get("data").get("drive_id"+i));
+				target.setTarget_user(requestDto.getBody().get("data").get("data_path"+i));
+				target.setSystem(requestDto.getBody().get("data").get("system"));
+			}
 			
 			targetArr.add(target);
 		}
@@ -342,6 +350,7 @@ public class DataExtractController {
 		srcSysDto.setCountry_code(requestDto.getBody().get("data").get("country_code"));
 		srcSysDto.setSrc_extract_type(requestDto.getBody().get("data").get("src_extract_type"));
 		srcSysDto.setTarget(requestDto.getBody().get("data").get("target"));
+		srcSysDto.setEncryptionStatus(requestDto.getBody().get("data").get("mt"));
 		try {
 			 src_sys_id=dataExtractRepositories.onboardSystem(srcSysDto);
 			 
@@ -540,6 +549,31 @@ public class DataExtractController {
 					
 		}
 	
+		return ResponseUtil.createResponse(status, message);
+	}
+	
+	
+	
+	@RequestMapping(value = "/addHDFSInfo", method = RequestMethod.POST, consumes = "application/json")
+	@ResponseBody
+	public String addHDFSInfo(@RequestBody RequestDto requestDto) throws SQLException, SftpException {
+		String status="";
+		String message="";
+		String response="";
+		String src_sys_id_str= (String) requestDto.getBody().get("data").get("src_sys_id");
+		int src_sys_id=Integer.parseInt(src_sys_id_str);
+		
+		HDFSMetadataDto hdfsDto = new HDFSMetadataDto();
+		hdfsDto.setSrc_sys_id(src_sys_id);
+		hdfsDto.setHdfsPath(requestDto.getBody().get("data").get("hdfs_path"));
+            
+		response=dataExtractRepositories.addHDFSDetails(hdfsDto);
+		if(response.equalsIgnoreCase("Success")) {
+				message="HDFS Metadata Added Successfully";
+			}
+			else {
+				status="failed";
+			}
 		return ResponseUtil.createResponse(status, message);
 	}
 	

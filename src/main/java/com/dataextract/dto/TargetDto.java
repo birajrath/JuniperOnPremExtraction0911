@@ -14,6 +14,8 @@ public class TargetDto {
 	String target_hdfs_path;
 	int target_id;
 	String system;
+	String drive_id;
+	String data_path;
 	
 	
 	
@@ -83,6 +85,18 @@ public class TargetDto {
 	}
 	public void setSystem(String system) {
 		this.system = system;
+	}
+	public String getDrive_id() {
+		return drive_id;
+	}
+	public void setDrive_id(String drive_id) {
+		this.drive_id = drive_id;
+	}
+	public String getData_path() {
+		return data_path;
+	}
+	public void setData_path(String data_path) {
+		this.data_path = data_path;
 	}
 	
 	

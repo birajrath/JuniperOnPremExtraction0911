@@ -13,6 +13,7 @@ import com.dataextract.dto.DataExtractDto;
 import com.dataextract.dto.ExtractStatusDto;
 import com.dataextract.dto.FileInfoDto;
 import com.dataextract.dto.FileMetadataDto;
+import com.dataextract.dto.HDFSMetadataDto;
 import com.dataextract.dto.RealTimeExtractDto;
 import com.dataextract.dto.SrcSysDto;
 import com.dataextract.dto.TableInfoDto;
@@ -47,6 +48,7 @@ public String updateTargetDetails(ArrayList<TargetDto> targetArr) throws SQLExce
 public String addFileDetails(FileInfoDto fileInfoDto) throws SQLException;
 public String putFile(FileInfoDto fileInfoDto) throws SQLException, SftpException;
 public FileInfoDto getFileInfoObject(String fileList) throws SQLException;
+public String addHDFSDetails(HDFSMetadataDto hdfsDto) throws SQLException;
 
 
 

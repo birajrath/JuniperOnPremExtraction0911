@@ -13,6 +13,7 @@ public class SrcSysDto {
 	String tableList;
 	String fileList;
 	String dataPath;
+	String encryptionStatus;
 	
 	
 	
@@ -87,6 +88,12 @@ public class SrcSysDto {
 	}
 	public void setConnection_id(int connection_id) {
 		this.connection_id = connection_id;
+	}
+	public String getEncryptionStatus() {
+		return encryptionStatus;
+	}
+	public void setEncryptionStatus(String encryptionStatus) {
+		this.encryptionStatus = encryptionStatus;
 	}
 
 }
