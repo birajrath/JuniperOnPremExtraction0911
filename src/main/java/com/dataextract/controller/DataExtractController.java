@@ -575,14 +575,14 @@ public class DataExtractController {
 		String response="";
 		ArrayList<String> hdfsFileList=new ArrayList<String>();
 		String src_sys_id_str= requestDto.getBody().get("data").get("src_sys_id");
-		int counter= Integer.parseInt(requestDto.getBody().get("data").get("counter"));
+		//int counter= Integer.parseInt(requestDto.getBody().get("data").get("counter"));
 		int src_sys_id=Integer.parseInt(src_sys_id_str);
 		
 		HDFSMetadataDto hdfsDto = new HDFSMetadataDto();
 		hdfsDto.setSrc_sys_id(src_sys_id);
-		for(int i=1;i<=counter;i++) {
-			hdfsFileList.add(requestDto.getBody().get("data").get("hdfs_path"+i));
-		}
+		//for(int i=1;i<=counter;i++) {
+			hdfsFileList.add(requestDto.getBody().get("data").get("hdfs_path"));
+		//}
 		hdfsDto.setHdfsPath(hdfsFileList);
             
 		response=dataExtractRepositories.addHDFSDetails(hdfsDto);
