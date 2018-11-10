@@ -148,7 +148,7 @@ public class DataExtractController {
 		connDto.setConn_type(requestDto.getBody().get("data").get("connection_type"));
 		connDto.setSystem(requestDto.getBody().get("data").get("system"));
 		
-		if(connDto.getConn_type().equalsIgnoreCase("ORACLE")) {
+		if(connDto.getConn_type().equalsIgnoreCase("ORACLE")||connDto.getConn_type().equalsIgnoreCase("HADOOP")) {
 			
 			connDto.setHostName(requestDto.getBody().get("data").get("host_name"));
 			connDto.setPort(requestDto.getBody().get("data").get("port"));
@@ -363,7 +363,7 @@ public class DataExtractController {
 		srcSysDto.setCountry_code(requestDto.getBody().get("data").get("country_code"));
 		srcSysDto.setSrc_extract_type(requestDto.getBody().get("data").get("src_extract_type"));
 		srcSysDto.setTarget(requestDto.getBody().get("data").get("target"));
-		srcSysDto.setEncryptionStatus(requestDto.getBody().get("data").get("mt"));
+		srcSysDto.setEncryptionStatus(requestDto.getBody().get("data").get("encrypt"));
 		try {
 			 src_sys_id=dataExtractRepositories.onboardSystem(srcSysDto);
 			 
