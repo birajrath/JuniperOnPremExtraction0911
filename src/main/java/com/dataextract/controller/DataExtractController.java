@@ -69,9 +69,9 @@ public class DataExtractController {
 		ConnectionDto connDto = new ConnectionDto();
 		int connectionId=0;
 		
-		if(requestDto.getBody().get("data").get("connection_type").equalsIgnoreCase("ORACLE")||requestDto.getBody().get("data").get("connection_type").equalsIgnoreCase("HADOOP")) {
-			
-			System.out.println("oracle system");
+		if(requestDto.getBody().get("data").get("connection_type").equalsIgnoreCase("ORACLE")
+				||requestDto.getBody().get("data").get("connection_type").equalsIgnoreCase("HADOOP")) {
+			System.out.println("oracle system or hadoop system");
 			connDto.setConn_name(requestDto.getBody().get("data").get("connection_name"));
 			connDto.setConn_type(requestDto.getBody().get("data").get("connection_type"));
 			connDto.setHostName(requestDto.getBody().get("data").get("host_name"));
@@ -91,7 +91,6 @@ public class DataExtractController {
 		}
 		
 		if(requestDto.getBody().get("data").get("connection_type").equalsIgnoreCase("TERADATA")) {
-			
 			System.out.println("Teradata System");
 			connDto.setConn_name(requestDto.getBody().get("data").get("connection_name"));
 			connDto.setConn_type(requestDto.getBody().get("data").get("connection_type"));
@@ -148,7 +147,7 @@ public class DataExtractController {
 		connDto.setConn_type(requestDto.getBody().get("data").get("connection_type"));
 		connDto.setSystem(requestDto.getBody().get("data").get("system"));
 		
-		if(connDto.getConn_type().equalsIgnoreCase("ORACLE")) {
+		if(connDto.getConn_type().equalsIgnoreCase("ORACLE")||connDto.getConn_type().equalsIgnoreCase("HADOOP")) {
 			
 			connDto.setHostName(requestDto.getBody().get("data").get("host_name"));
 			connDto.setPort(requestDto.getBody().get("data").get("port"));
@@ -363,7 +362,7 @@ public class DataExtractController {
 		srcSysDto.setCountry_code(requestDto.getBody().get("data").get("country_code"));
 		srcSysDto.setSrc_extract_type(requestDto.getBody().get("data").get("src_extract_type"));
 		srcSysDto.setTarget(requestDto.getBody().get("data").get("target"));
-		srcSysDto.setEncryptionStatus(requestDto.getBody().get("data").get("mt"));
+		srcSysDto.setEncryptionStatus(requestDto.getBody().get("data").get("encrypt"));
 		try {
 			 src_sys_id=dataExtractRepositories.onboardSystem(srcSysDto);
 			 
@@ -575,6 +574,7 @@ public class DataExtractController {
 		String response="";
 		ArrayList<String> hdfsFileList=new ArrayList<String>();
 		String src_sys_id_str= requestDto.getBody().get("data").get("src_sys_id");
+
 		//int counter= Integer.parseInt(requestDto.getBody().get("data").get("counter"));
 		int src_sys_id=Integer.parseInt(src_sys_id_str);
 		
