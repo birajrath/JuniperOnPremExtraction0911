@@ -6,8 +6,6 @@
 /Users/birajrath/Documents/GitHub/OnPrem0911/JuniperOnPremExtraction0911/src/main/java/com/dataextract/dto/TargetDto.java
 /Users/birajrath/Documents/GitHub/OnPrem0911/JuniperOnPremExtraction0911/src/main/java/com/dataextract/fetchdata/IExtract.java
 /Users/birajrath/Documents/GitHub/OnPrem0911/JuniperOnPremExtraction0911/src/main/java/com/dataextract/dto/FileInfoDto.java
-/Users/birajrath/Documents/GitHub/OnPrem0911/JuniperOnPremExtraction0911/src/main/java/com/dataextract/fetchdata/ExportMetadataCallable.java
-/Users/birajrath/Documents/GitHub/OnPrem0911/JuniperOnPremExtraction0911/src/main/java/com/dataextract/fetchdata/UncheckedCloseable.java
 /Users/birajrath/Documents/GitHub/OnPrem0911/JuniperOnPremExtraction0911/src/main/java/com/dataextract/dto/ExtracteRequestDto.java
 /Users/birajrath/Documents/GitHub/OnPrem0911/JuniperOnPremExtraction0911/src/main/java/com/dataextract/dto/HDFSMetadataDto.java
 /Users/birajrath/Documents/GitHub/OnPrem0911/JuniperOnPremExtraction0911/src/main/java/com/dataextract/fetchdata/ExtractNifiImpl.java

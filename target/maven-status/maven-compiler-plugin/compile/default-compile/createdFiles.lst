@@ -21,7 +21,6 @@ com/dataextract/dto/TargetDto.class
 com/dataextract/repositories/DataExtractRepositoriesImpl.class
 com/dataextract/util/ScheduleUtils.class
 com/dataextract/dto/FileInfoDto.class
-com/dataextract/fetchdata/ExportMetadataCallable.class
 com/dataextract/util/ConnectionUtils.class
 com/dataextract/constants/MySQLConstants.class
 com/dataextract/fetchdata/IExtract.class
@@ -30,7 +29,6 @@ com/dataextract/util/AuthUtilsImpl.class
 com/dataextract/dto/ExtracteRequestDto.class
 com/dataextract/dto/UnixDataRequestDto.class
 com/dataextract/driver/DataExtractionApplication.class
-com/dataextract/fetchdata/UncheckedCloseable.class
 com/dataextract/dto/FieldMetadataDto.class
 com/dataextract/dto/ResponseDto.class
 com/dataextract/constants/OracleConstants.class

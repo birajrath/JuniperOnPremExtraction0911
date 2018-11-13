@@ -95,8 +95,8 @@ public class ExtractNifiImpl implements IExtract {
 			
 			for(int i =0;i<100;i++) {
 				NifiConstants constants=new NifiConstants();
-				index=2;
-				//index=getRandomNumberInRange(1, NifiConstants.NOOFORACLEPROCESSORS);
+				//index=2;
+				index=getRandomNumberInRange(1, NifiConstants.NOOFORACLEPROCESSORS);
 				String varName="ORACLEPROCESSGROUPURL"+index;
 				processGroupUrl = String.valueOf(NifiConstants.class.getDeclaredField(varName).get(constants));
 				String listener="ORACLELISTENER"+index;
@@ -540,16 +540,16 @@ public class ExtractNifiImpl implements IExtract {
 		StringBuffer tableListWithQuotes=new StringBuffer();
 		for(Map<String,String> table: rtExtractDto.getTableInfoDto().getTableInfo()) {
 			JSONObject json=new JSONObject();
-			String[] temp=table.get("table_name").split("//.");
+			String[] temp=table.get("table_name").split("\\.");
 			if(temp.length>1) {
-				json.put("table_name", temp[1]);
+				
 				tableList.append(temp[1]+",");
 			}
 			else {
-				json.put("table_name", table.get("table_name"));
+				
 				tableList.append(table.get("table_name")+",");
 			}
-			
+			json.put("table_name", table.get("table_name"));
 			json.put("columns", table.get("columns"));
 			json.put("where_clause", table.get("where_clause"));
 			json.put("incremental_column", table.get("incremental_column"));
@@ -763,12 +763,12 @@ public  void createSystemDetailsFile(RealTimeExtractDto rtExtractDto,Long runId,
 		}
 		
 		JSch obj_JSch = new JSch();
-		obj_JSch.addIdentity("/home/birajrath2008/.ssh/id_rsa");
+		//obj_JSch.addIdentity("/home/birajrath2008/.ssh/id_rsa");
 	    Session obj_Session = null;
 	    try {
-			obj_Session = obj_JSch.getSession("birajrath2008", NifiConstants.NIFINSTANCEIP);
+			obj_Session = obj_JSch.getSession("extraction_user", NifiConstants.NIFINSTANCEIP);
 			obj_Session.setPort(22);
-			// obj_Session.setPassword(str_Password);
+			obj_Session.setPassword("Infy@123");
 			Properties obj_Properties = new Properties();
 			obj_Properties.put("StrictHostKeyChecking", "no");
 			obj_Session.setConfig(obj_Properties);
@@ -840,12 +840,12 @@ public  void createFileDetailsFile(RealTimeExtractDto rtExtractDto,Long runId,St
 		
 		}
 	JSch obj_JSch = new JSch();
-	obj_JSch.addIdentity("/home/birajrath2008/.ssh/id_rsa");
+	//obj_JSch.addIdentity("/home/birajrath2008/.ssh/id_rsa");
     Session obj_Session = null;
 	try {
-			obj_Session = obj_JSch.getSession("birajrath2008", NifiConstants.NIFINSTANCEIP);
+			obj_Session = obj_JSch.getSession("extraction_user", NifiConstants.NIFINSTANCEIP);
 			obj_Session.setPort(22);
-			// obj_Session.setPassword(str_Password);
+			obj_Session.setPassword("Infy@123");
 			Properties obj_Properties = new Properties();
 			obj_Properties.put("StrictHostKeyChecking", "no");
 			obj_Session.setConfig(obj_Properties);
