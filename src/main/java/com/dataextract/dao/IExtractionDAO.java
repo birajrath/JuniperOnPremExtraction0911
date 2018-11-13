@@ -4,17 +4,12 @@ import java.sql.Connection;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
-
-import com.dataextract.dto.DataExtractDto;
-import com.dataextract.dto.ExtractStatusDto;
 import com.dataextract.dto.FileInfoDto;
-import com.dataextract.dto.FileMetadataDto;
 import com.dataextract.dto.HDFSMetadataDto;
 import com.dataextract.dto.RealTimeExtractDto;
 import com.dataextract.dto.SrcSysDto;
 import com.dataextract.dto.TableInfoDto;
 import com.dataextract.dto.TargetDto;
-import com.jcraft.jsch.SftpException;
 import com.dataextract.dto.BatchExtractDto;
 import com.dataextract.dto.ConnectionDto;
 
@@ -38,7 +33,6 @@ public interface IExtractionDAO {
 	public String deleteSrcSysMetadata(Connection conn, SrcSysDto srcSysDto)throws SQLException;
 	public String updateTargetMetadata(Connection conn, ArrayList<TargetDto> targetArr) throws SQLException;
 	public String insertFileMetadata(Connection conn, FileInfoDto fileInfoDto) throws SQLException;
-	public String putFile(Connection conn,FileInfoDto fileInfoDto) throws SQLException, SftpException;
 	public FileInfoDto getFileInfoObject(Connection conn, String fileList) throws SQLException;
 	public String insertHDFSMetadata(Connection conn, HDFSMetadataDto hdfsDto)throws SQLException;
 	public HDFSMetadataDto getHDFSInfoObject(Connection conn, String fileList)throws SQLException;

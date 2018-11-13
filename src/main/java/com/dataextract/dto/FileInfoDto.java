@@ -6,9 +6,18 @@ public class FileInfoDto {
 	
 	
 	int src_sys_id;
+	String dataPath;
 	ArrayList<FileMetadataDto> fileMetadataArr;
 	ArrayList<FieldMetadataDto> fieldMetadataArr;
 	
+	
+	
+	public String getDataPath() {
+		return dataPath;
+	}
+	public void setDataPath(String dataPath) {
+		this.dataPath = dataPath;
+	}
 	public int getSrc_sys_id() {
 		return src_sys_id;
 	}

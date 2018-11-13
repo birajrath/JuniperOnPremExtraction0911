@@ -8,9 +8,9 @@ package com.dataextract.fetchdata;
 //import org.springframework.expression.ParseException;
 //import org.springframework.http.HttpEntity;
 
-import com.dataextract.dto.DataExtractDto;
+
 import com.dataextract.dto.RealTimeExtractDto;
-import com.dataextract.dto.ConnectionDto;
+
 
 public interface IExtract {
 	

@@ -4,32 +4,25 @@
 package com.dataextract.repositories;
 
 import java.io.IOException;
+
 import java.sql.Connection;
 
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Properties;
+
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
-import com.dataextract.constants.MySQLConstants;
-import com.dataextract.constants.NifiConstants;
 import com.dataextract.constants.OracleConstants;
 import com.dataextract.dao.IExtractionDAO;
-import com.dataextract.dto.DataExtractDto;
 import com.dataextract.dto.FileInfoDto;
-import com.dataextract.dto.FileMetadataDto;
 import com.dataextract.dto.HDFSMetadataDto;
 import com.dataextract.dto.RealTimeExtractDto;
 import com.dataextract.dto.SrcSysDto;
 import com.dataextract.dto.TableInfoDto;
 import com.dataextract.dto.TargetDto;
 import com.dataextract.util.ConnectionUtils;
-import com.jcraft.jsch.ChannelSftp;
-import com.jcraft.jsch.JSch;
-import com.jcraft.jsch.Session;
-import com.jcraft.jsch.SftpException;
 import com.dataextract.dto.BatchExtractDto;
 import com.dataextract.dto.ConnectionDto;
 
@@ -135,13 +128,7 @@ public class DataExtractRepositoriesImpl implements DataExtractRepositories {
 		return extractionDao.insertFileMetadata(conn, fileInfoDto);
 	}
 
-	@Override
-	public String putFile(FileInfoDto fileInfoDto) throws SQLException, SftpException {
-		Connection conn=null;
-		conn=ConnectionUtils.connectToOracle(OracleConstants.ORACLE_IP_PORT_SID, OracleConstants.ORACLE_USER_NAME, OracleConstants.ORACLE_PASSWORD);
-		return extractionDao.putFile(conn,fileInfoDto);
-	}
-
+	
 	@Override
 	public ConnectionDto getConnectionObject(String src_unique_name) throws SQLException {
 		Connection conn=null;

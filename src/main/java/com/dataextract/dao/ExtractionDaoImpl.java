@@ -32,7 +32,6 @@ import com.dataextract.dto.SrcSysDto;
 import com.dataextract.dto.TableInfoDto;
 import com.dataextract.dto.TargetDto;
 import com.dataextract.fetchdata.IExtract;
-import com.dataextract.util.ScheduleUtils;
 import com.jcraft.jsch.Channel;
 import com.jcraft.jsch.ChannelSftp;
 import com.jcraft.jsch.JSch;
@@ -48,8 +47,7 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 	@Autowired
 	private IExtract extract;
 
-	@Autowired
-	private ScheduleUtils scheduleUtils;
+
 
 	@Override
 	public  int  insertConnectionMetadata(Connection conn, ConnectionDto dto) throws SQLException  {
@@ -72,11 +70,10 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 		if(dto.getConn_type().equalsIgnoreCase("UNIX")) {
 
 			insertQuery=OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.CONNECTIONTABLE)
-					.replace("{$columns}", "connection_name,connection_type,drive_id,path,system")
+					.replace("{$columns}", "connection_name,connection_type,drive_id,system")
 					.replace("{$data}",OracleConstants.QUOTE+dto.getConn_name()+OracleConstants.QUOTE+OracleConstants.COMMA
 							+OracleConstants.QUOTE+dto.getConn_type()+OracleConstants.QUOTE+OracleConstants.COMMA
 							+dto.getDrive_id()+OracleConstants.COMMA
-							+OracleConstants.QUOTE+dto.getData_path()+OracleConstants.QUOTE+OracleConstants.COMMA
 							+OracleConstants.QUOTE+dto.getSystem()+OracleConstants.QUOTE);
 		}
 		if(dto.getConn_type().equalsIgnoreCase("TERADATA")) 
@@ -158,7 +155,6 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 					+" set connection_name="+OracleConstants.QUOTE+connDto.getConn_name()+OracleConstants.QUOTE+OracleConstants.COMMA
 					+"connection_type="+OracleConstants.QUOTE+connDto.getConn_type()+OracleConstants.QUOTE+OracleConstants.COMMA
 					+"drive_id="+connDto.getDrive_id()+OracleConstants.COMMA
-					+"path="+OracleConstants.QUOTE+connDto.getData_path()+OracleConstants.QUOTE+OracleConstants.COMMA
 					+"system="+OracleConstants.QUOTE+connDto.getSystem()+OracleConstants.QUOTE
 					+" where connection_id="+connDto.getConnId();
 		}
@@ -382,13 +378,13 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 			srcSysDto.setSrc_sys_id((src_sys_id));
 			if(src_sys_id!=0) {
 				insertExtractionMaster=OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.EXTRACTIONTABLE)
-						.replace("{$columns}","src_sys_id,extraction_type,target,connection_id,created_by,encryptionstatus" )
+						.replace("{$columns}","src_sys_id,extraction_type,target,connection_id,encr_sts,created_by" )
 						.replace("{$data}", src_sys_id +OracleConstants.COMMA
 								+OracleConstants.QUOTE+srcSysDto.getSrc_extract_type()+OracleConstants.QUOTE+OracleConstants.COMMA
 								+OracleConstants.QUOTE+srcSysDto.getTarget()+OracleConstants.QUOTE+OracleConstants.COMMA
 								+srcSysDto.getConnection_id()+OracleConstants.COMMA
-								+OracleConstants.QUOTE+srcSysDto.getApplication_user()+OracleConstants.QUOTE+OracleConstants.COMMA
-								+OracleConstants.QUOTE+srcSysDto.getEncryptionStatus()+OracleConstants.QUOTE
+								+OracleConstants.QUOTE+srcSysDto.getEncryptionStatus()+OracleConstants.QUOTE+OracleConstants.COMMA
+								+OracleConstants.QUOTE+srcSysDto.getApplication_user()+OracleConstants.QUOTE
 								);
 				Statement statement2=conn.createStatement();
 				statement2.execute(insertExtractionMaster);
@@ -538,9 +534,10 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 	public String insertFileMetadata(Connection conn, FileInfoDto fileInfoDto) throws SQLException{
 	
 		StringBuffer fileList=new StringBuffer();
-		
 		String insertFileMaster="";
 		String sequence="";
+		String file_path=getFilePath(conn, fileInfoDto.getSrc_sys_id(),fileInfoDto.getDataPath());
+		String put_status;
 		for(FileMetadataDto file:fileInfoDto.getFileMetadataArr()) {
 			StringBuffer fieldList=new StringBuffer();
 			for(FieldMetadataDto field:fileInfoDto.getFieldMetadataArr()) {
@@ -550,12 +547,28 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 				}
 			}
 			fieldList.setLength(fieldList.length()-1);
+			String delimiter="";
+			if(file.getFile_delimiter().equalsIgnoreCase("comma")) {
+				delimiter=",";
+			}
+			else if(file.getFile_delimiter().equalsIgnoreCase("tab")) {
+				delimiter="\t";
+			}
+			else if(file.getFile_delimiter().equalsIgnoreCase("semicolon")) {
+				delimiter=";";
+			}
+			else if(file.getFile_delimiter().equalsIgnoreCase("pipe")) {
+				delimiter="\\|";
+			}
+			else {
+				delimiter=null;
+			}
 			insertFileMaster=OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.FILEDETAILSTABLE)
 					.replace("{$columns}","src_sys_id,file_name,file_type,file_delimiter,header_count,trailer_count,field_list,avro_conv_flg" )
 					.replace("{$data}",fileInfoDto.getSrc_sys_id() +OracleConstants.COMMA
 							+OracleConstants.QUOTE+file.getFile_name()+OracleConstants.QUOTE+OracleConstants.COMMA
 							+OracleConstants.QUOTE+file.getFile_type()+OracleConstants.QUOTE+OracleConstants.COMMA
-							+OracleConstants.QUOTE+file.getFile_delimiter()+OracleConstants.QUOTE+OracleConstants.COMMA
+							+OracleConstants.QUOTE+delimiter+OracleConstants.QUOTE+OracleConstants.COMMA
 							+file.getHeader_count()+OracleConstants.COMMA
 							+file.getTrailer_count()+OracleConstants.COMMA
 							+OracleConstants.QUOTE+fieldList+OracleConstants.QUOTE+OracleConstants.COMMA
@@ -593,11 +606,25 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 		}
 		fileList.setLength(fileList.length()-1);
 		String fileListStr=fileList.toString();
-		String updateExtractionMaster="update "+OracleConstants.EXTRACTIONTABLE+" set file_list='"+fileListStr+"' where src_sys_id="+fileInfoDto.getSrc_sys_id();
+		String updateExtractionMaster="update "+OracleConstants.EXTRACTIONTABLE+" set file_list="+OracleConstants.QUOTE+fileListStr+OracleConstants.QUOTE+OracleConstants.COMMA
+				+ "file_path="+OracleConstants.QUOTE+file_path+OracleConstants.QUOTE
+				+" where src_sys_id="+fileInfoDto.getSrc_sys_id();
 		try {	
 			Statement statement = conn.createStatement();
 			statement.execute(updateExtractionMaster);
-			return "Success";
+			try {
+				put_status=putFile(fileInfoDto,file_path);
+				if(put_status.equalsIgnoreCase("success")) {
+					return "Success";
+				}
+				else {
+					return put_status;
+				}
+			} catch (SftpException e) {
+				// TODO Auto-generated catch block
+				return e.getMessage();
+			}
+			
 			
 		}catch (SQLException e) {
 			// TODO Auto-generated catch block
@@ -612,20 +639,20 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 		
 	}
 
-	@Override
-	public String putFile(Connection conn,FileInfoDto fileInfoDto) throws SQLException, SftpException {
+
+	@SuppressWarnings("unused")
+	private String putFile(FileInfoDto fileInfoDto,String file_path) throws SQLException, SftpException {
 
 		StringBuffer fileDetails= new StringBuffer();
-		StringBuffer fieldDetails=new StringBuffer();
-		String data_path=getDataPath(conn,fileInfoDto.getSrc_sys_id());
-		if(!data_path.equalsIgnoreCase("failed")) {
-			JSch obj_JSch = new JSch();
+		StringBuffer fieldDetails=new StringBuffer();	
+			
 			try {
-				obj_JSch.addIdentity("/home/birajrath2008/.ssh/id_rsa");
+				JSch obj_JSch = new JSch();
+				//obj_JSch.addIdentity("/Users/birajrath/.ssh/id_rsa");
 				Session obj_Session = null;
-				obj_Session = obj_JSch.getSession("birajrath2008", NifiConstants.NIFINSTANCEIP);
+				obj_Session = obj_JSch.getSession("extraction_user", NifiConstants.NIFINSTANCEIP);
 				obj_Session.setPort(22);
-				// obj_Session.setPassword(str_Password);
+				obj_Session.setPassword("Infy@123");
 				Properties obj_Properties = new Properties();
 				obj_Properties.put("StrictHostKeyChecking", "no");
 				obj_Session.setConfig(obj_Properties);
@@ -648,7 +675,7 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 				InputStream fileInputStream = new ByteArrayInputStream(fileDetails.toString().getBytes());
 				InputStream fieldInputStream=new ByteArrayInputStream(fieldDetails.toString().getBytes());
 				SftpATTRS attrs=null;
-				obj_SFTPChannel.cd(data_path);
+				obj_SFTPChannel.cd(file_path);
 				try {
 					attrs=obj_SFTPChannel.stat("metadata");
 
@@ -658,8 +685,8 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 				}
 
 				obj_SFTPChannel.cd("metadata");
-				obj_SFTPChannel.put(fileInputStream, data_path+"/metadata/"+"mstr_file_dtls.csv");
-				obj_SFTPChannel.put(fieldInputStream, data_path+"/metadata/"+"mstr_field_dtls.csv");
+				obj_SFTPChannel.put(fileInputStream, file_path+"/metadata/"+"mstr_file_dtls.csv");
+				obj_SFTPChannel.put(fieldInputStream, file_path+"/metadata/"+"mstr_field_dtls.csv");
 				return "success";
 
 			} catch (JSchException e) {
@@ -667,40 +694,37 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 				e.printStackTrace();
 				return e.getMessage();
 			}
-		}
-		else {
-			return "Error uploading metadata Files";
-		}
+		
+		
 
 
 	}
 
-	private String getDataPath(Connection conn,int src_sys_id) {
+	private String getFilePath(Connection conn,int src_sys_id, String dataPath) {
 
 		String query1="select connection_id from "+OracleConstants.EXTRACTIONTABLE+" where src_sys_id="+src_sys_id;
 		int conn_id;
 		int drive_id;
-		String path;
 		String drive_path;
+		String file_path;
 		try {
 			Statement statement=conn.createStatement();
 			ResultSet rs=statement.executeQuery(query1);
 			if(rs.isBeforeFirst()) {
 				rs.next();
 				conn_id=rs.getInt(1);
-				String query2="select drive_id,path from "+OracleConstants.CONNECTIONTABLE+" where connection_id="+conn_id;
+				String query2="select drive_id from "+OracleConstants.CONNECTIONTABLE+" where connection_id="+conn_id;
 				rs=statement.executeQuery(query2);
 				if(rs.isBeforeFirst()) {
 					rs.next();
 					drive_id=rs.getInt(1);
-					path=rs.getString(2);
 					String query3="select mounted_path from "+OracleConstants.DRIVETABLE+" where drive_id="+drive_id;
 					rs=statement.executeQuery(query3);
 					if(rs.isBeforeFirst()) {
 						rs.next();
 						drive_path=rs.getString(1);
-						path=drive_path+path;
-						return path;
+						file_path=drive_path+dataPath;
+						return file_path;
 					}
 
 
@@ -777,7 +801,7 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 
 		SrcSysDto srcSysDto=new SrcSysDto();
 
-		String query=" select s.src_unique_name,s.country_code,e.target,e.table_list,e.file_list from "+OracleConstants.SOURCESYSTEMTABLE+" s inner join "+OracleConstants.EXTRACTIONTABLE+" e on s.src_sys_id=e.src_sys_id"
+		String query=" select s.src_unique_name,s.country_code,e.target,e.table_list,e.file_list,e.file_path from "+OracleConstants.SOURCESYSTEMTABLE+" s inner join "+OracleConstants.EXTRACTIONTABLE+" e on s.src_sys_id=e.src_sys_id"
 				+ " where s.src_unique_name='"+src_unique_name+"'";
 		try {
 			Statement statement=conn.createStatement();
@@ -789,6 +813,7 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 				srcSysDto.setTarget(rs.getString(3));
 				srcSysDto.setTableList(rs.getString(4));
 				srcSysDto.setFileList(rs.getString(5));
+				srcSysDto.setFilePath(rs.getString(6));
 
 			}
 
@@ -799,8 +824,7 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 				srcSysDto.setSrc_sys_id(rs.getInt(1));	
 			}
 
-			String data_path=getDataPath(conn, srcSysDto.getSrc_sys_id());
-			srcSysDto.setDataPath(data_path);
+			
 
 
 		}catch(SQLException e) {
@@ -950,6 +974,7 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 		
 	}
 
+	@SuppressWarnings("unused")
 	@Override
 	public  String pullData(RealTimeExtractDto rtExtractDto)  {
 

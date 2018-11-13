@@ -1,19 +1,15 @@
 package com.dataextract.fetchdata;
 
-import java.io.BufferedWriter;
+
+
 import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URI;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Random;
 import java.util.UUID;
-
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.ParseException;
@@ -29,22 +25,12 @@ import org.apache.http.util.EntityUtils;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
-
 import com.dataextract.constants.GenericConstants;
-import com.dataextract.constants.KmsConstants;
 import com.dataextract.constants.NifiConstants;
-import com.dataextract.dto.ConnectionDto;
-import com.dataextract.dto.DataExtractDto;
 import com.dataextract.dto.FileMetadataDto;
 import com.dataextract.dto.RealTimeExtractDto;
 import com.dataextract.dto.TargetDto;
-import com.dataextract.util.AuthUtils;
-import com.google.auth.Credentials;
-import com.google.cloud.storage.BlobId;
-import com.google.cloud.storage.BlobInfo;
-import com.google.cloud.storage.Storage;
 import com.jcraft.jsch.Channel;
 import com.jcraft.jsch.ChannelSftp;
 import com.jcraft.jsch.JSch;
@@ -55,8 +41,7 @@ import com.jcraft.jsch.SftpException;
 @Repository
 public class ExtractNifiImpl implements IExtract {
 
-@Autowired
-private AuthUtils authUtils;
+
 
 
 	@Override
@@ -402,6 +387,7 @@ private AuthUtils authUtils;
 
 	}
 		
+	@SuppressWarnings("static-access")
 	private void updateController(String connUrl,String uname, String pwd,String controllerId) throws Exception {
 
 		HttpEntity respEntity=null;
@@ -486,6 +472,7 @@ private AuthUtils authUtils;
 	
 
 	
+	@SuppressWarnings("static-access")
 	private  void startReferencingComponents(String controllerId,String processGroupUrl)
 			throws Exception {
 		HttpEntity respEntity=null;
@@ -656,7 +643,7 @@ private AuthUtils authUtils;
 			json.put("file_delimiter", file.getFile_delimiter());
 			json.put("src_unique_name", rtExtractDto.getSrsSysDto().getSrc_unique_name());
 			json.put("country_code", rtExtractDto.getSrsSysDto().getCountry_code());
-			json.put("file_path", rtExtractDto.getSrsSysDto().getDataPath());
+			json.put("file_path", rtExtractDto.getSrsSysDto().getFilePath());
 			json.put("run_id", runId);
 			json.put("date", date);
 			int i=1;
@@ -757,7 +744,6 @@ public  void createSystemDetailsFile(RealTimeExtractDto rtExtractDto,Long runId,
 		
 		
 		StringBuffer stringBufferGcp = new StringBuffer();
-		StringBuffer stringBufferHdfs=new StringBuffer();
 		StringBuffer dataPathGcp=new StringBuffer();
 		StringBuffer dataPathHdfs=new StringBuffer();
 		

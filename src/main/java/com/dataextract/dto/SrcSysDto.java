@@ -12,7 +12,7 @@ public class SrcSysDto {
 	String target;
 	String tableList;
 	String fileList;
-	String dataPath;
+	String filePath;
 	String encryptionStatus;
 	
 	
@@ -22,11 +22,11 @@ public class SrcSysDto {
 	
 	
 	
-	public String getDataPath() {
-		return dataPath;
+	public String getFilePath() {
+		return filePath;
 	}
-	public void setDataPath(String dataPath) {
-		this.dataPath = dataPath;
+	public void setFilePath(String filePath) {
+		this.filePath = filePath;
 	}
 	public String getFileList() {
 		return fileList;

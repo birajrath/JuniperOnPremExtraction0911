@@ -6,15 +6,12 @@ package com.dataextract.controller;
 import java.sql.SQLException;
 
 
+
 import java.util.ArrayList;
-import java.util.Arrays;
+
 import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -22,23 +19,16 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
-
-
-import com.dataextract.dto.DataExtractDto;
-import com.dataextract.dto.ExtractStatusDto;
-import com.dataextract.dto.ExtracteRequestDto;
 import com.dataextract.dto.FieldMetadataDto;
 import com.dataextract.dto.FileInfoDto;
 import com.dataextract.dto.FileMetadataDto;
 import com.dataextract.dto.HDFSMetadataDto;
-import com.dataextract.dto.NifiRequestDto;
 import com.dataextract.dto.RealTimeExtractDto;
 import com.dataextract.dto.RequestDto;
 import com.dataextract.dto.SrcSysDto;
 import com.dataextract.dto.TableInfoDto;
 import com.dataextract.dto.TargetDto;
 import com.dataextract.dto.UnixDataRequestDto;
-import com.dataextract.constants.GenericConstants;
 import com.dataextract.dto.BatchExtractDto;
 import com.dataextract.dto.ConnectionDto;
 import com.dataextract.repositories.DataExtractRepositories;
@@ -86,7 +76,6 @@ public class DataExtractController {
 			connDto.setConn_name(requestDto.getBody().get("data").get("connection_name"));
 			connDto.setConn_type(requestDto.getBody().get("data").get("connection_type"));
 			connDto.setDrive_id(Integer.parseInt(requestDto.getBody().get("data").get("drive_id")));
-			connDto.setData_path(requestDto.getBody().get("data").get("data_path"));
 			connDto.setSystem(requestDto.getBody().get("data").get("system"));
 		}
 		
@@ -160,7 +149,7 @@ public class DataExtractController {
 			
 			connDto.setConn_name(requestDto.getBody().get("data").get("connection_name"));
 			connDto.setDrive_id(Integer.parseInt(requestDto.getBody().get("data").get("drive_id")));
-			connDto.setData_path(requestDto.getBody().get("data").get("data_path"));
+
 		}
 		
 		try {
@@ -503,14 +492,15 @@ public class DataExtractController {
 	
 	
 	
+	@SuppressWarnings("unchecked")
 	@RequestMapping(value = "/addFileInfo", method = RequestMethod.POST, consumes = "application/json")
 	@ResponseBody
 	public String addFileInfo(@RequestBody UnixDataRequestDto requestDto) throws SQLException, SftpException {
 		String status="";
 		String message="";
 		String response="";
-		String put_status="";
 		String src_sys_id_str= (String) requestDto.getBody().get("data").get("src_sys_id");
+		String dataPath=(String) requestDto.getBody().get("data").get("data_path");
 		int src_sys_id=Integer.parseInt(src_sys_id_str);
 		ArrayList<Map<String,String>> fileMetadata=(ArrayList<Map<String,String>>) requestDto.getBody().get("data").get("file_details");
 		ArrayList<Map<String,String>> fieldMetadata=(ArrayList<Map<String,String>>) requestDto.getBody().get("data").get("field_details");
@@ -539,27 +529,22 @@ public class DataExtractController {
             
       FileInfoDto fileInfoDto=new FileInfoDto();
       fileInfoDto.setSrc_sys_id(src_sys_id);
+      fileInfoDto.setDataPath(dataPath);
       fileInfoDto.setFileMetadataArr(fileMetadataArr);
       fileInfoDto.setFieldMetadataArr(fieldMetadataArr);
       
 		response=dataExtractRepositories.addFileDetails(fileInfoDto);
 		if(response.equalsIgnoreCase("Success")) {
-			put_status=dataExtractRepositories.putFile(fileInfoDto);
-			if(put_status.equalsIgnoreCase("SUCCESS")) {
+			
 				status="Success";
 				message="File Metadata Added Successfully";
 			}
 			else {
 				status="failed";
-				message=put_status;
+				message=response;
 			}
 			
-		}
-		else {
-			status="Failed";
-			message=response;
-					
-		}
+		
 	
 		return ResponseUtil.createResponse(status, message);
 	}
@@ -658,11 +643,9 @@ public class DataExtractController {
 		String response="";
 		String status="";
 		String message="";
-		int src_sys_id;
 		BatchExtractDto batchExtractDto = new BatchExtractDto();
 		String src_unique_name=requestDto.getBody().get("data").get("src_unique_name");
 		batchExtractDto.setCron(requestDto.getBody().get("data").get("cron"));
-		//src_sys_id=Integer.parseInt(requestDto.getBody().get("data").get("src_sys_id"));
 		batchExtractDto.setConnDto(dataExtractRepositories.getConnectionObject(src_unique_name));
 		batchExtractDto.setSrsSysDto(dataExtractRepositories.getSrcSysObject(src_unique_name));
 		String targetList=batchExtractDto.getSrsSysDto().getTarget();
