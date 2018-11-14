@@ -1277,7 +1277,7 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 								if(minutes.contains(",")) {
 									for(String minute:minutes.split(",")) {
 										insertQuery=OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.SCHEDULETABLE)
-												.replace("{$columns}", "job_id,job_name,batch_id,command,argument_1,argument_2,argument_3,argument_4,daily_flag,job_schedule_time")
+												.replace("{$columns}", "job_id,job_name,batch_id,command,argument_1,argument_2,argument_3,argument_4,monthly_flag,month_run_day,job_schedule_time")
 												.replace("{$data}",OracleConstants.QUOTE+batchDto.getSrsSysDto().getSrc_unique_name()+"_monthlyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
 														+OracleConstants.QUOTE+batchDto.getSrsSysDto().getSrc_unique_name()+"_Extraction"+OracleConstants.QUOTE+OracleConstants.COMMA
 														+OracleConstants.QUOTE+batchDto.getSrsSysDto().getSrc_unique_name()+OracleConstants.QUOTE+OracleConstants.COMMA
@@ -1296,7 +1296,7 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 								}
 								else {
 									insertQuery=OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.SCHEDULETABLE)
-											.replace("{$columns}", "job_id,job_name,batch_id,command,argument_1,argument_2,argument_3,argument_4,daily_flag,job_schedule_time")
+											.replace("{$columns}", "job_id,job_name,batch_id,command,argument_1,argument_2,argument_3,argument_4,monthly_flag,month_run_day,job_schedule_time")
 											.replace("{$data}",OracleConstants.QUOTE+batchDto.getSrsSysDto().getSrc_unique_name()+"_monthlyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
 													+OracleConstants.QUOTE+batchDto.getSrsSysDto().getSrc_unique_name()+"_Extraction"+OracleConstants.QUOTE+OracleConstants.COMMA
 													+OracleConstants.QUOTE+batchDto.getSrsSysDto().getSrc_unique_name()+OracleConstants.QUOTE+OracleConstants.COMMA
@@ -1320,7 +1320,7 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 							if(minutes.contains(",")) {
 								for(String minute:minutes.split(",")) {
 									insertQuery=OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.SCHEDULETABLE)
-											.replace("{$columns}", "job_id,job_name,batch_id,command,argument_1,argument_2,argument_3,argument_4,daily_flag,job_schedule_time")
+											.replace("{$columns}", "job_id,job_name,batch_id,command,argument_1,argument_2,argument_3,argument_4,monthly_flag,month_run_day,job_schedule_time")
 											.replace("{$data}",OracleConstants.QUOTE+batchDto.getSrsSysDto().getSrc_unique_name()+"_monthlyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
 													+OracleConstants.QUOTE+batchDto.getSrsSysDto().getSrc_unique_name()+"_Extraction"+OracleConstants.QUOTE+OracleConstants.COMMA
 													+OracleConstants.QUOTE+batchDto.getSrsSysDto().getSrc_unique_name()+OracleConstants.QUOTE+OracleConstants.COMMA
@@ -1338,7 +1338,7 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 
 							} 			else {
 								insertQuery=OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.SCHEDULETABLE)
-										.replace("{$columns}", "job_id,job_name,batch_id,command,argument_1,argument_2,argument_3,argument_4,daily_flag,job_schedule_time")
+										.replace("{$columns}", "job_id,job_name,batch_id,command,argument_1,argument_2,argument_3,argument_4,monthly_flag,month_run_day,job_schedule_time")
 										.replace("{$data}",OracleConstants.QUOTE+batchDto.getSrsSysDto().getSrc_unique_name()+"_monthlyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
 												+OracleConstants.QUOTE+batchDto.getSrsSysDto().getSrc_unique_name()+"_Extraction"+OracleConstants.QUOTE+OracleConstants.COMMA
 												+OracleConstants.QUOTE+batchDto.getSrsSysDto().getSrc_unique_name()+OracleConstants.QUOTE+OracleConstants.COMMA
@@ -1362,7 +1362,7 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 							if(minutes.contains(",")) {
 								for(String minute:minutes.split(",")) {
 									insertQuery=OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.SCHEDULETABLE)
-											.replace("{$columns}", "job_id,job_name,batch_id,command,argument_1,argument_2,argument_3,argument_4,daily_flag,job_schedule_time")
+											.replace("{$columns}", "job_id,job_name,batch_id,command,argument_1,argument_2,argument_3,argument_4,monthly_flag,month_run_day,job_schedule_time")
 											.replace("{$data}",OracleConstants.QUOTE+batchDto.getSrsSysDto().getSrc_unique_name()+"_monthlyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
 													+OracleConstants.QUOTE+batchDto.getSrsSysDto().getSrc_unique_name()+"_Extraction"+OracleConstants.QUOTE+OracleConstants.COMMA
 													+OracleConstants.QUOTE+batchDto.getSrsSysDto().getSrc_unique_name()+OracleConstants.QUOTE+OracleConstants.COMMA
@@ -1381,7 +1381,7 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 							}
 							else {
 								insertQuery=OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.SCHEDULETABLE)
-										.replace("{$columns}", "job_id,job_name,batch_id,command,argument_1,argument_2,argument_3,argument_4,daily_flag,job_schedule_time")
+										.replace("{$columns}", "job_id,job_name,batch_id,command,argument_1,argument_2,argument_3,argument_4,monthly_flag,month_run_day,job_schedule_time")
 										.replace("{$data}",OracleConstants.QUOTE+batchDto.getSrsSysDto().getSrc_unique_name()+"_monthlyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
 												+OracleConstants.QUOTE+batchDto.getSrsSysDto().getSrc_unique_name()+"_Extraction"+OracleConstants.QUOTE+OracleConstants.COMMA
 												+OracleConstants.QUOTE+batchDto.getSrsSysDto().getSrc_unique_name()+OracleConstants.QUOTE+OracleConstants.COMMA
@@ -1405,7 +1405,7 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 						if(minutes.contains(",")) {
 							for(String minute:minutes.split(",")) {
 								insertQuery=OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.SCHEDULETABLE)
-										.replace("{$columns}", "job_id,job_name,batch_id,command,argument_1,argument_2,argument_3,argument_4,daily_flag,job_schedule_time")
+										.replace("{$columns}", "job_id,job_name,batch_id,command,argument_1,argument_2,argument_3,argument_4,monthly_flag,month_run_day,job_schedule_time")
 										.replace("{$data}",OracleConstants.QUOTE+batchDto.getSrsSysDto().getSrc_unique_name()+"_monthlyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
 												+OracleConstants.QUOTE+batchDto.getSrsSysDto().getSrc_unique_name()+"_Extraction"+OracleConstants.QUOTE+OracleConstants.COMMA
 												+OracleConstants.QUOTE+batchDto.getSrsSysDto().getSrc_unique_name()+OracleConstants.QUOTE+OracleConstants.COMMA
@@ -1423,7 +1423,7 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 
 						}else {
 							insertQuery=OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.SCHEDULETABLE)
-									.replace("{$columns}", "job_id,job_name,batch_id,command,argument_1,argument_2,argument_3,argument_4,daily_flag,job_schedule_time")
+									.replace("{$columns}", "job_id,job_name,batch_id,command,argument_1,argument_2,argument_3,argument_4,monthly_flag,month_run_day,job_schedule_time")
 									.replace("{$data}",OracleConstants.QUOTE+batchDto.getSrsSysDto().getSrc_unique_name()+"_monthlyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
 											+OracleConstants.QUOTE+batchDto.getSrsSysDto().getSrc_unique_name()+"_Extraction"+OracleConstants.QUOTE+OracleConstants.COMMA
 											+OracleConstants.QUOTE+batchDto.getSrsSysDto().getSrc_unique_name()+OracleConstants.QUOTE+OracleConstants.COMMA
@@ -1590,7 +1590,7 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 				}
 			}
 		}catch(SQLException e) {
-			e.printStackTrace();
+			return e.getMessage();
 		}finally {
 			conn.close();
 		}
