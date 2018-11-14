@@ -470,6 +470,7 @@ public class DataExtractController {
 	    	tableDetails.put("columns", requestDto.getBody().get("data").get("columns_name"+i));
 	    	tableDetails.put("where_clause", requestDto.getBody().get("data").get("where_clause"+i));
 	    	tableDetails.put("fetch_type", requestDto.getBody().get("data").get("fetch_type"+i));
+	    	tableDetails.put("incr_col", requestDto.getBody().get("data").get("incr_col"+i));
 	    	tableInfo.add(tableDetails);
 	    }
 		

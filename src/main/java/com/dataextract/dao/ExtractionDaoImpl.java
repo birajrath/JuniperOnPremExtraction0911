@@ -472,12 +472,13 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 		String sequence="";
 		for(Map<String,String> table:tableInfo) {
 			String insertTableMaster= OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.TABLEDETAILSTABLE)
-					.replace("{$columns}","src_sys_id,table_name,columns,fetch_type,where_clause,created_by" )
+					.replace("{$columns}","src_sys_id,table_name,columns,fetch_type,where_clause,incr_col,created_by" )
 					.replace("{$data}",tableInfoDto.getSrc_sys_id() +OracleConstants.COMMA
 							+OracleConstants.QUOTE+table.get("table_name")+OracleConstants.QUOTE+OracleConstants.COMMA
 							+OracleConstants.QUOTE+table.get("columns")+OracleConstants.QUOTE+OracleConstants.COMMA
 							+OracleConstants.QUOTE+table.get("fetch_type")+OracleConstants.QUOTE+OracleConstants.COMMA
 							+OracleConstants.QUOTE+table.get("where_clause")+OracleConstants.QUOTE+OracleConstants.COMMA
+							+OracleConstants.QUOTE+table.get("incr_col")+OracleConstants.QUOTE+OracleConstants.COMMA
 							+OracleConstants.QUOTE+tableInfoDto.getApplication_user()+OracleConstants.QUOTE
 							);
 			try {	
@@ -913,7 +914,7 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 		String[] tableIds=table_list.split(",");
 		try {
 			for(String tableId:tableIds) {
-				String query="select table_name,columns,where_clause,fetch_type from "+OracleConstants.TABLEDETAILSTABLE+" where table_id="+tableId;
+				String query="select table_name,columns,where_clause,fetch_type,incr_col from "+OracleConstants.TABLEDETAILSTABLE+" where table_id="+tableId;
 				Statement statement=conn.createStatement();
 				ResultSet rs = statement.executeQuery(query);
 				if(rs.isBeforeFirst()) {
@@ -923,6 +924,7 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 					tableDetails.put("columns",rs.getString(2));
 					tableDetails.put("where_clause", rs.getString(3));
 					tableDetails.put("fetch_type",  rs.getString(4));
+					tableDetails.put("incr_col", rs.getString(5));
 					tableInfo.add(tableDetails);
 				}
 

@@ -552,7 +552,7 @@ public class ExtractNifiImpl implements IExtract {
 			json.put("table_name", table.get("table_name"));
 			json.put("columns", table.get("columns"));
 			json.put("where_clause", table.get("where_clause"));
-			json.put("incremental_column", table.get("incremental_column"));
+			json.put("incremental_column", table.get("incr_col"));
 			json.put("country_code", rtExtractDto.getSrsSysDto().getCountry_code());
 			json.put("src_sys_id",Integer.toString(rtExtractDto.getSrsSysDto().getSrc_sys_id()));
 			json.put("src_unique_name", rtExtractDto.getSrsSysDto().getSrc_unique_name());
