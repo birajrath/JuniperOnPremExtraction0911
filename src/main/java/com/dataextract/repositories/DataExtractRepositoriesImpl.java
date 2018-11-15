@@ -277,6 +277,14 @@ public class DataExtractRepositoriesImpl implements DataExtractRepositories {
 		//conn= ConnectionUtils.connectToMySql(MySQLConstants.MYSQLIP, MySQLConstants.MYSQLPORT, MySQLConstants.DB,MySQLConstants.USER , MySQLConstants.PASSWORD);
 		return extractionDao.getHDFSInfoObject(conn,fileList);
 	}
+	
+	@Override
+	public String updateNifiProcessgroupDetails(RealTimeExtractDto rtDto,String date,String run_id, int index) throws SQLException{
+		Connection conn=null;
+		conn=ConnectionUtils.connectToOracle(OracleConstants.ORACLE_IP_PORT_SID, OracleConstants.ORACLE_USER_NAME, OracleConstants.ORACLE_PASSWORD);
+		//conn= ConnectionUtils.connectToMySql(MySQLConstants.MYSQLIP, MySQLConstants.MYSQLPORT, MySQLConstants.DB,MySQLConstants.USER , MySQLConstants.PASSWORD);
+		return extractionDao.updateNifiProcessgroupDetails(conn, rtDto ,date, run_id,index);
+	}
 }
 
 

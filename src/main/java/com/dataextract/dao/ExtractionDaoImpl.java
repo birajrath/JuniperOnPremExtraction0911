@@ -1153,6 +1153,32 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 		String status=insertScheduleMetadata(conn,batchExtractDto,connectionDetails,sourceSysDetails,targetDetails.toString(),tableDetails);
 		return status;
 	}
+	
+	@Override
+	public String updateNifiProcessgroupDetails(Connection conn, RealTimeExtractDto rtDto,String date, String run_id,int index) throws SQLException{
+		
+		String insertQuery=OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.NIFISTATUSTABLE)
+				.replace("{$columns}", "country_code,src_sys_id,run_id,nifi_pg,extracted_date,status")
+				.replace("{$data}",OracleConstants.QUOTE+rtDto.getSrsSysDto().getCountry_code()+OracleConstants.QUOTE+OracleConstants.COMMA
+						+OracleConstants.QUOTE+rtDto.getSrsSysDto().getSrc_unique_name()+OracleConstants.QUOTE+OracleConstants.COMMA
+						+OracleConstants.QUOTE+run_id+OracleConstants.QUOTE+OracleConstants.COMMA
+						+index+OracleConstants.COMMA
+						+OracleConstants.QUOTE+date+OracleConstants.QUOTE+OracleConstants.COMMA
+						+OracleConstants.QUOTE+"running"+OracleConstants.QUOTE);
+		try {	
+			Statement statement = conn.createStatement();
+			statement.execute(insertQuery);
+		}catch (SQLException e) {
+			// TODO Auto-generated catch block
+			//e.printStackTrace();
+			//TODO: Log the error message
+			return e.getMessage();
+		}finally {
+			conn.close();
+		}
+		return "success";
+						
+	}
 
 
 

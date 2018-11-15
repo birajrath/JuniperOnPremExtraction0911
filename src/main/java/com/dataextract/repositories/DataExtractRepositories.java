@@ -41,8 +41,8 @@ public String updateTargetDetails(ArrayList<TargetDto> targetArr) throws SQLExce
 public String addFileDetails(FileInfoDto fileInfoDto) throws SQLException;
 public FileInfoDto getFileInfoObject(String fileList) throws SQLException;
 public String addHDFSDetails(HDFSMetadataDto hdfsDto) throws SQLException;
-public HDFSMetadataDto getHDFSInfoObject(String fileList)throws SQLException;;
-
+public HDFSMetadataDto getHDFSInfoObject(String fileList)throws SQLException;
+public String updateNifiProcessgroupDetails(RealTimeExtractDto rtDto, String date,String run_id,int index) throws SQLException;
 
 
 

@@ -23,4 +23,5 @@ public class OracleConstants {
 	public static final String FILEDETAILSTABLE = "JUNIPER_EXT_FILE_MASTER";
 	public static final String DRIVETABLE = "JUNIPER_EXT_DRIVE_MASTER";
 	public static final String HDFSDETAILSTABLE = "JUNIPER_HDFS_MASTER";
+	public static final String NIFISTATUSTABLE = "JUNIPER_EXT_NIFI_STATUS";
 }

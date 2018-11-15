@@ -25,12 +25,15 @@ import org.apache.http.util.EntityUtils;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 import com.dataextract.constants.GenericConstants;
 import com.dataextract.constants.NifiConstants;
+import com.dataextract.dao.IExtractionDAO;
 import com.dataextract.dto.FileMetadataDto;
 import com.dataextract.dto.RealTimeExtractDto;
 import com.dataextract.dto.TargetDto;
+import com.dataextract.repositories.DataExtractRepositories;
 import com.jcraft.jsch.Channel;
 import com.jcraft.jsch.ChannelSftp;
 import com.jcraft.jsch.JSch;
@@ -42,7 +45,8 @@ import com.jcraft.jsch.SftpException;
 public class ExtractNifiImpl implements IExtract {
 
 
-
+	@Autowired
+	private DataExtractRepositories dataExtractRepositories;
 
 	@Override
 	public  String callNifiDataRealTime(RealTimeExtractDto rtExtractDto,String conn_string,String date,Long runId) throws UnsupportedOperationException, Exception {
@@ -56,6 +60,7 @@ public class ExtractNifiImpl implements IExtract {
 		int index=0;
 		String processorInfo="";
 		HttpEntity respEntity=null;
+		int processGroupIndex=0;
 	
 		
 		if(rtExtractDto.getConnDto().getConn_type().equalsIgnoreCase("MSSQL")) {
@@ -84,6 +89,7 @@ public class ExtractNifiImpl implements IExtract {
 						if(!processorInfo.equalsIgnoreCase("NOT FREE")) {
 							System.out.println("using processgroup"+index);
 							System.out.println("processors being used are: "+processorInfo);
+							
 							break;
 						}
 					}
@@ -96,7 +102,8 @@ public class ExtractNifiImpl implements IExtract {
 			for(int i =0;i<100;i++) {
 				NifiConstants constants=new NifiConstants();
 				
-				index=getRandomNumberInRange(1, NifiConstants.NOOFORACLEPROCESSORS);
+				index=1;
+				//index=getRandomNumberInRange(1, NifiConstants.NOOFORACLEPROCESSORS);
 				String varName="ORACLEPROCESSGROUPURL"+index;
 				processGroupUrl = String.valueOf(NifiConstants.class.getDeclaredField(varName).get(constants));
 				String listener="ORACLELISTENER"+index;
@@ -118,6 +125,7 @@ public class ExtractNifiImpl implements IExtract {
 						if(!processorInfo.equalsIgnoreCase("NOT FREE")) {
 							System.out.println("using processgroup"+index);
 							System.out.println("processors being used are: "+processorInfo);
+							processGroupIndex=index;
 							break;
 						}
 					}
@@ -157,6 +165,7 @@ public class ExtractNifiImpl implements IExtract {
 					}
 				}
 			}
+		 
 		
 		stopReferencingComponents(processorInfo, clientId);
 		disableController(controllerId);
@@ -165,6 +174,13 @@ public class ExtractNifiImpl implements IExtract {
 		startReferencingComponents(controllerId,processGroupUrl);
 		JSONArray arr=createJsonObject(rtExtractDto,conn_string,date, runId);
 		invokeNifiFull(arr,listenHttpUrl);
+		String updateStatus=dataExtractRepositories.updateNifiProcessgroupDetails(rtExtractDto, date, runId.toString(), processGroupIndex);
+		if(!(updateStatus.equalsIgnoreCase("success"))) {
+			
+			return updateStatus;
+		}
+		else {
+			
 			try {
 				createSystemDetailsFile(rtExtractDto,runId,date);
 				createFileDetailsFile(rtExtractDto,runId,date);
@@ -174,13 +190,9 @@ public class ExtractNifiImpl implements IExtract {
 					 
 				}
 			return "success";
+		}
 			
-		
-		
-		
-		
-			
-		
+	
 	}
 	
 	@Override

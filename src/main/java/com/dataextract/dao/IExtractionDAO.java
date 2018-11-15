@@ -36,6 +36,8 @@ public interface IExtractionDAO {
 	public FileInfoDto getFileInfoObject(Connection conn, String fileList) throws SQLException;
 	public String insertHDFSMetadata(Connection conn, HDFSMetadataDto hdfsDto)throws SQLException;
 	public HDFSMetadataDto getHDFSInfoObject(Connection conn, String fileList)throws SQLException;
+	public String updateNifiProcessgroupDetails(Connection conn, RealTimeExtractDto rtDto,String date, String run_id, int index) throws SQLException;
+	
 	
 	
 	
