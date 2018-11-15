@@ -1158,16 +1158,19 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 	public String updateNifiProcessgroupDetails(Connection conn, RealTimeExtractDto rtDto,String date, String run_id,int index) throws SQLException{
 		
 		String insertQuery=OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.NIFISTATUSTABLE)
-				.replace("{$columns}", "country_code,src_sys_id,run_id,nifi_pg,extracted_date,status")
+				.replace("{$columns}", "country_code,src_unique_name,run_id,nifi_pg,extracted_date,status")
 				.replace("{$data}",OracleConstants.QUOTE+rtDto.getSrsSysDto().getCountry_code()+OracleConstants.QUOTE+OracleConstants.COMMA
 						+OracleConstants.QUOTE+rtDto.getSrsSysDto().getSrc_unique_name()+OracleConstants.QUOTE+OracleConstants.COMMA
 						+OracleConstants.QUOTE+run_id+OracleConstants.QUOTE+OracleConstants.COMMA
 						+index+OracleConstants.COMMA
 						+OracleConstants.QUOTE+date+OracleConstants.QUOTE+OracleConstants.COMMA
 						+OracleConstants.QUOTE+"running"+OracleConstants.QUOTE);
+		
+		System.out.println("insert query is "+insertQuery);
 		try {	
 			Statement statement = conn.createStatement();
 			statement.execute(insertQuery);
+			System.out.println("query executed");
 		}catch (SQLException e) {
 			// TODO Auto-generated catch block
 			//e.printStackTrace();

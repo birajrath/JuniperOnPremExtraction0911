@@ -102,12 +102,12 @@ public class ExtractNifiImpl implements IExtract {
 			for(int i =0;i<100;i++) {
 				NifiConstants constants=new NifiConstants();
 				
-				index=1;
-				//index=getRandomNumberInRange(1, NifiConstants.NOOFORACLEPROCESSORS);
+				
+				index=getRandomNumberInRange(1, NifiConstants.NOOFORACLEPROCESSORS);
 				String varName="ORACLEPROCESSGROUPURL"+index;
 				processGroupUrl = String.valueOf(NifiConstants.class.getDeclaredField(varName).get(constants));
-				String listener="ORACLELISTENER"+index;
-				listenHttpUrl= String.valueOf(NifiConstants.class.getDeclaredField(listener).get(constants));
+				
+				listenHttpUrl= NifiConstants.ORACLELISTENER1;
 				System.out.println("process group url is "+processGroupUrl);
 				respEntity=getProcessGroupDetails(NifiConstants.NIFIURL, processGroupUrl);
 				if (respEntity != null) {
@@ -172,11 +172,11 @@ public class ExtractNifiImpl implements IExtract {
 		updateController(conn_string , rtExtractDto.getConnDto().getUserName(),  rtExtractDto.getConnDto().getPassword(), controllerId);
 		enableController(controllerId);
 		startReferencingComponents(controllerId,processGroupUrl);
-		JSONArray arr=createJsonObject(rtExtractDto,conn_string,date, runId);
+		JSONArray arr=createJsonObject(index,rtExtractDto,conn_string,date, runId);
 		invokeNifiFull(arr,listenHttpUrl);
 		String updateStatus=dataExtractRepositories.updateNifiProcessgroupDetails(rtExtractDto, date, runId.toString(), processGroupIndex);
 		if(!(updateStatus.equalsIgnoreCase("success"))) {
-			
+			System.out.println("update status is "+updateStatus);
 			return updateStatus;
 		}
 		else {
@@ -544,7 +544,7 @@ public class ExtractNifiImpl implements IExtract {
 
 
 	@SuppressWarnings("unchecked")
-	private  JSONArray createJsonObject(RealTimeExtractDto rtExtractDto,String conn_string,String date,Long runId) {
+	private  JSONArray createJsonObject(int index,RealTimeExtractDto rtExtractDto,String conn_string,String date,Long runId) {
 
 		JSONArray arr = new JSONArray();
 		HashMap<String, JSONObject> map = new HashMap<String, JSONObject>();
@@ -568,6 +568,7 @@ public class ExtractNifiImpl implements IExtract {
 				json.put("incremental_column", table.get("incr_col"));
 			}
 			
+			json.put("process_group", index);
 			json.put("country_code", rtExtractDto.getSrsSysDto().getCountry_code());
 			json.put("src_sys_id",Integer.toString(rtExtractDto.getSrsSysDto().getSrc_sys_id()));
 			json.put("src_unique_name", rtExtractDto.getSrsSysDto().getSrc_unique_name());
@@ -633,7 +634,7 @@ public class ExtractNifiImpl implements IExtract {
 			
 			i++;
 		}
-		
+		json.put("process_group", index);
 		json.put("src_unique_name", rtExtractDto.getSrsSysDto().getSrc_unique_name());
 		map.put("metadata_details", json);
 		arr.add(map.get("metadata_details"));
