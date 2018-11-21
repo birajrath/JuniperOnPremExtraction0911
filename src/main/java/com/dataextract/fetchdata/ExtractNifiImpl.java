@@ -108,6 +108,7 @@ public class ExtractNifiImpl implements IExtract {
 				processGroupUrl = String.valueOf(NifiConstants.class.getDeclaredField(varName).get(constants));
 				
 				listenHttpUrl= NifiConstants.ORACLELISTENER1;
+				System.out.println("listener is :" +listenHttpUrl);
 				System.out.println("process group url is "+processGroupUrl);
 				respEntity=getProcessGroupDetails(NifiConstants.NIFIURL, processGroupUrl);
 				if (respEntity != null) {
@@ -738,6 +739,9 @@ public class ExtractNifiImpl implements IExtract {
 			if(response.getStatusLine().getStatusCode()!=200) {
 					System.out.println("Nifi listener problem"+response.getStatusLine().getStatusCode());
 					throw new Exception("Nifi Not Running Or Some Problem In Sending HTTP Request"+response.getEntity().getContent().toString());
+			}
+			else {
+				System.out.println("Nifi Triggered");
 			}
 		}
 	
