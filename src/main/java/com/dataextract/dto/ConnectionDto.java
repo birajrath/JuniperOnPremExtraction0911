@@ -11,27 +11,56 @@ public class ConnectionDto {
 	String password;
 	String dbName;
 	String serviceName;
+	String encr_key;
 	int drive_id;
-	String data_path;
 	int connId;
 	String system;
+	String project;
+	String juniper_user;
+	int sys_seq;
+	int proj_seq;
 	
 	
 	
 	
-
+	public String getEncr_key() {
+		return encr_key;
+	}
+	public void setEncr_key(String encr_key) {
+		this.encr_key = encr_key;
+	}
+	public String getProject() {
+		return project;
+	}
+	public void setProject(String project) {
+		this.project = project;
+	}
+	
+	public String getJuniper_user() {
+		return juniper_user;
+	}
+	public void setJuniper_user(String juniper_user) {
+		this.juniper_user = juniper_user;
+	}
+	public int getSys_seq() {
+		return sys_seq;
+	}
+	public void setSys_seq(int sys_seq) {
+		this.sys_seq = sys_seq;
+	}
+	public int getProj_seq() {
+		return proj_seq;
+	}
+	public void setProj_seq(int proj_seq) {
+		this.proj_seq = proj_seq;
+	}
 	public int getDrive_id() {
 		return drive_id;
 	}
 	public void setDrive_id(int drive_id) {
 		this.drive_id = drive_id;
 	}
-	public String getData_path() {
-		return data_path;
-	}
-	public void setData_path(String data_path) {
-		this.data_path = data_path;
-	}
+	
 	public int getConnId() {
 		return connId;
 	}

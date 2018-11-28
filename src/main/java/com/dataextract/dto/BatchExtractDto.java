@@ -6,11 +6,27 @@ public class BatchExtractDto {
 
 	
 	ConnectionDto connDto;
-	SrcSysDto srsSysDto;
+	FeedDto feedDto;
 	TableInfoDto tableInfoDto;
+	FileInfoDto fileInfoDto;
+	HDFSMetadataDto hdfsInfoDto;
 	ArrayList<TargetDto> targetArr=new ArrayList<TargetDto>();
 	String cron;
 	
+	
+	
+	public FileInfoDto getFileInfoDto() {
+		return fileInfoDto;
+	}
+	public void setFileInfoDto(FileInfoDto fileInfoDto) {
+		this.fileInfoDto = fileInfoDto;
+	}
+	public HDFSMetadataDto getHdfsInfoDto() {
+		return hdfsInfoDto;
+	}
+	public void setHdfsInfoDto(HDFSMetadataDto hdfsInfoDto) {
+		this.hdfsInfoDto = hdfsInfoDto;
+	}
 	public ArrayList<TargetDto> getTargetArr() {
 		return targetArr;
 	}
@@ -30,11 +46,12 @@ public class BatchExtractDto {
 	public void setConnDto(ConnectionDto connDto) {
 		this.connDto = connDto;
 	}
-	public SrcSysDto getSrsSysDto() {
-		return srsSysDto;
+	
+	public FeedDto getFeedDto() {
+		return feedDto;
 	}
-	public void setSrsSysDto(SrcSysDto srsSysDto) {
-		this.srsSysDto = srsSysDto;
+	public void setFeedDto(FeedDto feedDto) {
+		this.feedDto = feedDto;
 	}
 	public TableInfoDto getTableInfoDto() {
 		return tableInfoDto;

@@ -6,30 +6,20 @@ package com.dataextract.constants;
 public class NifiConstants {
 
 	
-	public final static  String NIFIURL="http://35.231.171.195:8080/";
-	public final static String NIFINSTANCEIP="35.231.171.195";
-	public final static String LISTENHTTPURLSQL="http://35.196.51.88:8082/contentListener";
-	public final static String SQLLISTENHTTPURLMETADATA="http://35.227.99.37:8094/contentListener";
-	public final static String SQLDBCPCONNECTIONPOOLURL="nifi-api/controller-services/2a02fb61-17d3-3605-a71b-72c76f521cb8";
-	public final static String SQLMETADATADBCPCONNECTIONPOOLURL="nifi-api/controller-services/73d53069-646a-1974-e979-3e5fc6df69b5";
-	public final static String SQLMETADATADBCPCONNECTIONPOOLID="73d53069-646a-1974-e979-3e5fc6df69b5";
-	public final static String SQLDBCPCONNECTIONPOOLID="2a02fb61-17d3-3605-a71b-72c76f521cb8";
-	public final static int NOOFMSSQLPROCESSORS=5;
+	public final static  String NIFIURL="http://35.243.211.145:9090/";
+	public final static String NIFINSTANCEIP="35.243.211.145";
 	
-	public final static int NOOFORACLEPROCESSORS=5;
-	public final static String ORACLEPROCESSGROUPURL1="nifi-api/flow/process-groups/12a63e1d-7ecc-1c23-b926-ca17ddff339b/controller-services";
-	public final static String ORACLEPROCESSGROUPURL2="nifi-api/flow/process-groups/12a63e2d-7ecc-1c23-acd8-bb924476f6d3/controller-services";
-	public final static String ORACLEPROCESSGROUPURL3="nifi-api/flow/process-groups/cabd6195-0166-1000-1a15-98bb8de9e9d3/controller-services";
-	public final static String ORACLEPROCESSGROUPURL4="nifi-api/flow/process-groups/cac31d6a-0166-1000-3e9b-297fa014fc95/controller-services";
-	public final static String ORACLEPROCESSGROUPURL5="nifi-api/flow/process-groups/cac71e2e-0166-1000-cdc2-bccf594e76c9/controller-services";
-	public final static String ORACLELISTENER1="http://35.231.171.195:8084/contentListener";
-	public final static String ORACLELISTENER2="http://35.231.171.195:8085/contentListener";
-	public final static String ORACLELISTENER3="http://35.231.171.195:8086/contentListener";
-	public final static String ORACLELISTENER4="http://35.231.171.195:8087/contentListener";
-	public final static String ORACLELISTENER5="http://35.231.171.195:8088/contentListener";
+	public final static int NOOFORACLEPROCESSORS=3;
+	public final static String ORACLEPROCESSGROUPURL1="nifi-api/flow/process-groups/17239146-0167-1000-ffff-ffffee7f24ab/controller-services";
+	public final static String ORACLEPROCESSGROUPURL2="nifi-api/flow/process-groups/330e37fb-132c-16ce-ffff-ffffad8bd4de/controller-services";
+	public final static String ORACLEPROCESSGROUPURL3="nifi-api/flow/process-groups/1c7af9d7-0167-1000-ffff-ffff866c37aa/controller-services";																			
+	public final static String ORACLELISTENER1="http://35.243.211.145:8084/contentListener";
 	
-	public final static String UNIXLISTENER1="http://35.231.171.195:8090/contentListener";
+	public static final int NOOFUNIXPROCESSORS =3;
+	public final static String UNIXPROCESSGROUPURL1="nifi-api/flow/process-groups/3bfa4378-0167-1000-0000-00000f7e2794/controller-services";
+	public static final String UNIXLISTENER1 ="http://35.243.211.145:8085/contentListener";
 	
+
 	public final static String HADOOPLISTENER1="http://35.231.171.195:8091/contentListener";
 	
 	public final static String DISABLECONTROLLERCOMMAND="{\"revision\":{\"clientId\":\"${clientid}\",\"version\":${version}},\"component\":{\"id\":\"${id}\",\"state\":\"DISABLED\"}}";

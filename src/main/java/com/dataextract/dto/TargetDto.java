@@ -17,12 +17,26 @@ public class TargetDto {
 	String drive_id;
 	String data_path;
 	String full_path;
+	String project;
+	String juniper_user;
 	
 	
 	
 	
+	public String getProject() {
+		return project;
+	}
+	public void setProject(String project) {
+		this.project = project;
+	}
 	
 	
+	public String getJuniper_user() {
+		return juniper_user;
+	}
+	public void setJuniper_user(String juniper_user) {
+		this.juniper_user = juniper_user;
+	}
 	public String getFull_path() {
 		return full_path;
 	}

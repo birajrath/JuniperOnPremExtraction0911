@@ -5,7 +5,7 @@ import java.util.ArrayList;
 public class RealTimeExtractDto {
 	
 	ConnectionDto connDto;
-	SrcSysDto srsSysDto;
+	FeedDto feedDto;
 	TableInfoDto tableInfoDto;
 	FileInfoDto fileInfoDto;
 	HDFSMetadataDto hdfsInfoDto;
@@ -30,11 +30,12 @@ public class RealTimeExtractDto {
 	public void setConnDto(ConnectionDto connDto) {
 		this.connDto = connDto;
 	}
-	public SrcSysDto getSrsSysDto() {
-		return srsSysDto;
+	
+	public FeedDto getFeedDto() {
+		return feedDto;
 	}
-	public void setSrsSysDto(SrcSysDto srsSysDto) {
-		this.srsSysDto = srsSysDto;
+	public void setFeedDto(FeedDto feedDto) {
+		this.feedDto = feedDto;
 	}
 	public TableInfoDto getTableInfoDto() {
 		return tableInfoDto;

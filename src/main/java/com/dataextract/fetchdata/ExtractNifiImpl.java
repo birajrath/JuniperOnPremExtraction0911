@@ -3,9 +3,11 @@ package com.dataextract.fetchdata;
 
 
 import java.io.ByteArrayInputStream;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Random;
@@ -32,6 +34,7 @@ import com.dataextract.constants.NifiConstants;
 import com.dataextract.dao.IExtractionDAO;
 import com.dataextract.dto.FileMetadataDto;
 import com.dataextract.dto.RealTimeExtractDto;
+import com.dataextract.dto.TableMetadataDto;
 import com.dataextract.dto.TargetDto;
 import com.dataextract.repositories.DataExtractRepositories;
 import com.jcraft.jsch.Channel;
@@ -48,6 +51,7 @@ public class ExtractNifiImpl implements IExtract {
 	@Autowired
 	private DataExtractRepositories dataExtractRepositories;
 
+	@SuppressWarnings("static-access")
 	@Override
 	public  String callNifiDataRealTime(RealTimeExtractDto rtExtractDto,String conn_string,String date,Long runId) throws UnsupportedOperationException, Exception {
 		
@@ -61,77 +65,59 @@ public class ExtractNifiImpl implements IExtract {
 		String processorInfo="";
 		HttpEntity respEntity=null;
 		int processGroupIndex=0;
+		String trigger_flag="N";
+		String processGroupStatus="";
+		String path="";
 	
 		
-		if(rtExtractDto.getConnDto().getConn_type().equalsIgnoreCase("MSSQL")) {
-			
-			for(int i =0;i<100;i++) {
-				NifiConstants constants=new NifiConstants(); 
-				index=getRandomNumberInRange(1, NifiConstants.NOOFMSSQLPROCESSORS);
-				String processor="MSSQLPROCESSGROUPURL"+index;
-				processGroupUrl = String.valueOf(NifiConstants.class.getDeclaredField(processor).get(constants));
-				String listener="MSSQLLISTENER"+index;
-				listenHttpUrl= String.valueOf(NifiConstants.class.getDeclaredField(listener).get(constants));
-				System.out.println("process group url is "+processGroupUrl);
-				respEntity=getProcessGroupDetails(NifiConstants.NIFIURL, processGroupUrl);
-				if (respEntity != null) {
-					String content = EntityUtils.toString(respEntity);
-					System.out.println(content);
-					JSONObject controllerObj=getControllerObject(content);
-					String controllerInfo=getControllerInfo(controllerObj);
-					controllerId=controllerInfo.split(",")[0];
-					clientId=controllerInfo.split(",")[1];
-					controllerVersion=controllerInfo.split(",")[2];
-					controllerStatus=controllerInfo.split(",")[3];
-					System.out.println("controller id,clientId, version and status are : "+controllerId+" "+clientId+" "+controllerVersion+" "+controllerStatus);
-					if(controllerStatus.equalsIgnoreCase("ENABLED")) {
-						 processorInfo=processorFree(controllerObj);
-						if(!processorInfo.equalsIgnoreCase("NOT FREE")) {
-							System.out.println("using processgroup"+index);
-							System.out.println("processors being used are: "+processorInfo);
-							
-							break;
-						}
-					}
-				}
-			}
-		}
+		if(rtExtractDto.getConnDto().getConn_type().equalsIgnoreCase("ORACLE")) 
+		{
 		
-		 if(rtExtractDto.getConnDto().getConn_type().equalsIgnoreCase("ORACLE")) {
-			
-			for(int i =0;i<100;i++) {
-				NifiConstants constants=new NifiConstants();
+			if(rtExtractDto.getTableInfoDto().getIncr_flag().equalsIgnoreCase("Y")) {
+				processGroupIndex=dataExtractRepositories.getProcessGroup(rtExtractDto.getFeedDto().getFeed_name(),rtExtractDto.getFeedDto().getCountry_code());
 				
+			}
+		
+			do {
 				
-				index=getRandomNumberInRange(1, NifiConstants.NOOFORACLEPROCESSORS);
-				String varName="ORACLEPROCESSGROUPURL"+index;
-				processGroupUrl = String.valueOf(NifiConstants.class.getDeclaredField(varName).get(constants));
-				
-				listenHttpUrl= NifiConstants.ORACLELISTENER1;
-				System.out.println("listener is :" +listenHttpUrl);
-				System.out.println("process group url is "+processGroupUrl);
-				respEntity=getProcessGroupDetails(NifiConstants.NIFIURL, processGroupUrl);
-				if (respEntity != null) {
-					String content = EntityUtils.toString(respEntity);
-					System.out.println(content);
-					JSONObject controllerObj=getControllerObject(content);
-					String controllerInfo=getControllerInfo(controllerObj);
-					controllerId=controllerInfo.split(",")[0];
-					clientId=controllerInfo.split(",")[1];
-					controllerVersion=controllerInfo.split(",")[2];
-					controllerStatus=controllerInfo.split(",")[3];
-					System.out.println("controller id,clientId, version and status are : "+controllerId+" "+clientId+" "+controllerVersion+" "+controllerStatus);
-					if(controllerStatus.equalsIgnoreCase("ENABLED")) {
-						processorInfo=processorFree(controllerObj);
-						if(!processorInfo.equalsIgnoreCase("NOT FREE")) {
-							System.out.println("using processgroup"+index);
-							System.out.println("processors being used are: "+processorInfo);
-							processGroupIndex=index;
-							break;
+				Thread.currentThread().sleep(10000);
+				if(processGroupIndex==0) {
+					index=1;
+					//index=getRandomNumberInRange(1, NifiConstants.NOOFORACLEPROCESSORS);
+				}
+				else {
+					index=processGroupIndex;
+				}
+				processGroupStatus=dataExtractRepositories.checkProcessGroupStatus(index,rtExtractDto.getConnDto().getConn_type());
+				if(processGroupStatus.equalsIgnoreCase("FREE")) {
+					
+					NifiConstants constants=new NifiConstants();
+					String varName="ORACLEPROCESSGROUPURL"+index;
+					processGroupUrl = String.valueOf(NifiConstants.class.getDeclaredField(varName).get(constants));
+					listenHttpUrl= NifiConstants.ORACLELISTENER1;
+					respEntity=getProcessGroupDetails(NifiConstants.NIFIURL, processGroupUrl);
+					if (respEntity != null) {
+						String content = EntityUtils.toString(respEntity);
+						JSONObject controllerObj=getControllerObject(content);
+						String controllerInfo=getControllerInfo(controllerObj);
+						controllerId=controllerInfo.split(",")[0];
+						clientId=controllerInfo.split(",")[1];
+						controllerVersion=controllerInfo.split(",")[2];
+						controllerStatus=controllerInfo.split(",")[3];
+						System.out.println("controller id,clientId, version and status are : "+controllerId+" "+clientId+" "+controllerVersion+" "+controllerStatus);
+						if(controllerStatus.equalsIgnoreCase("ENABLED")) {
+							processorInfo=processorFree(controllerObj);
+							if(!processorInfo.equalsIgnoreCase("NOT FREE")) {
+								System.out.println("using processgroup"+index);
+								System.out.println("processors being used are: "+processorInfo);
+								trigger_flag="Y";
+								
+							}
 						}
 					}
 				}
-			}
+			}while(trigger_flag.equalsIgnoreCase("N"));	
+			
 		}
 		
 		 if(rtExtractDto.getConnDto().getConn_type().equalsIgnoreCase("TERADATA")) {
@@ -167,32 +153,26 @@ public class ExtractNifiImpl implements IExtract {
 				}
 			}
 		 
-		
-		stopReferencingComponents(processorInfo, clientId);
-		disableController(controllerId);
-		updateController(conn_string , rtExtractDto.getConnDto().getUserName(),  rtExtractDto.getConnDto().getPassword(), controllerId);
-		enableController(controllerId);
-		startReferencingComponents(controllerId,processGroupUrl);
-		JSONArray arr=createJsonObject(index,rtExtractDto,conn_string,date, runId);
-		invokeNifiFull(arr,listenHttpUrl);
-		String updateStatus=dataExtractRepositories.updateNifiProcessgroupDetails(rtExtractDto, date, runId.toString(), processGroupIndex);
-		if(!(updateStatus.equalsIgnoreCase("success"))) {
-			System.out.println("update status is "+updateStatus);
-			return updateStatus;
-		}
-		else {
+		if(rtExtractDto.getConnDto().getConn_type().equals("ORACLE")||rtExtractDto.getConnDto().getConn_type().equals("TERADARA")) {
 			
-			try {
-				createSystemDetailsFile(rtExtractDto,runId,date);
-				createFileDetailsFile(rtExtractDto,runId,date);
-				}catch (IOException e) {
-					// TODO Auto-generated catch block
-					 return e.getMessage();
-					 
-				}
+			stopReferencingComponents(processorInfo, clientId);
+			disableController(controllerId);
+			updateController(conn_string , rtExtractDto.getConnDto().getUserName(),  rtExtractDto.getConnDto().getPassword(), controllerId);
+			enableController(controllerId);
+			startReferencingComponents(controllerId,processGroupUrl);
+			path=rtExtractDto.getFeedDto().getCountry_code()+"/"+ rtExtractDto.getFeedDto().getFeed_name()+"/"+date+"/"+runId+"/";
+			JSONArray arr=createJsonObject(index,rtExtractDto,conn_string,path,date, runId);
+			invokeNifiFull(arr,listenHttpUrl);
+		}
+		
+		String updateStatus=dataExtractRepositories.updateNifiProcessgroupDetails(rtExtractDto,path, date, runId.toString(), index);
+		if(updateStatus.equalsIgnoreCase("success")) {
 			return "success";
 		}
-			
+		else {
+			return "failed";
+		}
+		
 	
 	}
 	
@@ -237,12 +217,26 @@ public class ExtractNifiImpl implements IExtract {
 	}
 	
 	
+	@SuppressWarnings("rawtypes")
 	private  JSONObject getControllerObject(String content) throws ClientProtocolException, IOException, org.json.simple.parser.ParseException {
 		
 		JSONObject jsonObject = (JSONObject) new JSONParser().parse(content);
 		JSONArray jsonArray = (JSONArray) jsonObject.get("controllerServices");
-		JSONObject controllerJsonObject = (JSONObject) jsonArray.get(0);
-		return controllerJsonObject;
+		Iterator i = jsonArray.iterator();
+		while(i.hasNext()) {
+			JSONObject controllerObject=(JSONObject) i.next();
+			JSONObject controllerComponent = (JSONObject) controllerObject.get("component");
+			String name= (String) controllerComponent.get("name");
+			if(!(name.contains("metadata"))) {
+				System.out.println(name);
+				return controllerObject;
+			}
+			
+		}
+		
+		
+		return null;
+
 
 	}
 	
@@ -279,6 +273,7 @@ public class ExtractNifiImpl implements IExtract {
 			refComponents.append(refCompId+"~"+refCompVersion+",");
 			JSONObject refCompComponent=(JSONObject)refComp.get("component");
 			if(!String.valueOf(refCompComponent.get("activeThreadCount")).equals("0")) {
+				System.out.println("active thread found");
 				activeThreadCount++;
 			}else {
 				System.out.println("No Active thread for processor "+refCompId);
@@ -545,104 +540,80 @@ public class ExtractNifiImpl implements IExtract {
 
 
 	@SuppressWarnings("unchecked")
-	private  JSONArray createJsonObject(int index,RealTimeExtractDto rtExtractDto,String conn_string,String date,Long runId) {
+	private  JSONArray createJsonObject(int index,RealTimeExtractDto rtExtractDto,String conn_string,String path,String date,Long runId) {
 
 		JSONArray arr = new JSONArray();
 		HashMap<String, JSONObject> map = new HashMap<String, JSONObject>();
-		StringBuffer tableList=new StringBuffer();
-		StringBuffer tableListWithQuotes=new StringBuffer();
-		for(Map<String,String> table: rtExtractDto.getTableInfoDto().getTableInfo()) {
+		
+		for(TableMetadataDto tableMetadata: rtExtractDto.getTableInfoDto().getTableMetadataArr()) {
+			StringBuffer gcsTarget=new StringBuffer();
+			StringBuffer hdfsTarget=new StringBuffer();
 			JSONObject json=new JSONObject();
-			String[] temp=table.get("table_name").split("\\.");
-			if(temp.length>1) {
-				
-				tableList.append(temp[1]+",");
+			StringBuffer columnsWithQuotes=new StringBuffer();
+			String[] columns=tableMetadata.getColumns().split(",");
+			for(String column :columns) {
+				column =new StringBuilder()
+		        .append('\'')
+		        .append(column)
+		        .append('\'')
+		        .append(',')
+		        .toString();
+				columnsWithQuotes.append(column);
 			}
-			else {
-				
-				tableList.append(table.get("table_name")+",");
-			}
-			json.put("table_name", table.get("table_name"));
-			json.put("columns", table.get("columns"));
-			json.put("where_clause", table.get("where_clause"));
-			if(!(table.get("fetch_type").equalsIgnoreCase("FULL"))) {
-				json.put("incremental_column", table.get("incr_col"));
+			columnsWithQuotes.setLength((columnsWithQuotes.length()-1));
+			
+			json.put("table_name", tableMetadata.getTable_name());
+			if(!(tableMetadata.getColumns().equalsIgnoreCase("all"))) {
+				json.put("columns", tableMetadata.getColumns());
+				json.put("columns_where_clause","where upper(table_name)='"+tableMetadata.getTable_name().split("\\.")[1].toUpperCase()
+						+"' and upper(owner)='"+tableMetadata.getTable_name().split("\\.")[0].toUpperCase()
+						+ "' and upper(column_name) in("+columnsWithQuotes.toString().toUpperCase()+")");
+			}else {
+				json.put("columns_where_clause","where upper(table_name)='"+tableMetadata.getTable_name().split("\\.")[1].toUpperCase()
+						+"' and upper(owner)='"+tableMetadata.getTable_name().split("\\.")[0].toUpperCase()+"'");
 			}
 			
+			json.put("where_clause", tableMetadata.getWhere_clause());
+			if(tableMetadata.getFetch_type().equalsIgnoreCase("INCR")) {
+				json.put("incremental_column", tableMetadata.getIncr_col());
+			}
+			json.put("project_sequence", rtExtractDto.getFeedDto().getProject_sequence());
 			json.put("process_group", index);
-			json.put("country_code", rtExtractDto.getSrsSysDto().getCountry_code());
-			json.put("src_sys_id",Integer.toString(rtExtractDto.getSrsSysDto().getSrc_sys_id()));
-			json.put("src_unique_name", rtExtractDto.getSrsSysDto().getSrc_unique_name());
+			json.put("country_code", rtExtractDto.getFeedDto().getCountry_code());
+			json.put("feed_id",Integer.toString(rtExtractDto.getFeedDto().getFeed_id()));
+			json.put("feed_name", rtExtractDto.getFeedDto().getFeed_name());
 			json.put("date", date);
 			json.put("run_id", runId);
-			json.put("path", rtExtractDto.getSrsSysDto().getCountry_code()+"/"+ rtExtractDto.getSrsSysDto().getSrc_unique_name()+"/"+date+"/"+runId+"/");
-			json.put("metadata_tables", "00000");
-			int i=1;
+			json.put("path", path);
 			for(TargetDto targetDto :rtExtractDto.getTargetArr()) {
 				if(targetDto.getTarget_type().equalsIgnoreCase("gcs")) {
-					json.put("target_type"+Integer.toString(i), "gcs");
-					json.put("bucket"+Integer.toString(i), targetDto.getTarget_bucket());
+					gcsTarget.append(targetDto.getTarget_project()+"~");
+					gcsTarget.append(targetDto.getService_account()+"~");
+					gcsTarget.append(targetDto.getTarget_bucket()+",");
 				}
 				if(targetDto.getTarget_type().equalsIgnoreCase("hdfs")) {
-					json.put("target_type"+Integer.toString(i), "hdfs");
-					json.put("knox_url"+Integer.toString(i), targetDto.getTarget_knox_url());
-					json.put("knox_user"+Integer.toString(i), targetDto.getTarget_user());
-					json.put("knox_password"+Integer.toString(i), targetDto.getTarget_password());
-					json.put("hdfs_path"+Integer.toString(i), targetDto.getTarget_hdfs_path());
+					hdfsTarget.append(targetDto.getTarget_knox_url()+"~");
+					hdfsTarget.append(targetDto.getTarget_user()+"~");
+					hdfsTarget.append(targetDto.getTarget_password()+"~");
+					hdfsTarget.append(targetDto.getTarget_hdfs_path()+",");
 				}
 				
-				i++;
+				
 			}
-			
-			
-			
-			
-			
-			map.put(table.get("table_name")+"_obj", json);
-			arr.add(map.get(table.get("table_name")+"_obj"));
-			
-		}
-		tableList.setLength(tableList.length()-1);
-		String[] tempList=tableList.toString().split(",");
-		for(String table :tempList) {
-			System.out.println("table------"+table);
-			//System.out.println(table.split("\\.")[1]);
-			table =new StringBuilder()
-	        .append('\'')
-	        .append(table)
-	        .append('\'')
-	        .append(',')
-	        .toString();
-			tableListWithQuotes.append(table);
-		}
-		tableListWithQuotes.setLength((tableListWithQuotes.length()-1));
-		JSONObject json=new JSONObject();
-		json.put("metadata_tables",tableListWithQuotes.toString());
-		json.put("path", rtExtractDto.getSrsSysDto().getCountry_code()+"/"+ rtExtractDto.getSrsSysDto().getSrc_unique_name()+"/"+date+"/"+runId+"/");
-		int i=1;
-		for(TargetDto targetDto :rtExtractDto.getTargetArr()) {
-			if(targetDto.getTarget_type().equalsIgnoreCase("gcs")) {
-				json.put("target_type"+Integer.toString(i), "gcs");
-				json.put("bucket"+Integer.toString(i), targetDto.getTarget_bucket());
+			if(gcsTarget.length()>1) {
+				gcsTarget.setLength(gcsTarget.length()-1);
+				json.put("gcsTarget", gcsTarget.toString());
 			}
-			if(targetDto.getTarget_type().equalsIgnoreCase("hdfs")) {
-				json.put("target_type"+Integer.toString(i), "hdfs");
-				json.put("knox_url"+Integer.toString(i), targetDto.getTarget_knox_url());
-				json.put("knox_user"+Integer.toString(i), targetDto.getTarget_user());
-				json.put("knox_password"+Integer.toString(i), targetDto.getTarget_password());
-				json.put("hdfs_path"+Integer.toString(i), targetDto.getTarget_hdfs_path());
+			if(hdfsTarget.length()>1) {
+				hdfsTarget.setLength(hdfsTarget.length()-1);
+				json.put("hdfsTarget", hdfsTarget.toString());
 			}
-			
-			i++;
-		}
-		json.put("process_group", index);
-		json.put("src_unique_name", rtExtractDto.getSrsSysDto().getSrc_unique_name());
-		map.put("metadata_details", json);
-		arr.add(map.get("metadata_details"));
-		System.out.println("Json Array size------"+arr.size());
-		System.out.println("json array"+arr.toString());
-	
 
+			map.put(tableMetadata.getTable_name()+"_obj", json);
+			arr.add(map.get(tableMetadata.getTable_name()+"_obj"));
+			
+		}
+		
 		return arr;
 
 	}
@@ -658,9 +629,9 @@ public class ExtractNifiImpl implements IExtract {
 			json.put("field_list", file.getField_list());
 			json.put("file_type", file.getFile_type());
 			json.put("file_delimiter", file.getFile_delimiter());
-			json.put("src_unique_name", rtExtractDto.getSrsSysDto().getSrc_unique_name());
-			json.put("country_code", rtExtractDto.getSrsSysDto().getCountry_code());
-			json.put("file_path", rtExtractDto.getSrsSysDto().getFilePath());
+			json.put("src_unique_name", rtExtractDto.getFeedDto().getFeed_name());
+			json.put("country_code", rtExtractDto.getFeedDto().getCountry_code());
+			json.put("file_path", rtExtractDto.getFeedDto().getFilePath());
 			json.put("run_id", runId);
 			json.put("date", date);
 			int i=1;
@@ -726,29 +697,34 @@ public class ExtractNifiImpl implements IExtract {
 	}
 
 	
+	@SuppressWarnings("rawtypes")
 	private  void invokeNifiFull(JSONArray arr,String  listenHttpUrl) throws UnsupportedOperationException, Exception {
 		
 	
 			
 			CloseableHttpClient httpClient = HttpClientBuilder.create().build();
+			Iterator it = arr.iterator();
+			while (it.hasNext()) {
+				JSONObject json=(JSONObject) it.next();
+				HttpPost postRequest=new HttpPost(listenHttpUrl);
+				StringEntity input = new StringEntity(json.toString());
+				postRequest.setEntity(input); 
+				HttpResponse response = httpClient.execute(postRequest);
+				if(response.getStatusLine().getStatusCode()!=200) {
+						System.out.println("Nifi listener problem"+response.getStatusLine().getStatusCode());
+						throw new Exception("Nifi Not Running Or Some Problem In Sending HTTP Request"+response.getEntity().getContent().toString());
+				}
+				else {
+					System.out.println("Nifi Triggered");
+				}
+			}
 			
-			HttpPost postRequest=new HttpPost(listenHttpUrl);
-			StringEntity input = new StringEntity(arr.toString());
-			postRequest.setEntity(input); 
-			HttpResponse response = httpClient.execute(postRequest);
-			if(response.getStatusLine().getStatusCode()!=200) {
-					System.out.println("Nifi listener problem"+response.getStatusLine().getStatusCode());
-					throw new Exception("Nifi Not Running Or Some Problem In Sending HTTP Request"+response.getEntity().getContent().toString());
-			}
-			else {
-				System.out.println("Nifi Triggered");
-			}
 		}
 	
 	
 	
 	
-public  void createSystemDetailsFile(RealTimeExtractDto rtExtractDto,Long runId,String date) throws IOException, JSchException {
+/*public  void createSystemDetailsFile(RealTimeExtractDto rtExtractDto,Long runId,String date) throws IOException, JSchException {
 
 	StringBuffer bucketNames = new StringBuffer();
 	StringBuffer hdfsPath=new StringBuffer();
@@ -850,12 +826,12 @@ public  void createFileDetailsFile(RealTimeExtractDto rtExtractDto,Long runId,St
 	
 	StringBuffer filebuffer = new StringBuffer();
 	filebuffer.append("\n");
-	for(Map<String,String> tbl:rtExtractDto.getTableInfoDto().getTableInfo()) {
-		if(tbl.get("fetch_type").equalsIgnoreCase("full")) {
-			filebuffer.append(rtExtractDto.getSrsSysDto().getSrc_unique_name()+","+tbl.get("table_name")+","+tbl.get("table_name")+","+rtExtractDto.getSrsSysDto().getSrc_sys_id()+"_samplefile"+","+"A"+","+""+","+tbl.get("table_name")+","+","+"0"+","+"0"+","+"0"+","+"0"+","+"SQL"+","+"F"+"\n");
+	for(TableMetadataDto tbl:rtExtractDto.getTableInfoDto().getTableMetadataArr()) {
+		if(tbl.getFetch_type().equalsIgnoreCase("full")) {
+			filebuffer.append(rtExtractDto.getSrsSysDto().getSrc_unique_name()+","+tbl.getTable_name()+","+tbl.getTable_name()+","+rtExtractDto.getSrsSysDto().getSrc_sys_id()+"_samplefile"+","+"A"+","+""+","+tbl.getTable_name()+","+","+"0"+","+"0"+","+"0"+","+"0"+","+"SQL"+","+"F"+"\n");
 		}
 		else {
-			filebuffer.append(rtExtractDto.getSrsSysDto().getSrc_unique_name()+","+tbl.get("table_name")+","+tbl.get("table_name")+","+rtExtractDto.getSrsSysDto().getSrc_sys_id()+"_samplefile"+","+"A"+","+""+","+tbl.get("table_name")+","+","+"0"+","+"0"+","+"0"+","+"0"+","+"SQL"+","+"I"+"\n");
+			filebuffer.append(rtExtractDto.getSrsSysDto().getSrc_unique_name()+","+tbl.getTable_name()+","+tbl.getTable_name()+","+rtExtractDto.getSrsSysDto().getSrc_sys_id()+"_samplefile"+","+"A"+","+""+","+tbl.getTable_name()+","+","+"0"+","+"0"+","+"0"+","+"0"+","+"SQL"+","+"I"+"\n");
 		}
 		
 		}
@@ -907,7 +883,7 @@ public  void createFileDetailsFile(RealTimeExtractDto rtExtractDto,Long runId,St
 
 
 
-}
+}*/
 
 	
 }

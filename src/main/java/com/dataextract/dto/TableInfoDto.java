@@ -5,29 +5,45 @@ import java.util.Map;
 
 public class TableInfoDto {
 	
-	String application_user;
-	int src_sys_id;
-	ArrayList<Map<String,String>> tableInfo;
+	String juniper_user;
+	int feed_id;
+	ArrayList<TableMetadataDto> tableMetadataArr;
+	String project;
+	String incr_flag="";
 	
 	
-	public String getApplication_user() {
-		return application_user;
+	
+	public String getIncr_flag() {
+		return incr_flag;
 	}
-	public void setApplication_user(String application_user) {
-		this.application_user = application_user;
+	public void setIncr_flag(String incr_flag) {
+		this.incr_flag = incr_flag;
 	}
-	public int getSrc_sys_id() {
-		return src_sys_id;
+	public String getProject() {
+		return project;
 	}
-	public void setSrc_sys_id(int src_sys_id) {
-		this.src_sys_id = src_sys_id;
+	public void setProject(String project) {
+		this.project = project;
 	}
-	public ArrayList<Map<String, String>> getTableInfo() {
-		return tableInfo;
+	public String getJuniper_user() {
+		return juniper_user;
 	}
-	public void setTableInfo(ArrayList<Map<String, String>> tableInfo) {
-		this.tableInfo = tableInfo;
+	public void setJuniper_user(String juniper_user) {
+		this.juniper_user = juniper_user;
 	}
+	public int getFeed_id() {
+		return feed_id;
+	}
+	public void setFeed_id(int feed_id) {
+		this.feed_id = feed_id;
+	}
+	public ArrayList<TableMetadataDto> getTableMetadataArr() {
+		return tableMetadataArr;
+	}
+	public void setTableMetadataArr(ArrayList<TableMetadataDto> tableMetadataArr) {
+		this.tableMetadataArr = tableMetadataArr;
+	}
+	
 	
 
 }

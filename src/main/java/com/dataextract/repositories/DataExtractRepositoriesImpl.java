@@ -19,7 +19,7 @@ import com.dataextract.dao.IExtractionDAO;
 import com.dataextract.dto.FileInfoDto;
 import com.dataextract.dto.HDFSMetadataDto;
 import com.dataextract.dto.RealTimeExtractDto;
-import com.dataextract.dto.SrcSysDto;
+import com.dataextract.dto.FeedDto;
 import com.dataextract.dto.TableInfoDto;
 import com.dataextract.dto.TargetDto;
 import com.dataextract.util.ConnectionUtils;
@@ -41,7 +41,7 @@ public class DataExtractRepositoriesImpl implements DataExtractRepositories {
 
 
 	@Override
-	public int addConnectionDetails(ConnectionDto dto) throws SQLException {
+	public String addConnectionDetails(ConnectionDto dto) throws Exception {
 		Connection conn=null;
 		conn=ConnectionUtils.connectToOracle(OracleConstants.ORACLE_IP_PORT_SID, OracleConstants.ORACLE_USER_NAME, OracleConstants.ORACLE_PASSWORD);
 		//conn= ConnectionUtils.connectToMySql(MySQLConstants.MYSQLIP, MySQLConstants.MYSQLPORT, MySQLConstants.DB,MySQLConstants.USER , MySQLConstants.PASSWORD);
@@ -65,48 +65,48 @@ public class DataExtractRepositoriesImpl implements DataExtractRepositories {
 	}
 
 	@Override
-	public String addTargetDetails(ArrayList<TargetDto> targetArr) throws SQLException {
+	public String addTargetDetails(TargetDto target) throws SQLException {
 
 		Connection conn=null;
 		conn=ConnectionUtils.connectToOracle(OracleConstants.ORACLE_IP_PORT_SID, OracleConstants.ORACLE_USER_NAME, OracleConstants.ORACLE_PASSWORD);
 		//conn= ConnectionUtils.connectToMySql(MySQLConstants.MYSQLIP, MySQLConstants.MYSQLPORT, MySQLConstants.DB,MySQLConstants.USER , MySQLConstants.PASSWORD);
 		System.out.println("connection established");
-		return extractionDao.insertTargetMetadata(conn,targetArr);
+		return extractionDao.insertTargetMetadata(conn,target);
 	}
 
 	@Override
-	public String updateTargetDetails(ArrayList<TargetDto> targetArr) throws SQLException{
+	public String updateTargetDetails(TargetDto target) throws SQLException{
 
 		Connection conn=null;
 		conn=ConnectionUtils.connectToOracle(OracleConstants.ORACLE_IP_PORT_SID, OracleConstants.ORACLE_USER_NAME, OracleConstants.ORACLE_PASSWORD);
 		//conn= ConnectionUtils.connectToMySql(MySQLConstants.MYSQLIP, MySQLConstants.MYSQLPORT, MySQLConstants.DB,MySQLConstants.USER , MySQLConstants.PASSWORD);
-		return extractionDao.updateTargetMetadata(conn,targetArr);
+		return extractionDao.updateTargetMetadata(conn,target);
 	}
 
 
 	@Override
-	public int onboardSystem(SrcSysDto srcSysDto) throws SQLException  {
+	public String onboardSystem(FeedDto feedDto) throws SQLException  {
 		Connection conn=null;
 		conn=ConnectionUtils.connectToOracle(OracleConstants.ORACLE_IP_PORT_SID, OracleConstants.ORACLE_USER_NAME, OracleConstants.ORACLE_PASSWORD);
 		//conn= ConnectionUtils.connectToMySql(MySQLConstants.MYSQLIP, MySQLConstants.MYSQLPORT, MySQLConstants.DB,MySQLConstants.USER , MySQLConstants.PASSWORD);
-		return extractionDao.insertSrcSysMetadata(conn, srcSysDto);
+		return extractionDao.insertFeedMetadata(conn, feedDto);
 
 	}
 
 	@Override
-	public String updateSystem(SrcSysDto srcSysDto)throws SQLException{
+	public String updateFeed(FeedDto feedDto)throws SQLException{
 		Connection conn=null;
 		conn=ConnectionUtils.connectToOracle(OracleConstants.ORACLE_IP_PORT_SID, OracleConstants.ORACLE_USER_NAME, OracleConstants.ORACLE_PASSWORD);
 		//conn= ConnectionUtils.connectToMySql(MySQLConstants.MYSQLIP, MySQLConstants.MYSQLPORT, MySQLConstants.DB,MySQLConstants.USER , MySQLConstants.PASSWORD);
-		return extractionDao.updateSrcSysMetadata(conn, srcSysDto);
+		return extractionDao.updateFeedMetadata(conn, feedDto);
 	}
 
 	@Override
-	public String deleteSystem(SrcSysDto srcSysDto)throws SQLException {
+	public String deleteFeed(FeedDto feedDto)throws SQLException {
 		Connection conn=null;
 		conn=ConnectionUtils.connectToOracle(OracleConstants.ORACLE_IP_PORT_SID, OracleConstants.ORACLE_USER_NAME, OracleConstants.ORACLE_PASSWORD);
 		//conn= ConnectionUtils.connectToMySql(MySQLConstants.MYSQLIP, MySQLConstants.MYSQLPORT, MySQLConstants.DB,MySQLConstants.USER , MySQLConstants.PASSWORD);
-		return extractionDao.deleteSrcSysMetadata(conn, srcSysDto);
+		return extractionDao.deleteFeed(conn, feedDto);
 	}
 
 
@@ -130,19 +130,19 @@ public class DataExtractRepositoriesImpl implements DataExtractRepositories {
 
 	
 	@Override
-	public ConnectionDto getConnectionObject(String src_unique_name) throws SQLException {
+	public ConnectionDto getConnectionObject(String feed_name) throws SQLException {
 		Connection conn=null;
 		conn=ConnectionUtils.connectToOracle(OracleConstants.ORACLE_IP_PORT_SID, OracleConstants.ORACLE_USER_NAME, OracleConstants.ORACLE_PASSWORD);
 		//conn= ConnectionUtils.connectToMySql(MySQLConstants.MYSQLIP, MySQLConstants.MYSQLPORT, MySQLConstants.DB,MySQLConstants.USER , MySQLConstants.PASSWORD);
-		return extractionDao.getConnectionObject(conn,src_unique_name);
+		return extractionDao.getConnectionObject(conn,feed_name);
 	}
 
 	@Override
-	public SrcSysDto getSrcSysObject(String src_unique_name) throws SQLException{
+	public FeedDto getFeedObject(String feed_name) throws SQLException{
 		Connection conn=null;
 		conn=ConnectionUtils.connectToOracle(OracleConstants.ORACLE_IP_PORT_SID, OracleConstants.ORACLE_USER_NAME, OracleConstants.ORACLE_PASSWORD);
 		//conn= ConnectionUtils.connectToMySql(MySQLConstants.MYSQLIP, MySQLConstants.MYSQLPORT, MySQLConstants.DB,MySQLConstants.USER , MySQLConstants.PASSWORD);
-		return extractionDao.getSrcSysObject(conn,src_unique_name);
+		return extractionDao.getFeedObject(conn,feed_name);
 
 	}
 
@@ -171,6 +171,22 @@ public class DataExtractRepositoriesImpl implements DataExtractRepositories {
 		//conn= ConnectionUtils.connectToMySql(MySQLConstants.MYSQLIP, MySQLConstants.MYSQLPORT, MySQLConstants.DB,MySQLConstants.USER , MySQLConstants.PASSWORD);
 		return extractionDao.getFileInfoObject(conn,fileList);
 	}
+	
+	@Override
+	public int getProcessGroup(String feed_name, String country_code)throws SQLException{
+		Connection conn=null;
+		conn=ConnectionUtils.connectToOracle(OracleConstants.ORACLE_IP_PORT_SID, OracleConstants.ORACLE_USER_NAME, OracleConstants.ORACLE_PASSWORD);
+		//conn= ConnectionUtils.connectToMySql(MySQLConstants.MYSQLIP, MySQLConstants.MYSQLPORT, MySQLConstants.DB,MySQLConstants.USER , MySQLConstants.PASSWORD);
+		return extractionDao.getProcessGroup(conn,feed_name,country_code);
+	}
+	
+	@Override
+	public String checkProcessGroupStatus(int index, String conn_type) throws SQLException{
+		Connection conn=null;
+		conn=ConnectionUtils.connectToOracle(OracleConstants.ORACLE_IP_PORT_SID, OracleConstants.ORACLE_USER_NAME, OracleConstants.ORACLE_PASSWORD);
+		//conn= ConnectionUtils.connectToMySql(MySQLConstants.MYSQLIP, MySQLConstants.MYSQLPORT, MySQLConstants.DB,MySQLConstants.USER , MySQLConstants.PASSWORD);
+		return extractionDao.checkProcessGroupStatus(conn,index,conn_type);
+	}
 
 	@Override
 	public String realTimeExtract(RealTimeExtractDto rtExtractDto) throws IOException, SQLException {
@@ -194,39 +210,11 @@ public class DataExtractRepositoriesImpl implements DataExtractRepositories {
 		String connectionUrl;
 		//Connection connection=null;
 
-		System.out.println("connection type is "+dto.getConn_type());
-
-		if(dto.getConn_type().equalsIgnoreCase("MSSQL")){
-			connectionUrl="jdbc:sqlserver://"+dto.getHostName()+":"+dto.getPort()+";DatabaseName="+dto.getDbName();
-
-			try {
-				Class.forName("com.microsoft.sqlserver.jdbc.SQLServerDriver");
-				System.out.println("connecting to source Database");
-				System.out.println(connectionUrl + "   " + dto.getUserName() + "  " +  dto.getPassword());
-				Connection connection = DriverManager.getConnection(connectionUrl, dto.getUserName(), dto.getPassword());
-				System.out.println("connected to source Database"); 
-				connection.close();
-				return "success";
-
-			} catch (Exception e) {
-				e.printStackTrace();
-				return "failed due to exception " + e.getMessage();
-			}
-		}
-
-
-
 		if(dto.getConn_type().equalsIgnoreCase("ORACLE"))
 		{
-
-
 			connectionUrl="jdbc:oracle:thin:@"+dto.getHostName()+":"+dto.getPort()+"/"+dto.getServiceName()+"";
-			System.out.println(connectionUrl);
-
 			try {
 				Class.forName(OracleConstants.ORACLE_DRIVER);
-				System.out.println("connecting to source Database");
-				System.out.println(connectionUrl + "   " + dto.getUserName() + "  " +  dto.getPassword());
 				//Connection connection = DriverManager.getConnection(connectionUrl, dto.getUserName(), dto.getPassword());
 				System.out.println("connected to source Database"); 
 				//connection.close();
@@ -242,11 +230,10 @@ public class DataExtractRepositoriesImpl implements DataExtractRepositories {
 		if(dto.getConn_type().equalsIgnoreCase("TERADATA"))
 		{
 
-
-
 			return "success";
 
 		} 
+
 		if(dto.getConn_type().equalsIgnoreCase("UNIX")) {
 
 			return "success";
@@ -279,11 +266,11 @@ public class DataExtractRepositoriesImpl implements DataExtractRepositories {
 	}
 	
 	@Override
-	public String updateNifiProcessgroupDetails(RealTimeExtractDto rtDto,String date,String run_id, int index) throws SQLException{
+	public String updateNifiProcessgroupDetails(RealTimeExtractDto rtDto,String path,String date,String run_id, int index) throws SQLException{
 		Connection conn=null;
 		conn=ConnectionUtils.connectToOracle(OracleConstants.ORACLE_IP_PORT_SID, OracleConstants.ORACLE_USER_NAME, OracleConstants.ORACLE_PASSWORD);
 		//conn= ConnectionUtils.connectToMySql(MySQLConstants.MYSQLIP, MySQLConstants.MYSQLPORT, MySQLConstants.DB,MySQLConstants.USER , MySQLConstants.PASSWORD);
-		return extractionDao.updateNifiProcessgroupDetails(conn, rtDto ,date, run_id,index);
+		return extractionDao.updateNifiProcessgroupDetails(conn, rtDto,path ,date, run_id,index);
 	}
 }
 
