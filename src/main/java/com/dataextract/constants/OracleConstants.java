@@ -18,6 +18,7 @@ public class OracleConstants {
 	public static final String TABLEDETAILSTABLE="JUNIPER_EXT_TABLE_MASTER";
 	public static final String FEEDTABLE = "JUNIPER_EXT_FEED_MASTER";
 	public static final String SCHEDULETABLE = "JUNIPER_SCH_MASTER_JOB_DETAIL";
+	public static final String KEYTABLE = "JUNIPER_EXT_KEY_MASTER";
 	public static final String INSERTQUERY = "insert into {$table}({$columns}) values({$data})";
 
 	public static final String QUOTE = "'";
@@ -30,6 +31,8 @@ public class OracleConstants {
 	public static final String HDFSDETAILSTABLE = "JUNIPER_HDFS_MASTER";
 	public static final String NIFISTATUSTABLE = "JUNIPER_EXT_NIFI_STATUS";
 	public static final String GCPTABLE = "JUNIPER_EXT_GCP_MASTER";
+	
+	
 	
 	
 	

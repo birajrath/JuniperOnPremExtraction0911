@@ -38,6 +38,7 @@ public interface IExtractionDAO {
 	public String updateNifiProcessgroupDetails(Connection conn, RealTimeExtractDto rtDto,String path,String date, String run_id, int index) throws SQLException;
 	public int getProcessGroup(Connection conn, String feed_name, String country_code) throws SQLException;
 	public String checkProcessGroupStatus(Connection conn, int index, String conn_type) throws SQLException;
+	public String decyptPassword(byte[] encrypted_key, byte[] encrypted_password) throws Exception;
 	
 	
 	

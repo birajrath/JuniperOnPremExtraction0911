@@ -17,15 +17,6 @@ public class FeedDto {
 	String project;
 	int project_sequence;
 	
-	
-	
-	
-	
-	
-	
-	
-	
-	
 	public int getProject_sequence() {
 		return project_sequence;
 	}

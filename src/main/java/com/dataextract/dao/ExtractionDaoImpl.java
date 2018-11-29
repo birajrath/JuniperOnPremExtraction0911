@@ -1,10 +1,12 @@
 package com.dataextract.dao;
 
+
+
 import java.io.ByteArrayInputStream;
-
-
+import java.io.IOException;
 import java.io.InputStream;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -15,8 +17,19 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Properties;
+import javax.crypto.SecretKey;
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.util.EntityUtils;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import com.dataextract.constants.EncryptionConstants;
 import com.dataextract.constants.NifiConstants;
 import com.dataextract.constants.OracleConstants;
 import com.dataextract.dto.BatchExtractDto;
@@ -31,6 +44,7 @@ import com.dataextract.dto.TableInfoDto;
 import com.dataextract.dto.TableMetadataDto;
 import com.dataextract.dto.TargetDto;
 import com.dataextract.fetchdata.IExtract;
+import com.dataextract.util.EncryptUtils;
 import com.jcraft.jsch.Channel;
 import com.jcraft.jsch.ChannelSftp;
 import com.jcraft.jsch.JSch;
@@ -46,13 +60,16 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 	@Autowired
 	private IExtract extract;
 
+	@Autowired
+	private EncryptUtils encryptUtil;
 
-
+	
 	@Override
 	public  String  insertConnectionMetadata(Connection conn, ConnectionDto dto) throws SQLException  {
 
 		int system_sequence=0;
 		int project_sequence=0;
+		
 		try {
 			 system_sequence=getSystemSequence(conn,dto.getSystem());
 			 project_sequence=getProjectSequence(conn,dto.getProject());
@@ -64,25 +81,55 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 		String insertConnDetails="";
 		String sequence="";
 		String connectionId="";
+		byte[] encrypted_key=null;
+		byte[] encrypted_password=null;
+		PreparedStatement pstm=null;
 		if(system_sequence!=0 && project_sequence!=0) {
 			
-		if(dto.getConn_type().equalsIgnoreCase("ORACLE")||dto.getConn_type().equalsIgnoreCase("HADOOP")) 
+			    encrypted_key=getEncryptedKey(conn,system_sequence,project_sequence);
+			    if(encrypted_key==null) {
+			    	
+			    	return "Encryption key not found";
+			    }
+		 else {
+			    encrypted_password=encryptPassword(encrypted_key,dto.getPassword());
+			    if(encrypted_password==null) {
+			    	return "Error while encrypting password";
+			    }
+			    	
+			  }
+		
+		if(dto.getConn_type().equalsIgnoreCase("ORACLE")||dto.getConn_type().equalsIgnoreCase("HADOOP")||dto.getConn_type().equalsIgnoreCase("TERADATA")) 
 		{
 			
 			
-			insertConnDetails=OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.CONNECTIONTABLE)
-					.replace("{$columns}", "src_conn_name,src_conn_type,host_name,port_no,username,password,database_name,service_name,system_sequence,project_sequence,created_by")
-					.replace("{$data}",OracleConstants.QUOTE+dto.getConn_name()+OracleConstants.QUOTE+OracleConstants.COMMA
-							+OracleConstants.QUOTE+dto.getConn_type()+OracleConstants.QUOTE+OracleConstants.COMMA
-							+OracleConstants.QUOTE+dto.getHostName()+OracleConstants.QUOTE+OracleConstants.COMMA
-							+OracleConstants.QUOTE+dto.getPort()+OracleConstants.QUOTE+OracleConstants.COMMA
-							+OracleConstants.QUOTE+dto.getUserName()+OracleConstants.QUOTE+OracleConstants.COMMA
-							+OracleConstants.QUOTE+dto.getPassword()+OracleConstants.QUOTE+OracleConstants.COMMA
-							+OracleConstants.QUOTE+dto.getDbName()+OracleConstants.QUOTE+OracleConstants.COMMA
-							+OracleConstants.QUOTE+dto.getServiceName()+OracleConstants.QUOTE+OracleConstants.COMMA
-							+system_sequence+OracleConstants.COMMA
-							+project_sequence+OracleConstants.COMMA
-							+OracleConstants.QUOTE+dto.getJuniper_user()+OracleConstants.QUOTE);
+			insertConnDetails="insert into "+OracleConstants.CONNECTIONTABLE+
+					"(src_conn_name,src_conn_type,host_name,port_no,username,password,encrypted_encr_key,database_name,service_name,system_sequence,project_sequence,created_by) "
+					+ "values(?,?,?,?,?,?,?,?,?,?,?,?)";
+				
+			
+			 pstm = conn.prepareStatement(insertConnDetails);
+			 pstm.setString(1, dto.getConn_name());
+			 pstm.setString(2, dto.getConn_type());
+			 pstm.setString(3, dto.getHostName());
+			 pstm.setString(4, dto.getPort());
+			 pstm.setString(5, dto.getUserName());
+			 pstm.setBytes(6,encrypted_password);
+			 pstm.setBytes(7,encrypted_key);
+			 pstm.setString(8, dto.getDbName());
+			 pstm.setString(9, dto.getServiceName());
+			 pstm.setInt(10, system_sequence);
+			 pstm.setInt(11, project_sequence);
+			 pstm.setString(12, dto.getJuniper_user());
+			
+			try {
+				pstm.executeUpdate();
+				pstm.close();
+			}catch(SQLException e) {
+				return e.getMessage();
+			}
+			
+			
 		}
 		
 		if(dto.getConn_type().equalsIgnoreCase("UNIX")) {
@@ -95,25 +142,12 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 								+system_sequence+OracleConstants.COMMA
 								+project_sequence+OracleConstants.COMMA
 								+OracleConstants.QUOTE+dto.getJuniper_user()+OracleConstants.QUOTE);
+				
+				Statement statement=conn.createStatement();
+				statement.executeUpdate(insertConnDetails);
 			}
 		
-		if(dto.getConn_type().equalsIgnoreCase("TERADATA")) 
-			{
-			insertConnDetails=OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.CONNECTIONTABLE)
-						.replace("{$columns}", "connection_name,connection_type,host_name,port_no,username,password,database_name,service_name,system_sequence,project_sequence,created_by")
-						.replace("{$data}",OracleConstants.QUOTE+dto.getConn_name()+OracleConstants.QUOTE+OracleConstants.COMMA
-								+OracleConstants.QUOTE+dto.getConn_type()+OracleConstants.QUOTE+OracleConstants.COMMA
-								+OracleConstants.QUOTE+dto.getHostName()+OracleConstants.QUOTE+OracleConstants.COMMA
-								+OracleConstants.QUOTE+dto.getPort()+OracleConstants.QUOTE+OracleConstants.COMMA
-								+OracleConstants.QUOTE+dto.getUserName()+OracleConstants.QUOTE+OracleConstants.COMMA
-								+OracleConstants.QUOTE+dto.getPassword()+OracleConstants.QUOTE+OracleConstants.COMMA
-								+OracleConstants.QUOTE+dto.getDbName()+OracleConstants.QUOTE+OracleConstants.COMMA
-								+OracleConstants.QUOTE+dto.getServiceName()+OracleConstants.QUOTE+OracleConstants.COMMA
-								+system_sequence+OracleConstants.COMMA
-								+project_sequence+OracleConstants.COMMA
-								+OracleConstants.QUOTE+dto.getJuniper_user()+OracleConstants.QUOTE);
-			}
-
+		
 				
 			}
 		else {
@@ -122,8 +156,9 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 		}
 		
 		try {	
+			//
+			
 			Statement statement=conn.createStatement();
-			statement.executeUpdate(insertConnDetails);
 			String query=OracleConstants.GETSEQUENCEID.replace("${tableName}", OracleConstants.CONNECTIONTABLE).replace("${columnName}", OracleConstants.CONNECTIONTABLEKEY);
 			ResultSet rs=statement.executeQuery(query);
 			if(rs.isBeforeFirst()) 
@@ -144,20 +179,98 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 			
 		}catch (SQLException e) {
 			// TODO Auto-generated catch block
-			//e.printStackTrace();
+			e.printStackTrace();
 			//TODO: Log the error message
 			return e.getMessage();
 		}finally {
 			conn.close();
 		}
 
-
-
-
 	}
+
+		@SuppressWarnings("unchecked")
+		private byte[] getEncryptedKey(Connection conn,int system_sequence, int project_sequence) throws SQLException {
+			
+			System.out.println("system sequence ="+system_sequence+" project sequence="+project_sequence);
+			JSONObject json=new JSONObject();
+			json.put("system", Integer.toString(system_sequence));
+			json.put("project", Integer.toString(project_sequence));
+			try {
+				String response=invokeEncryption(json,EncryptionConstants.ENCRYPTIONSERVICEURL);
+				System.out.println("response is "+response);
+				JSONObject jsonResponse = (JSONObject) new JSONParser().parse(response);
+				if(jsonResponse.get("status").toString().equalsIgnoreCase("FAILED")) {
+					return null;
+				}
+				else {
+					
+					String query="select key_value from "+OracleConstants.KEYTABLE+" where system_sequence="+system_sequence+
+							" and project_sequence="+project_sequence;
+					byte[] encrypted_key=null;
+					Statement statement=conn.createStatement();
+					ResultSet rs = statement.executeQuery(query);
+					if(rs.isBeforeFirst()) {
+	
+						rs.next();
+						encrypted_key=rs.getBytes(1);
+						return encrypted_key;
+	
+				}
+					else {
+						return null;
+					}
+			
+			}
+			
+			}catch (UnsupportedOperationException e) {
+			e.printStackTrace();
+			return null;
+			} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return null;
+			}
+		}
+
+		private byte[] encryptPassword(byte[] encrypted_key, String password) {
+				
+				try {
+					String content = encryptUtil.readFile(EncryptionConstants.masterKeyLocation);
+					SecretKey secKey = encryptUtil.decodeKeyFromString(content);
+					String decrypted_key=encryptUtil.decryptText(encrypted_key,secKey);
+					byte[] encrypted_password=encryptUtil.encryptText(password,decrypted_key);
+					return encrypted_password;
+					
+					
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+					return null;
+				} catch (Exception e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+					return null;
+				}
+			}
+		
+		@Override
+		public String decyptPassword(byte[] encrypted_key, byte[] encrypted_password) throws Exception {
+			
+			String content = encryptUtil.readFile(EncryptionConstants.masterKeyLocation);
+			SecretKey secKey = encryptUtil.decodeKeyFromString(content);
+			String decrypted_key=encryptUtil.decryptText(encrypted_key,secKey);
+			SecretKey secKey2 = encryptUtil.decodeKeyFromString(decrypted_key);
+			String password=encryptUtil.decryptText(encrypted_password,secKey2);
+			return password;
+			
+		}
+		
+		
 
 
 	
+
+
 
 	private int getSystemSequence(Connection conn, String system_name) throws SQLException {
 		// TODO Auto-generated method stub
@@ -196,7 +309,6 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 		// TODO Auto-generated method stub
 		String query="select gcp_sequence from "+OracleConstants.GCPTABLE+" where gcp_project='"+project+"' and service_account_name='"+service_account
 				+"' and bucket_name='"+target_bucket+"'";
-		System.out.println("query is:"+query);
 		int gcp_seq=0;
 		Statement statement=conn.createStatement();
 		ResultSet rs = statement.executeQuery(query);
@@ -310,6 +422,9 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 		String sequence="";
 		String targetId="";
 		Statement statement = conn.createStatement();
+		PreparedStatement pstm=null;
+		
+		
 		
 		if(target.getTarget_type().equalsIgnoreCase("gcs")) {
 			
@@ -334,6 +449,7 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 								+project_sequence+OracleConstants.COMMA
 								+OracleConstants.QUOTE+target.getJuniper_user()+OracleConstants.QUOTE
 								);
+				statement.executeUpdate(insertTargetDetails);
 			}
 			else {
 				return "System/Project/GCP details not Correct";
@@ -341,6 +457,8 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 			
 			}
 			if(target.getTarget_type().equalsIgnoreCase("hdfs")) {
+				
+				
 				
 				try {
 					system_sequence=getSystemSequence(conn, target.getSystem());
@@ -352,19 +470,45 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 				
 				if(system_sequence!=0 && project_sequence!=0) {
 					
-
+						byte[] encrypted_key=null;
+						byte[] encrypted_password=null;
+						encrypted_key=getEncryptedKey(conn,system_sequence,project_sequence);
+						if(encrypted_key==null) 
+						{
+							    	
+							    	return "Error ocurred while fetching  key for encryption";
+						}
+						 else 
+						 {
+							    encrypted_password=encryptPassword(encrypted_key,target.getTarget_password());
+							    if(encrypted_password==null) {
+							    	return "Error while encrypting password";
+							    }
+							    	
+							}
 					insertTargetDetails=OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.TAREGTTABLE)
-							.replace("{$columns}", "target_unique_name,target_type,hdp_knox_url,hdp_user,hdp_password,hdp_hdfs_path,system_sequence,project_sequence,created_by")
-							.replace("{$data}", OracleConstants.QUOTE + target.getTarget_unique_name()+OracleConstants.QUOTE+OracleConstants.COMMA
-									+OracleConstants.QUOTE+target.getTarget_type()+OracleConstants.QUOTE+OracleConstants.COMMA
-									+OracleConstants.QUOTE+target.getTarget_knox_url()+OracleConstants.QUOTE+OracleConstants.COMMA
-									+OracleConstants.QUOTE+target.getTarget_user()+OracleConstants.QUOTE+OracleConstants.COMMA
-									+OracleConstants.QUOTE+target.getTarget_password()+OracleConstants.QUOTE+OracleConstants.COMMA
-									+OracleConstants.QUOTE+target.getTarget_hdfs_path()+OracleConstants.QUOTE+OracleConstants.COMMA
-									+system_sequence+OracleConstants.COMMA
-									+project_sequence+OracleConstants.COMMA
-									+OracleConstants.QUOTE+target.getJuniper_user()+OracleConstants.QUOTE
+							.replace("{$columns}", "target_unique_name,target_type,hdp_knox_url,hdp_user,hdp_encrypted_password,encrypted_key,hdp_hdfs_path,system_sequence,project_sequence,created_by")
+							.replace("{$data}", "?,?,?,?,?,?,?,?,?,?"
 									);
+					 
+					try {
+						pstm = conn.prepareStatement(insertTargetDetails);
+						 pstm.setString(1, target.getTarget_unique_name());
+						 pstm.setString(2, target.getTarget_type());
+						 pstm.setString(3, target.getTarget_knox_url());
+						 pstm.setString(4, target.getTarget_user());
+						 pstm.setBytes(5, encrypted_password);
+						 pstm.setBytes(6,encrypted_key);
+						 pstm.setString(7, target.getTarget_hdfs_path());
+						 pstm.setInt(8, system_sequence);
+						 pstm.setInt(9, project_sequence);
+						 pstm.setString(10, target.getJuniper_user());
+						 pstm.executeUpdate();
+					}catch(SQLException e) {
+						e.printStackTrace();
+						return e.getMessage();
+					}
+					 
 				}
 				else {
 					
@@ -394,6 +538,7 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 										+project_sequence+OracleConstants.COMMA
 										+OracleConstants.QUOTE+target.getJuniper_user()+OracleConstants.QUOTE
 										);
+					 statement.executeUpdate(insertTargetDetails);
 				 }
 				 else {
 					 
@@ -404,7 +549,7 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 
 			try {	
 				
-				statement.executeUpdate(insertTargetDetails);
+				
 				String query=OracleConstants.GETSEQUENCEID.replace("${tableName}", OracleConstants.TAREGTTABLE).replace("${columnName}", OracleConstants.TARGETTABLEKEY);
 				ResultSet rs=statement.executeQuery(query);
 				if(rs.isBeforeFirst()) {
@@ -997,8 +1142,9 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 					connDto.setHostName(rs.getString(2));
 					connDto.setPort(rs.getString(3));
 					connDto.setUserName(rs.getString(4));
-					connDto.setPassword(rs.getString(5));
-					connDto.setEncr_key(rs.getString(6));
+					connDto.setEncrypted_password(rs.getBytes(5));
+					connDto.setEncr_key(rs.getBytes(6));
+					
 					connDto.setDbName(rs.getString(7));
 					connDto.setServiceName(rs.getString(8));
 					String drive_id=rs.getString(9);
@@ -1089,7 +1235,7 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 		try {
 			for(String target:targets) {
 				TargetDto targetDto=new TargetDto();
-				query=" select target_unique_name,target_type,gcp_sequence,hdp_knox_url,hdp_user,hdp_password,hdp_hdfs_path,drive_sequence,unix_data_path from "+OracleConstants.TAREGTTABLE
+				query=" select target_unique_name,target_type,gcp_sequence,hdp_knox_url,hdp_user,hdp_encrypted_password,encrypted_key,hdp_hdfs_path,drive_sequence,unix_data_path from "+OracleConstants.TAREGTTABLE
 						+ " where target_unique_name='"+target+"'";
 				rs = statement.executeQuery(query);
 				if(rs.isBeforeFirst()) {
@@ -1114,14 +1260,15 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 						targetDto.setTarget_type(rs.getString(2));
 						targetDto.setTarget_knox_url(rs.getString(4));
 						targetDto.setTarget_user(rs.getString(5));
-						targetDto.setTarget_password(rs.getString(6));
-						targetDto.setTarget_hdfs_path(rs.getString(7));
+						targetDto.setEncrypted_password(rs.getBytes(6));
+						targetDto.setEncrypted_key(rs.getBytes(7));
+						targetDto.setTarget_hdfs_path(rs.getString(8));
 					}
 					if(rs.getString(2).equalsIgnoreCase("unix")) {
 						targetDto.setTarget_unique_name(rs.getString(1));
 						targetDto.setTarget_type(rs.getString(2));
-						targetDto.setDrive_id(rs.getString(8));
-						targetDto.setData_path(rs.getString(9));
+						targetDto.setDrive_id(rs.getString(9));
+						targetDto.setData_path(rs.getString(10));
 						String drivePath=getDrivePath(conn,targetDto.getDrive_id());
 						targetDto.setFull_path(drivePath+targetDto.getData_path());
 					}
@@ -1491,6 +1638,22 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 		return "success";
 						
 	}
+	
+	private  String invokeEncryption(JSONObject json,String  url) throws UnsupportedOperationException, Exception {
+		
+		
+		
+		CloseableHttpClient httpClient = HttpClientBuilder.create().build();
+		
+			
+			HttpPost postRequest=new HttpPost(url);
+			postRequest.setHeader("Content-Type","application/json");
+			StringEntity input = new StringEntity(json.toString());
+			postRequest.setEntity(input); 
+			HttpResponse response = httpClient.execute(postRequest);
+			HttpEntity respEntity = response.getEntity();
+			return EntityUtils.toString(respEntity);
+		}
 
 
 

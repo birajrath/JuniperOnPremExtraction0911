@@ -50,6 +50,10 @@ public class ExtractNifiImpl implements IExtract {
 
 	@Autowired
 	private DataExtractRepositories dataExtractRepositories;
+	
+	@Autowired
+	private IExtractionDAO iExtract;
+	
 
 	@SuppressWarnings("static-access")
 	@Override
@@ -153,11 +157,12 @@ public class ExtractNifiImpl implements IExtract {
 				}
 			}
 		 
-		if(rtExtractDto.getConnDto().getConn_type().equals("ORACLE")||rtExtractDto.getConnDto().getConn_type().equals("TERADARA")) {
+		if(rtExtractDto.getConnDto().getConn_type().equalsIgnoreCase("ORACLE")||rtExtractDto.getConnDto().getConn_type().equalsIgnoreCase("TERADARA")) {
 			
 			stopReferencingComponents(processorInfo, clientId);
 			disableController(controllerId);
-			updateController(conn_string , rtExtractDto.getConnDto().getUserName(),  rtExtractDto.getConnDto().getPassword(), controllerId);
+			updateController(conn_string , rtExtractDto.getConnDto().getUserName(), rtExtractDto.getConnDto().getEncr_key(), rtExtractDto.getConnDto().getEncrypted_password(), controllerId);
+			
 			enableController(controllerId);
 			startReferencingComponents(controllerId,processGroupUrl);
 			path=rtExtractDto.getFeedDto().getCountry_code()+"/"+ rtExtractDto.getFeedDto().getFeed_name()+"/"+date+"/"+runId+"/";
@@ -396,12 +401,15 @@ public class ExtractNifiImpl implements IExtract {
 	}
 		
 	@SuppressWarnings("static-access")
-	private void updateController(String connUrl,String uname, String pwd,String controllerId) throws Exception {
+	private void updateController(String connUrl,String uname,byte[] encrypted_key,byte[] encrypted_password,String controllerId) throws Exception {
 
 		HttpEntity respEntity=null;
 		String state="";
 		String clientId="";
 		String controllerVersion="";
+		String password=iExtract.decyptPassword(encrypted_key, encrypted_password);
+		System.out.println("decrypted password is "+password);
+		
 		do {
 			Thread.currentThread().sleep(5000);
 			respEntity=getControllerServiceDetails(NifiConstants.NIFIURL, "nifi-api/controller-services/"+controllerId);
@@ -422,7 +430,7 @@ public class ExtractNifiImpl implements IExtract {
 		StringEntity input = new StringEntity(NifiConstants.UPDATEDBCONNECTIONPOOL.replace("${clientId}", clientId)
 				.replace("${ver}", controllerVersion).replace("${contId}", controllerId)
 				.replace("${conUrl}", connUrl).replace("${user}", uname)
-				.replace("${pasword}", pwd));
+				.replace("${pasword}", password));
 
 		input.setContentType("application/json;charset=UTF-8");
 		HttpPut putRequest = new HttpPut(NifiConstants.NIFIURL + "nifi-api/controller-services/"+controllerId);
@@ -540,7 +548,7 @@ public class ExtractNifiImpl implements IExtract {
 
 
 	@SuppressWarnings("unchecked")
-	private  JSONArray createJsonObject(int index,RealTimeExtractDto rtExtractDto,String conn_string,String path,String date,Long runId) {
+	private  JSONArray createJsonObject(int index,RealTimeExtractDto rtExtractDto,String conn_string,String path,String date,Long runId) throws Exception {
 
 		JSONArray arr = new JSONArray();
 		HashMap<String, JSONObject> map = new HashMap<String, JSONObject>();
@@ -592,6 +600,8 @@ public class ExtractNifiImpl implements IExtract {
 					gcsTarget.append(targetDto.getTarget_bucket()+",");
 				}
 				if(targetDto.getTarget_type().equalsIgnoreCase("hdfs")) {
+					
+					String password=iExtract.decyptPassword(targetDto.getEncrypted_key(), targetDto.getEncrypted_password());
 					hdfsTarget.append(targetDto.getTarget_knox_url()+"~");
 					hdfsTarget.append(targetDto.getTarget_user()+"~");
 					hdfsTarget.append(targetDto.getTarget_password()+"~");

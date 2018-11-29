@@ -11,7 +11,8 @@ public class ConnectionDto {
 	String password;
 	String dbName;
 	String serviceName;
-	String encr_key;
+	byte[] encr_key;
+	byte[] encrypted_password;
 	int drive_id;
 	int connId;
 	String system;
@@ -23,15 +24,27 @@ public class ConnectionDto {
 	
 	
 	
-	public String getEncr_key() {
+	
+	public byte[] getEncr_key() {
 		return encr_key;
 	}
-	public void setEncr_key(String encr_key) {
+
+	public void setEncr_key(byte[] encr_key) {
 		this.encr_key = encr_key;
 	}
+
+	public byte[] getEncrypted_password() {
+		return encrypted_password;
+	}
+
+	public void setEncrypted_password(byte[] encrypted_password) {
+		this.encrypted_password = encrypted_password;
+	}
+
 	public String getProject() {
 		return project;
 	}
+
 	public void setProject(String project) {
 		this.project = project;
 	}

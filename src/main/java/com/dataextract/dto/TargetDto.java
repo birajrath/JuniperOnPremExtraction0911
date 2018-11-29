@@ -19,10 +19,24 @@ public class TargetDto {
 	String full_path;
 	String project;
 	String juniper_user;
+	byte[] encrypted_password;
+	byte[] encrypted_key;
 	
 	
 	
 	
+	public byte[] getEncrypted_password() {
+		return encrypted_password;
+	}
+	public void setEncrypted_password(byte[] encrypted_password) {
+		this.encrypted_password = encrypted_password;
+	}
+	public byte[] getEncrypted_key() {
+		return encrypted_key;
+	}
+	public void setEncrypted_key(byte[] encrypted_key) {
+		this.encrypted_key = encrypted_key;
+	}
 	public String getProject() {
 		return project;
 	}

@@ -560,7 +560,6 @@ public class DataExtractController {
 		rtExtractDto.setConnDto(dataExtractRepositories.getConnectionObject(feed_name));
 		rtExtractDto.setFeedDto(dataExtractRepositories.getFeedObject(feed_name));
 		String targetList=rtExtractDto.getFeedDto().getTarget();
-		//System.out.println("target list is:"+targetList);
 		rtExtractDto.setTargetArr(dataExtractRepositories.getTargetObject(targetList));
 		if(!(rtExtractDto.getFeedDto().getTableList()==null||rtExtractDto.getFeedDto().getTableList().isEmpty())) {
 			String tableList=rtExtractDto.getFeedDto().getTableList();
