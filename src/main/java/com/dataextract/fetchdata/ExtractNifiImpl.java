@@ -408,7 +408,6 @@ public class ExtractNifiImpl implements IExtract {
 		String clientId="";
 		String controllerVersion="";
 		String password=iExtract.decyptPassword(encrypted_key, encrypted_password);
-		System.out.println("decrypted password is "+password);
 		
 		do {
 			Thread.currentThread().sleep(5000);
@@ -602,9 +601,10 @@ public class ExtractNifiImpl implements IExtract {
 				if(targetDto.getTarget_type().equalsIgnoreCase("hdfs")) {
 					
 					String password=iExtract.decyptPassword(targetDto.getEncrypted_key(), targetDto.getEncrypted_password());
+					
 					hdfsTarget.append(targetDto.getTarget_knox_url()+"~");
 					hdfsTarget.append(targetDto.getTarget_user()+"~");
-					hdfsTarget.append(targetDto.getTarget_password()+"~");
+					hdfsTarget.append(password+"~");
 					hdfsTarget.append(targetDto.getTarget_hdfs_path()+",");
 				}
 				
