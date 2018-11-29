@@ -25,7 +25,7 @@ public interface IExtractionDAO {
 	public  String pullData(RealTimeExtractDto rtExtractDto);
 	public String insertTargetMetadata(Connection conn, TargetDto target) throws SQLException;
 	public ArrayList<TargetDto> getTargetObject(Connection conn,String targetList) throws SQLException;
-	public String createDag(Connection conn,BatchExtractDto batchExtractDto) throws SQLException;
+	public String createDag(Connection conn,String feed_name,String cron ) throws SQLException;
 	public String updateConnectionMetadata(Connection conn, ConnectionDto connDto) throws SQLException;
 	public String deleteConnectionMetadata(Connection conn, ConnectionDto connDto)throws SQLException;
 	public String updateFeedMetadata(Connection conn, FeedDto feedDto) throws SQLException;

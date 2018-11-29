@@ -195,12 +195,12 @@ public class DataExtractRepositoriesImpl implements DataExtractRepositories {
 	}
 
 	@Override
-	public String batchExtract(BatchExtractDto batchExtractDto) throws SQLException{
+	public String batchExtract(String feed_name ,String cron) throws SQLException{
 
 		Connection conn=null;
 		conn=ConnectionUtils.connectToOracle(OracleConstants.ORACLE_IP_PORT_SID, OracleConstants.ORACLE_USER_NAME, OracleConstants.ORACLE_PASSWORD);
 		//conn= ConnectionUtils.connectToMySql(MySQLConstants.MYSQLIP, MySQLConstants.MYSQLPORT, MySQLConstants.DB,MySQLConstants.USER , MySQLConstants.PASSWORD);
-		return extractionDao.createDag(conn,batchExtractDto);
+		return extractionDao.createDag(conn,feed_name,cron);
 	}
 
 

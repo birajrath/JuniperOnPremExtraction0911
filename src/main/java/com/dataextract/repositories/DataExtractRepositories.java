@@ -32,7 +32,7 @@ public String realTimeExtract(RealTimeExtractDto rtExtractDto) throws IOExceptio
 public String testConnection(ConnectionDto dto);
 public String addTargetDetails(TargetDto target) throws SQLException;
 public ArrayList<TargetDto> getTargetObject(String targetList) throws SQLException;
-public String batchExtract(BatchExtractDto batchExtractDto) throws SQLException;
+public String batchExtract(String feed_name,String cron) throws SQLException;
 public String updateConnectionDetails(ConnectionDto connDto) throws SQLException;
 public String deleteConnectionDetails(ConnectionDto connDto) throws SQLException ;
 public String updateFeed(FeedDto feedDto)throws SQLException ;

@@ -608,34 +608,15 @@ public class DataExtractController {
 		String response="";
 		String status="";
 		String message="";
-		BatchExtractDto batchExtractDto = new BatchExtractDto();
+		
 		String feed_name=requestDto.getBody().get("data").get("feed_name");
-		batchExtractDto.setCron(requestDto.getBody().get("data").get("cron"));
-		batchExtractDto.setConnDto(dataExtractRepositories.getConnectionObject(feed_name));
-		batchExtractDto.setFeedDto(dataExtractRepositories.getFeedObject(feed_name));
-		String targetList=batchExtractDto.getFeedDto().getTarget();
-		batchExtractDto.setTargetArr(dataExtractRepositories.getTargetObject(targetList));
-		if(!(batchExtractDto.getFeedDto().getTableList()==null||batchExtractDto.getFeedDto().getTableList().isEmpty())) {
-			String tableList=batchExtractDto.getFeedDto().getTableList();
-			batchExtractDto.setTableInfoDto(dataExtractRepositories.getTableInfoObject(tableList));
-			
-		}
-		if(!(batchExtractDto.getFeedDto().getFileList()==null||batchExtractDto.getFeedDto().getFileList().isEmpty())) {
-			if(batchExtractDto.getConnDto().getConn_type().equalsIgnoreCase("UNIX")) {
-				String fileList=batchExtractDto.getFeedDto().getFileList();
-				batchExtractDto.setFileInfoDto(dataExtractRepositories.getFileInfoObject(fileList));
-			}
-			if(batchExtractDto.getConnDto().getConn_type().equalsIgnoreCase("HADOOP")) {
-				String fileList=batchExtractDto.getFeedDto().getFileList();
-				batchExtractDto.setHdfsInfoDto(dataExtractRepositories.getHDFSInfoObject(fileList));
-			}
-			
-		}
+		String cron=requestDto.getBody().get("data").get("cron");
+		
 		
 		
 		
 		try {
-			 response=dataExtractRepositories.batchExtract(batchExtractDto);
+			 response=dataExtractRepositories.batchExtract(feed_name,cron);
 			if(response.equalsIgnoreCase("success")) {
 				status="Success";
 				message="Batch Scheduled Successfully";

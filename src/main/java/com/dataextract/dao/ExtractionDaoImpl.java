@@ -32,6 +32,7 @@ import org.springframework.stereotype.Component;
 import com.dataextract.constants.EncryptionConstants;
 import com.dataextract.constants.NifiConstants;
 import com.dataextract.constants.OracleConstants;
+import com.dataextract.constants.SchedulerConstants;
 import com.dataextract.dto.BatchExtractDto;
 import com.dataextract.dto.ConnectionDto;
 import com.dataextract.dto.FieldMetadataDto;
@@ -1541,64 +1542,15 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 
 	
 	@Override
-	public String createDag(Connection conn,BatchExtractDto batchExtractDto) throws SQLException{
+	public String createDag(Connection conn,String feed_name, String cron) throws SQLException{
 
 		StringBuffer targetDetails=new StringBuffer();
 		String connectionDetails="";
 		String dataDetails="";
 		
 		
-		for(TargetDto tarDto:batchExtractDto.getTargetArr()) {
-			if(tarDto.getTarget_type().equalsIgnoreCase("GCS")) {
-				targetDetails.append(tarDto.getTarget_type()+"~");
-				targetDetails.append(tarDto.getTarget_project()+"~");
-				targetDetails.append(tarDto.getService_account()+"~");
-				targetDetails.append(tarDto.getTarget_bucket()+"---");
-			}
-			if(tarDto.getTarget_type().equalsIgnoreCase("HDFS")) {
-				targetDetails.append(tarDto.getTarget_type()+"~");
-				targetDetails.append(tarDto.getTarget_knox_url()+"~");
-				targetDetails.append(tarDto.getTarget_user()+"~");
-				targetDetails.append(tarDto.getTarget_password()+"~");
-				targetDetails.append(tarDto.getTarget_hdfs_path()+"---");
-			}
-
-		}
-		targetDetails.setLength(targetDetails.length()-3);
-		String feed_details=Integer.toString(batchExtractDto.getFeedDto().getFeed_id())+"~"+batchExtractDto.getFeedDto().getCountry_code()+"~"+batchExtractDto.getFeedDto().getFeed_name()+"~"+batchExtractDto.getFeedDto().getProject_sequence();
-		if(batchExtractDto.getConnDto().getConn_type().equalsIgnoreCase("ORACLE")||batchExtractDto.getConnDto().getConn_type().equalsIgnoreCase("TERADATA")) {
-			String connectionString=getConnectionString(batchExtractDto.getConnDto());
-			 connectionDetails=batchExtractDto.getConnDto().getConn_type()+"~"+connectionString+"~"+"~"+batchExtractDto.getConnDto().getUserName()+"~"+batchExtractDto.getConnDto().getPassword();
-			StringBuffer temp=new StringBuffer();
-			for(TableMetadataDto tableMetadata: batchExtractDto.getTableInfoDto().getTableMetadataArr()) {
-				temp.append("table_name="+tableMetadata.getTable_name()+"~");
-				temp.append("columns="+tableMetadata.getColumns()+"~");
-				temp.append("where_clause="+tableMetadata.getWhere_clause()+"~");
-				temp.append("fetch_type="+tableMetadata.getFetch_type()+"~");
-				temp.append("incr_col="+tableMetadata.getIncr_col()+"---");
-			}
-			temp.setLength(temp.length()-3);
-			 dataDetails=temp.toString();
-		}
-		if(batchExtractDto.getConnDto().getConn_type().equalsIgnoreCase("UNIX")) {
-			connectionDetails=batchExtractDto.getConnDto().getConn_type()+"~"+batchExtractDto.getFeedDto().getFilePath();
-			StringBuffer temp=new StringBuffer();
-			for(FileMetadataDto fileMetaDto:batchExtractDto.getFileInfoDto().getFileMetadataArr()) {
-				temp.append("file_name="+fileMetaDto.getFile_name()+"~");
-				temp.append("file_type="+fileMetaDto.getFile_type()+"~");
-				temp.append("file_delimiter="+fileMetaDto.getFile_delimiter()+"~");
-				temp.append("avro_conv_flag="+fileMetaDto.getAvro_conv_flag()+"~");
-				temp.append("header_count="+fileMetaDto.getHeader_count()+"~");
-				temp.append("trailer_count="+fileMetaDto.getTrailer_count()+"~");
-				temp.append("field_list="+fileMetaDto.getField_list()+"---");
-			}
-			temp.setLength(temp.length()-3);
-			dataDetails=temp.toString();
-			System.out.println("Data Details is "+dataDetails);
-		}
 		
-
-		String status=insertScheduleMetadata(conn,batchExtractDto,connectionDetails,feed_details,targetDetails.toString(),dataDetails);
+		String status=insertScheduleMetadata(conn,feed_name,cron);
 		if(status.equalsIgnoreCase("success")) {
 			return "success";
 		}
@@ -1657,8 +1609,8 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 
 
 
-	private String insertScheduleMetadata(Connection conn,BatchExtractDto batchDto,String connectionDetails,String sourceSysDetails,String targetDetails,String tableDetails) throws SQLException {
-		String cron=batchDto.getCron();
+	private String insertScheduleMetadata(Connection conn,String feed_name,String cron) throws SQLException {
+		
 		Statement statement=conn.createStatement();
 		String insertQuery="";
 		String hourlyFlag="";
@@ -1696,16 +1648,12 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 						if(minutes.contains(",")) {
 							for(String minute:minutes.split(",")) {
 								insertQuery=OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.SCHEDULETABLE)
-										.replace("{$columns}", "job_id,job_name,batch_id,command,argument_1,argument_2,argument_3,argument_4,daily_flag,job_schedule_time")
-										.replace("{$data}",OracleConstants.QUOTE+batchDto.getFeedDto().getFeed_name()+"_dailyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
-												+OracleConstants.QUOTE+batchDto.getFeedDto().getFeed_name()+"_dailyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
-												+OracleConstants.QUOTE+batchDto.getFeedDto().getFeed_name()+OracleConstants.QUOTE+OracleConstants.COMMA
-												+OracleConstants.QUOTE+"/home/juniper/scripts/pullDataNew.sh"+OracleConstants.QUOTE+OracleConstants.COMMA
-												+OracleConstants.QUOTE+connectionDetails+OracleConstants.QUOTE+OracleConstants.COMMA
-												+OracleConstants.QUOTE+sourceSysDetails+OracleConstants.QUOTE+OracleConstants.COMMA
-												+OracleConstants.QUOTE+targetDetails+OracleConstants.QUOTE+OracleConstants.COMMA
-												+OracleConstants.QUOTE+tableDetails+OracleConstants.QUOTE+OracleConstants.COMMA
-
+										.replace("{$columns}", "job_id,job_name,batch_id,command,argument_1,daily_flag,job_schedule_time")
+										.replace("{$data}",OracleConstants.QUOTE+feed_name+"_dailyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
+												+OracleConstants.QUOTE+feed_name+"_dailyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
+												+OracleConstants.QUOTE+feed_name+OracleConstants.QUOTE+OracleConstants.COMMA
+												+OracleConstants.QUOTE+SchedulerConstants.script_loc+OracleConstants.QUOTE+OracleConstants.COMMA
+												+OracleConstants.QUOTE+feed_name+OracleConstants.QUOTE+OracleConstants.COMMA
 												+OracleConstants.QUOTE+"Y"+OracleConstants.QUOTE+OracleConstants.COMMA
 												+OracleConstants.QUOTE+hour+":"+minute+":00"+OracleConstants.QUOTE);
 								System.out.println(insertQuery);
@@ -1715,16 +1663,12 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 							}
 						}else {
 							insertQuery=OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.SCHEDULETABLE)
-									.replace("{$columns}", "job_id,job_name,batch_id,command,argument_1,argument_2,argument_3,argument_4,daily_flag,job_schedule_time")
-									.replace("{$data}",OracleConstants.QUOTE+batchDto.getFeedDto().getFeed_name()+"_dailyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
-											+OracleConstants.QUOTE+batchDto.getFeedDto().getFeed_name()+"_dailyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
-											+OracleConstants.QUOTE+batchDto.getFeedDto().getFeed_name()+OracleConstants.QUOTE+OracleConstants.COMMA
-											+OracleConstants.QUOTE+"/home/juniper/scripts/pullDataNew.sh"+OracleConstants.QUOTE+OracleConstants.COMMA
-											+OracleConstants.QUOTE+connectionDetails+OracleConstants.QUOTE+OracleConstants.COMMA
-											+OracleConstants.QUOTE+sourceSysDetails+OracleConstants.QUOTE+OracleConstants.COMMA
-											+OracleConstants.QUOTE+targetDetails+OracleConstants.QUOTE+OracleConstants.COMMA
-											+OracleConstants.QUOTE+tableDetails+OracleConstants.QUOTE+OracleConstants.COMMA
-
+									.replace("{$columns}", "job_id,job_name,batch_id,command,argument_1,daily_flag,job_schedule_time")
+									.replace("{$data}",OracleConstants.QUOTE+feed_name+"_dailyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
+											+OracleConstants.QUOTE+feed_name+"_dailyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
+											+OracleConstants.QUOTE+feed_name+OracleConstants.QUOTE+OracleConstants.COMMA
+											+OracleConstants.QUOTE+SchedulerConstants.script_loc+OracleConstants.QUOTE+OracleConstants.COMMA
+											+OracleConstants.QUOTE+feed_name+OracleConstants.QUOTE+OracleConstants.COMMA
 											+OracleConstants.QUOTE+"Y"+OracleConstants.QUOTE+OracleConstants.COMMA
 											+OracleConstants.QUOTE+hour+":"+minutes+":00"+OracleConstants.QUOTE);
 							System.out.println(insertQuery);
@@ -1735,16 +1679,12 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 					if(minutes.contains(",")) {
 						for(String minute:minutes.split(",")) {
 							insertQuery=OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.SCHEDULETABLE)
-									.replace("{$columns}", "job_id,job_name,batch_id,command,argument_1,argument_2,argument_3,argument_4,daily_flag,job_schedule_time")
-									.replace("{$data}",OracleConstants.QUOTE+batchDto.getFeedDto().getFeed_name()+"_dailyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
-											+OracleConstants.QUOTE+batchDto.getFeedDto().getFeed_name()+"_dailyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
-											+OracleConstants.QUOTE+batchDto.getFeedDto().getFeed_name()+OracleConstants.QUOTE+OracleConstants.COMMA
-											+OracleConstants.QUOTE+"/home/juniper/scripts/pullDataNew.sh"+OracleConstants.QUOTE+OracleConstants.COMMA
-											+OracleConstants.QUOTE+connectionDetails+OracleConstants.QUOTE+OracleConstants.COMMA
-											+OracleConstants.QUOTE+sourceSysDetails+OracleConstants.QUOTE+OracleConstants.COMMA
-											+OracleConstants.QUOTE+targetDetails+OracleConstants.QUOTE+OracleConstants.COMMA
-											+OracleConstants.QUOTE+tableDetails+OracleConstants.QUOTE+OracleConstants.COMMA
-
+									.replace("{$columns}", "job_id,job_name,batch_id,command,argument_1,daily_flag,job_schedule_time")
+									.replace("{$data}",OracleConstants.QUOTE+feed_name+"_dailyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
+											+OracleConstants.QUOTE+feed_name+"_dailyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
+											+OracleConstants.QUOTE+feed_name+OracleConstants.QUOTE+OracleConstants.COMMA
+											+OracleConstants.QUOTE+SchedulerConstants.script_loc+OracleConstants.QUOTE+OracleConstants.COMMA
+											+OracleConstants.QUOTE+feed_name+OracleConstants.QUOTE+OracleConstants.COMMA
 											+OracleConstants.QUOTE+"Y"+OracleConstants.QUOTE+OracleConstants.COMMA
 											+OracleConstants.QUOTE+hours+":"+minute+":00"+OracleConstants.QUOTE);
 							System.out.println(insertQuery);
@@ -1754,16 +1694,12 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 						}
 					}else {
 						insertQuery=OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.SCHEDULETABLE)
-								.replace("{$columns}", "job_id,job_name,batch_id,command,argument_1,argument_2,argument_3,argument_4,daily_flag,job_schedule_time")
-								.replace("{$data}",OracleConstants.QUOTE+batchDto.getFeedDto().getFeed_name()+"_dailyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
-										+OracleConstants.QUOTE+batchDto.getFeedDto().getFeed_name()+"dailyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
-										+OracleConstants.QUOTE+batchDto.getFeedDto().getFeed_name()+OracleConstants.QUOTE+OracleConstants.COMMA
-										+OracleConstants.QUOTE+"/home/juniper/scripts/pullDataNew.sh"+OracleConstants.QUOTE+OracleConstants.COMMA
-										+OracleConstants.QUOTE+connectionDetails+OracleConstants.QUOTE+OracleConstants.COMMA
-										+OracleConstants.QUOTE+sourceSysDetails+OracleConstants.QUOTE+OracleConstants.COMMA
-										+OracleConstants.QUOTE+targetDetails+OracleConstants.QUOTE+OracleConstants.COMMA
-										+OracleConstants.QUOTE+tableDetails+OracleConstants.QUOTE+OracleConstants.COMMA
-
+								.replace("{$columns}", "job_id,job_name,batch_id,command,argument_1,daily_flag,job_schedule_time")
+								.replace("{$data}",OracleConstants.QUOTE+feed_name+"_dailyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
+										+OracleConstants.QUOTE+feed_name+"dailyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
+										+OracleConstants.QUOTE+feed_name+OracleConstants.QUOTE+OracleConstants.COMMA
+										+OracleConstants.QUOTE+SchedulerConstants.script_loc+OracleConstants.QUOTE+OracleConstants.COMMA
+										+OracleConstants.QUOTE+feed_name+OracleConstants.QUOTE+OracleConstants.COMMA
 										+OracleConstants.QUOTE+"Y"+OracleConstants.QUOTE+OracleConstants.COMMA
 										+OracleConstants.QUOTE+hours+":"+minutes+":00"+OracleConstants.QUOTE);
 						System.out.println(insertQuery);
@@ -1778,15 +1714,12 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 								if(minutes.contains(",")) {
 									for(String minute:minutes.split(",")) {
 										insertQuery=OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.SCHEDULETABLE)
-												.replace("{$columns}", "job_id,job_name,batch_id,command,argument_1,argument_2,argument_3,argument_4,monthly_flag,month_run_day,job_schedule_time")
-												.replace("{$data}",OracleConstants.QUOTE+batchDto.getFeedDto().getFeed_name()+"_monthlyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
-														+OracleConstants.QUOTE+batchDto.getFeedDto().getFeed_name()+"_monthlyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
-														+OracleConstants.QUOTE+batchDto.getFeedDto().getFeed_name()+OracleConstants.QUOTE+OracleConstants.COMMA
-														+OracleConstants.QUOTE+"/home/juniper/scripts/pullDataNew.sh"+OracleConstants.QUOTE+OracleConstants.COMMA
-														+OracleConstants.QUOTE+connectionDetails+OracleConstants.QUOTE+OracleConstants.COMMA
-														+OracleConstants.QUOTE+sourceSysDetails+OracleConstants.QUOTE+OracleConstants.COMMA
-														+OracleConstants.QUOTE+targetDetails+OracleConstants.QUOTE+OracleConstants.COMMA
-														+OracleConstants.QUOTE+tableDetails+OracleConstants.QUOTE+OracleConstants.COMMA
+												.replace("{$columns}", "job_id,job_name,batch_id,command,argument_1,monthly_flag,month_run_day,job_schedule_time")
+												.replace("{$data}",OracleConstants.QUOTE+feed_name+"_monthlyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
+														+OracleConstants.QUOTE+feed_name+"_monthlyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
+														+OracleConstants.QUOTE+feed_name+OracleConstants.QUOTE+OracleConstants.COMMA
+														+OracleConstants.QUOTE+SchedulerConstants.script_loc+OracleConstants.QUOTE+OracleConstants.COMMA
+														+OracleConstants.QUOTE+feed_name+OracleConstants.QUOTE+OracleConstants.COMMA
 														+OracleConstants.QUOTE+"Y"+OracleConstants.QUOTE+OracleConstants.COMMA
 														+OracleConstants.QUOTE+date+OracleConstants.QUOTE+OracleConstants.COMMA
 														+OracleConstants.QUOTE+hour+":"+minute+":00"+OracleConstants.QUOTE);
@@ -1797,15 +1730,12 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 								}
 								else {
 									insertQuery=OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.SCHEDULETABLE)
-											.replace("{$columns}", "job_id,job_name,batch_id,command,argument_1,argument_2,argument_3,argument_4,monthly_flag,month_run_day,job_schedule_time")
-											.replace("{$data}",OracleConstants.QUOTE+batchDto.getFeedDto().getFeed_name()+"_monthlyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
-													+OracleConstants.QUOTE+batchDto.getFeedDto().getFeed_name()+"_monthlyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
-													+OracleConstants.QUOTE+batchDto.getFeedDto().getFeed_name()+OracleConstants.QUOTE+OracleConstants.COMMA
-													+OracleConstants.QUOTE+"/home/juniper/scripts/pullDataNew.sh"+OracleConstants.QUOTE+OracleConstants.COMMA
-													+OracleConstants.QUOTE+connectionDetails+OracleConstants.QUOTE+OracleConstants.COMMA
-													+OracleConstants.QUOTE+sourceSysDetails+OracleConstants.QUOTE+OracleConstants.COMMA
-													+OracleConstants.QUOTE+targetDetails+OracleConstants.QUOTE+OracleConstants.COMMA
-													+OracleConstants.QUOTE+tableDetails+OracleConstants.QUOTE+OracleConstants.COMMA
+											.replace("{$columns}", "job_id,job_name,batch_id,command,argument_1,monthly_flag,month_run_day,job_schedule_time")
+											.replace("{$data}",OracleConstants.QUOTE+feed_name+"_monthlyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
+													+OracleConstants.QUOTE+feed_name+"_monthlyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
+													+OracleConstants.QUOTE+feed_name+OracleConstants.QUOTE+OracleConstants.COMMA
+													+OracleConstants.QUOTE+SchedulerConstants.script_loc+OracleConstants.QUOTE+OracleConstants.COMMA
+													+OracleConstants.QUOTE+feed_name+OracleConstants.QUOTE+OracleConstants.COMMA
 													+OracleConstants.QUOTE+"Y"+OracleConstants.QUOTE+OracleConstants.COMMA
 													+OracleConstants.QUOTE+date+OracleConstants.QUOTE+OracleConstants.COMMA
 													+OracleConstants.QUOTE+hour+":"+minutes+":00"+OracleConstants.QUOTE);
@@ -1821,15 +1751,12 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 							if(minutes.contains(",")) {
 								for(String minute:minutes.split(",")) {
 									insertQuery=OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.SCHEDULETABLE)
-											.replace("{$columns}", "job_id,job_name,batch_id,command,argument_1,argument_2,argument_3,argument_4,monthly_flag,month_run_day,job_schedule_time")
-											.replace("{$data}",OracleConstants.QUOTE+batchDto.getFeedDto().getFeed_name()+"_monthlyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
-													+OracleConstants.QUOTE+batchDto.getFeedDto().getFeed_name()+"_monthlyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
-													+OracleConstants.QUOTE+batchDto.getFeedDto().getFeed_name()+OracleConstants.QUOTE+OracleConstants.COMMA
-													+OracleConstants.QUOTE+"/home/juniper/scripts/pullDataNew.sh"+OracleConstants.QUOTE+OracleConstants.COMMA
-													+OracleConstants.QUOTE+connectionDetails+OracleConstants.QUOTE+OracleConstants.COMMA
-													+OracleConstants.QUOTE+sourceSysDetails+OracleConstants.QUOTE+OracleConstants.COMMA
-													+OracleConstants.QUOTE+targetDetails+OracleConstants.QUOTE+OracleConstants.COMMA
-													+OracleConstants.QUOTE+tableDetails+OracleConstants.QUOTE+OracleConstants.COMMA
+											.replace("{$columns}", "job_id,job_name,batch_id,command,argument_1,monthly_flag,month_run_day,job_schedule_time")
+											.replace("{$data}",OracleConstants.QUOTE+feed_name+"_monthlyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
+													+OracleConstants.QUOTE+feed_name+"_monthlyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
+													+OracleConstants.QUOTE+feed_name+OracleConstants.QUOTE+OracleConstants.COMMA
+													+OracleConstants.QUOTE+SchedulerConstants.script_loc+OracleConstants.QUOTE+OracleConstants.COMMA
+													+OracleConstants.QUOTE+feed_name+OracleConstants.QUOTE+OracleConstants.COMMA
 													+OracleConstants.QUOTE+"Y"+OracleConstants.QUOTE+OracleConstants.COMMA
 													+OracleConstants.QUOTE+date+OracleConstants.QUOTE+OracleConstants.COMMA
 													+OracleConstants.QUOTE+hours+":"+minute+":00"+OracleConstants.QUOTE);
@@ -1839,15 +1766,12 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 
 							} 			else {
 								insertQuery=OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.SCHEDULETABLE)
-										.replace("{$columns}", "job_id,job_name,batch_id,command,argument_1,argument_2,argument_3,argument_4,monthly_flag,month_run_day,job_schedule_time")
-										.replace("{$data}",OracleConstants.QUOTE+batchDto.getFeedDto().getFeed_name()+"_monthlyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
-												+OracleConstants.QUOTE+batchDto.getFeedDto().getFeed_name()+"_monthlyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
-												+OracleConstants.QUOTE+batchDto.getFeedDto().getFeed_name()+OracleConstants.QUOTE+OracleConstants.COMMA
-												+OracleConstants.QUOTE+"/home/juniper/scripts/pullDataNew.sh"+OracleConstants.QUOTE+OracleConstants.COMMA
-												+OracleConstants.QUOTE+connectionDetails+OracleConstants.QUOTE+OracleConstants.COMMA
-												+OracleConstants.QUOTE+sourceSysDetails+OracleConstants.QUOTE+OracleConstants.COMMA
-												+OracleConstants.QUOTE+targetDetails+OracleConstants.QUOTE+OracleConstants.COMMA
-												+OracleConstants.QUOTE+tableDetails+OracleConstants.QUOTE+OracleConstants.COMMA
+										.replace("{$columns}", "job_id,job_name,batch_id,command,argument_1,monthly_flag,month_run_day,job_schedule_time")
+										.replace("{$data}",OracleConstants.QUOTE+feed_name+"_monthlyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
+												+OracleConstants.QUOTE+feed_name+"_monthlyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
+												+OracleConstants.QUOTE+feed_name+OracleConstants.QUOTE+OracleConstants.COMMA
+												+OracleConstants.QUOTE+SchedulerConstants.script_loc+OracleConstants.QUOTE+OracleConstants.COMMA
+												+OracleConstants.QUOTE+feed_name+OracleConstants.QUOTE+OracleConstants.COMMA
 												+OracleConstants.QUOTE+"Y"+OracleConstants.QUOTE+OracleConstants.COMMA
 												+OracleConstants.QUOTE+date+OracleConstants.QUOTE+OracleConstants.COMMA
 												+OracleConstants.QUOTE+hours+":"+minutes+":00"+OracleConstants.QUOTE);
@@ -1863,15 +1787,12 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 							if(minutes.contains(",")) {
 								for(String minute:minutes.split(",")) {
 									insertQuery=OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.SCHEDULETABLE)
-											.replace("{$columns}", "job_id,job_name,batch_id,command,argument_1,argument_2,argument_3,argument_4,monthly_flag,month_run_day,job_schedule_time")
-											.replace("{$data}",OracleConstants.QUOTE+batchDto.getFeedDto().getFeed_name()+"_monthlyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
-													+OracleConstants.QUOTE+batchDto.getFeedDto().getFeed_name()+"_monthlyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
-													+OracleConstants.QUOTE+batchDto.getFeedDto().getFeed_name()+OracleConstants.QUOTE+OracleConstants.COMMA
-													+OracleConstants.QUOTE+"/home/juniper/scripts/pullDataNew.sh"+OracleConstants.QUOTE+OracleConstants.COMMA
-													+OracleConstants.QUOTE+connectionDetails+OracleConstants.QUOTE+OracleConstants.COMMA
-													+OracleConstants.QUOTE+sourceSysDetails+OracleConstants.QUOTE+OracleConstants.COMMA
-													+OracleConstants.QUOTE+targetDetails+OracleConstants.QUOTE+OracleConstants.COMMA
-													+OracleConstants.QUOTE+tableDetails+OracleConstants.QUOTE+OracleConstants.COMMA
+											.replace("{$columns}", "job_id,job_name,batch_id,command,argument_1,monthly_flag,month_run_day,job_schedule_time")
+											.replace("{$data}",OracleConstants.QUOTE+feed_name+"_monthlyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
+													+OracleConstants.QUOTE+feed_name+"_monthlyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
+													+OracleConstants.QUOTE+feed_name+OracleConstants.QUOTE+OracleConstants.COMMA
+													+OracleConstants.QUOTE+SchedulerConstants.script_loc+OracleConstants.QUOTE+OracleConstants.COMMA
+													+OracleConstants.QUOTE+feed_name+OracleConstants.COMMA
 													+OracleConstants.QUOTE+"Y"+OracleConstants.QUOTE+OracleConstants.COMMA
 													+OracleConstants.QUOTE+dates+OracleConstants.QUOTE+OracleConstants.COMMA
 													+OracleConstants.QUOTE+hour+":"+minute+":00"+OracleConstants.QUOTE);
@@ -1882,15 +1803,12 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 							}
 							else {
 								insertQuery=OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.SCHEDULETABLE)
-										.replace("{$columns}", "job_id,job_name,batch_id,command,argument_1,argument_2,argument_3,argument_4,monthly_flag,month_run_day,job_schedule_time")
-										.replace("{$data}",OracleConstants.QUOTE+batchDto.getFeedDto().getFeed_name()+"_monthlyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
-												+OracleConstants.QUOTE+batchDto.getFeedDto().getFeed_name()+"_monthlyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
-												+OracleConstants.QUOTE+batchDto.getFeedDto().getFeed_name()+OracleConstants.QUOTE+OracleConstants.COMMA
-												+OracleConstants.QUOTE+"/home/juniper/scripts/pullDataNew.sh"+OracleConstants.QUOTE+OracleConstants.COMMA
-												+OracleConstants.QUOTE+connectionDetails+OracleConstants.QUOTE+OracleConstants.COMMA
-												+OracleConstants.QUOTE+sourceSysDetails+OracleConstants.QUOTE+OracleConstants.COMMA
-												+OracleConstants.QUOTE+targetDetails+OracleConstants.QUOTE+OracleConstants.COMMA
-												+OracleConstants.QUOTE+tableDetails+OracleConstants.QUOTE+OracleConstants.COMMA
+										.replace("{$columns}", "job_id,job_name,batch_id,command,argument_1,monthly_flag,month_run_day,job_schedule_time")
+										.replace("{$data}",OracleConstants.QUOTE+feed_name+"_monthlyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
+												+OracleConstants.QUOTE+feed_name+"_monthlyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
+												+OracleConstants.QUOTE+feed_name+OracleConstants.QUOTE+OracleConstants.COMMA
+												+OracleConstants.QUOTE+SchedulerConstants.script_loc+OracleConstants.QUOTE+OracleConstants.COMMA
+												+OracleConstants.QUOTE+feed_name+OracleConstants.QUOTE+OracleConstants.COMMA
 												+OracleConstants.QUOTE+"Y"+OracleConstants.QUOTE+OracleConstants.COMMA
 												+OracleConstants.QUOTE+dates+OracleConstants.QUOTE+OracleConstants.COMMA
 												+OracleConstants.QUOTE+hour+":"+minutes+":00"+OracleConstants.QUOTE);
@@ -1906,15 +1824,12 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 						if(minutes.contains(",")) {
 							for(String minute:minutes.split(",")) {
 								insertQuery=OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.SCHEDULETABLE)
-										.replace("{$columns}", "job_id,job_name,batch_id,command,argument_1,argument_2,argument_3,argument_4,monthly_flag,month_run_day,job_schedule_time")
-										.replace("{$data}",OracleConstants.QUOTE+batchDto.getFeedDto().getFeed_name()+"_monthlyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
-												+OracleConstants.QUOTE+batchDto.getFeedDto().getFeed_name()+"_monthlyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
-												+OracleConstants.QUOTE+batchDto.getFeedDto().getFeed_name()+OracleConstants.QUOTE+OracleConstants.COMMA
-												+OracleConstants.QUOTE+"/home/juniper/scripts/pullDataNew.sh"+OracleConstants.QUOTE+OracleConstants.COMMA
-												+OracleConstants.QUOTE+connectionDetails+OracleConstants.QUOTE+OracleConstants.COMMA
-												+OracleConstants.QUOTE+sourceSysDetails+OracleConstants.QUOTE+OracleConstants.COMMA
-												+OracleConstants.QUOTE+targetDetails+OracleConstants.QUOTE+OracleConstants.COMMA
-												+OracleConstants.QUOTE+tableDetails+OracleConstants.QUOTE+OracleConstants.COMMA
+										.replace("{$columns}", "job_id,job_name,batch_id,command,argument_1,monthly_flag,month_run_day,job_schedule_time")
+										.replace("{$data}",OracleConstants.QUOTE+feed_name+"_monthlyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
+												+OracleConstants.QUOTE+feed_name+"_monthlyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
+												+OracleConstants.QUOTE+feed_name+OracleConstants.QUOTE+OracleConstants.COMMA
+												+OracleConstants.QUOTE+SchedulerConstants.script_loc+OracleConstants.QUOTE+OracleConstants.COMMA
+												+OracleConstants.QUOTE+feed_name+OracleConstants.QUOTE+OracleConstants.COMMA
 												+OracleConstants.QUOTE+"Y"+OracleConstants.QUOTE+OracleConstants.COMMA
 												+OracleConstants.QUOTE+dates+OracleConstants.QUOTE+OracleConstants.COMMA
 												+OracleConstants.QUOTE+hours+":"+minute+":00"+OracleConstants.QUOTE);
@@ -1924,15 +1839,12 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 
 						}else {
 							insertQuery=OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.SCHEDULETABLE)
-									.replace("{$columns}", "job_id,job_name,batch_id,command,argument_1,argument_2,argument_3,argument_4,monthly_flag,month_run_day,job_schedule_time")
-									.replace("{$data}",OracleConstants.QUOTE+batchDto.getFeedDto().getFeed_name()+"_monthlyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
-											+OracleConstants.QUOTE+batchDto.getFeedDto().getFeed_name()+"_monthlyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
-											+OracleConstants.QUOTE+batchDto.getFeedDto().getFeed_name()+OracleConstants.QUOTE+OracleConstants.COMMA
-											+OracleConstants.QUOTE+"/home/juniper/scripts/pullDataNew.sh"+OracleConstants.QUOTE+OracleConstants.COMMA
-											+OracleConstants.QUOTE+connectionDetails+OracleConstants.QUOTE+OracleConstants.COMMA
-											+OracleConstants.QUOTE+sourceSysDetails+OracleConstants.QUOTE+OracleConstants.COMMA
-											+OracleConstants.QUOTE+targetDetails+OracleConstants.QUOTE+OracleConstants.COMMA
-											+OracleConstants.QUOTE+tableDetails+OracleConstants.QUOTE+OracleConstants.COMMA
+									.replace("{$columns}", "job_id,job_name,batch_id,command,argument_1,monthly_flag,month_run_day,job_schedule_time")
+									.replace("{$data}",OracleConstants.QUOTE+feed_name+"_monthlyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
+											+OracleConstants.QUOTE+feed_name+"_monthlyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
+											+OracleConstants.QUOTE+feed_name+OracleConstants.QUOTE+OracleConstants.COMMA
+											+OracleConstants.QUOTE+SchedulerConstants.script_loc+OracleConstants.QUOTE+OracleConstants.COMMA
+											+OracleConstants.QUOTE+feed_name+OracleConstants.QUOTE+OracleConstants.COMMA
 											+OracleConstants.QUOTE+"Y"+OracleConstants.QUOTE+OracleConstants.COMMA
 											+OracleConstants.QUOTE+dates+OracleConstants.QUOTE+OracleConstants.COMMA
 											+OracleConstants.QUOTE+hours+":"+minutes+":00"+OracleConstants.QUOTE);
@@ -1949,15 +1861,12 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 								if(minutes.contains(",")) {
 									for(String minute:minutes.split(",")) {
 										insertQuery=OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.SCHEDULETABLE)
-												.replace("{$columns}", "job_id,job_name,batch_id,command,argument_1,argument_2,argument_3,argument_4,weekly_flag,week_run_day,job_schedule_time")
-												.replace("{$data}",OracleConstants.QUOTE+batchDto.getFeedDto().getFeed_name()+"_weeklyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
-														+OracleConstants.QUOTE+batchDto.getFeedDto().getFeed_name()+"_weeklyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
-														+OracleConstants.QUOTE+batchDto.getFeedDto().getFeed_name()+OracleConstants.QUOTE+OracleConstants.COMMA
-														+OracleConstants.QUOTE+"/home/juniper/scripts/pullDataNew.sh"+OracleConstants.QUOTE+OracleConstants.COMMA
-														+OracleConstants.QUOTE+connectionDetails+OracleConstants.QUOTE+OracleConstants.COMMA
-														+OracleConstants.QUOTE+sourceSysDetails+OracleConstants.QUOTE+OracleConstants.COMMA
-														+OracleConstants.QUOTE+targetDetails+OracleConstants.QUOTE+OracleConstants.COMMA
-														+OracleConstants.QUOTE+tableDetails+OracleConstants.QUOTE+OracleConstants.COMMA
+												.replace("{$columns}", "job_id,job_name,batch_id,command,argument_1,weekly_flag,week_run_day,job_schedule_time")
+												.replace("{$data}",OracleConstants.QUOTE+feed_name+"_weeklyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
+														+OracleConstants.QUOTE+feed_name+"_weeklyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
+														+OracleConstants.QUOTE+feed_name+OracleConstants.QUOTE+OracleConstants.COMMA
+														+OracleConstants.QUOTE+SchedulerConstants.script_loc+OracleConstants.QUOTE+OracleConstants.COMMA
+														+OracleConstants.QUOTE+feed_name+OracleConstants.QUOTE+OracleConstants.COMMA
 														+OracleConstants.QUOTE+"Y"+OracleConstants.QUOTE+OracleConstants.COMMA
 														+OracleConstants.QUOTE+day+OracleConstants.QUOTE+OracleConstants.COMMA
 														+OracleConstants.QUOTE+hour+":"+minute+":00"+OracleConstants.QUOTE);
@@ -1965,15 +1874,12 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 									}
 								}else {
 									insertQuery=OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.SCHEDULETABLE)
-											.replace("{$columns}", "job_id,job_name,batch_id,command,argument_1,argument_2,argument_3,argument_4,weekly_flag,week_run_day,job_schedule_time")
-											.replace("{$data}",OracleConstants.QUOTE+batchDto.getFeedDto().getFeed_name()+"_weekExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
-													+OracleConstants.QUOTE+batchDto.getFeedDto().getFeed_name()+"_weeklyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
-													+OracleConstants.QUOTE+batchDto.getFeedDto().getFeed_name()+OracleConstants.QUOTE+OracleConstants.COMMA
-													+OracleConstants.QUOTE+"/home/juniper/scripts/pullDataNew.sh"+OracleConstants.QUOTE+OracleConstants.COMMA
-													+OracleConstants.QUOTE+connectionDetails+OracleConstants.QUOTE+OracleConstants.COMMA
-													+OracleConstants.QUOTE+sourceSysDetails+OracleConstants.QUOTE+OracleConstants.COMMA
-													+OracleConstants.QUOTE+targetDetails+OracleConstants.QUOTE+OracleConstants.COMMA
-													+OracleConstants.QUOTE+tableDetails+OracleConstants.QUOTE+OracleConstants.COMMA
+											.replace("{$columns}", "job_id,job_name,batch_id,command,argument_1,weekly_flag,week_run_day,job_schedule_time")
+											.replace("{$data}",OracleConstants.QUOTE+feed_name+"_weekExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
+													+OracleConstants.QUOTE+feed_name+"_weeklyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
+													+OracleConstants.QUOTE+feed_name+OracleConstants.QUOTE+OracleConstants.COMMA
+													+OracleConstants.QUOTE+SchedulerConstants.script_loc+OracleConstants.QUOTE+OracleConstants.COMMA
+													+OracleConstants.QUOTE+feed_name+OracleConstants.QUOTE+OracleConstants.COMMA
 													+OracleConstants.QUOTE+"Y"+OracleConstants.QUOTE+OracleConstants.COMMA
 													+OracleConstants.QUOTE+day+OracleConstants.QUOTE+OracleConstants.COMMA
 													+OracleConstants.QUOTE+hour+":"+minutes+":00"+OracleConstants.QUOTE);
@@ -1985,15 +1891,12 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 							if(minutes.contains(",")) {
 								for(String minute:minutes.split(",")) {
 									insertQuery=OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.SCHEDULETABLE)
-											.replace("{$columns}", "job_id,job_name,batch_id,command,argument_1,argument_2,argument_3,argument_4,weekly_flag,week_run_day,job_schedule_time")
-											.replace("{$data}",OracleConstants.QUOTE+batchDto.getFeedDto().getFeed_name()+"_weeklyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
-													+OracleConstants.QUOTE+batchDto.getFeedDto().getFeed_name()+"_weeklyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
-													+OracleConstants.QUOTE+batchDto.getFeedDto().getFeed_name()+OracleConstants.QUOTE+OracleConstants.COMMA
-													+OracleConstants.QUOTE+"/home/juniper/scripts/pullDataNew.sh"+OracleConstants.QUOTE+OracleConstants.COMMA
-													+OracleConstants.QUOTE+connectionDetails+OracleConstants.QUOTE+OracleConstants.COMMA
-													+OracleConstants.QUOTE+sourceSysDetails+OracleConstants.QUOTE+OracleConstants.COMMA
-													+OracleConstants.QUOTE+targetDetails+OracleConstants.QUOTE+OracleConstants.COMMA
-													+OracleConstants.QUOTE+tableDetails+OracleConstants.QUOTE+OracleConstants.COMMA
+											.replace("{$columns}", "job_id,job_name,batch_id,command,argument_1,weekly_flag,week_run_day,job_schedule_time")
+											.replace("{$data}",OracleConstants.QUOTE+feed_name+"_weeklyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
+													+OracleConstants.QUOTE+feed_name+"_weeklyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
+													+OracleConstants.QUOTE+feed_name+OracleConstants.QUOTE+OracleConstants.COMMA
+													+OracleConstants.QUOTE+SchedulerConstants.script_loc+OracleConstants.QUOTE+OracleConstants.COMMA
+													+OracleConstants.QUOTE+feed_name+OracleConstants.QUOTE+OracleConstants.COMMA
 													+OracleConstants.QUOTE+"Y"+OracleConstants.QUOTE+OracleConstants.COMMA
 													+OracleConstants.QUOTE+day+OracleConstants.QUOTE+OracleConstants.COMMA
 													+OracleConstants.QUOTE+hours+":"+minute+":00"+OracleConstants.QUOTE);
@@ -2001,14 +1904,12 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 								}
 							}else {
 								insertQuery=OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.SCHEDULETABLE)
-										.replace("{$data}",OracleConstants.QUOTE+batchDto.getFeedDto().getFeed_name()+"_weeklyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
-												+OracleConstants.QUOTE+batchDto.getFeedDto().getFeed_name()+"_weeklyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
-												+OracleConstants.QUOTE+batchDto.getFeedDto().getFeed_name()+OracleConstants.QUOTE+OracleConstants.COMMA
-												+OracleConstants.QUOTE+"/home/juniper/scripts/pullDataNew.sh"+OracleConstants.QUOTE+OracleConstants.COMMA
-												+OracleConstants.QUOTE+connectionDetails+OracleConstants.QUOTE+OracleConstants.COMMA
-												+OracleConstants.QUOTE+sourceSysDetails+OracleConstants.QUOTE+OracleConstants.COMMA
-												+OracleConstants.QUOTE+targetDetails+OracleConstants.QUOTE+OracleConstants.COMMA
-												+OracleConstants.QUOTE+tableDetails+OracleConstants.QUOTE+OracleConstants.COMMA
+										.replace("{$columns}", "job_id,job_name,batch_id,command,argument_1,weekly_flag,week_run_day,job_schedule_time")
+										.replace("{$data}",OracleConstants.QUOTE+feed_name+"_weeklyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
+												+OracleConstants.QUOTE+feed_name+"_weeklyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
+												+OracleConstants.QUOTE+feed_name+OracleConstants.QUOTE+OracleConstants.COMMA
+												+OracleConstants.QUOTE+SchedulerConstants.script_loc+OracleConstants.QUOTE+OracleConstants.COMMA
+												+OracleConstants.QUOTE+feed_name+OracleConstants.QUOTE+OracleConstants.COMMA
 												+OracleConstants.QUOTE+"Y"+OracleConstants.QUOTE+OracleConstants.COMMA
 												+OracleConstants.QUOTE+day+OracleConstants.QUOTE+OracleConstants.COMMA
 												+OracleConstants.QUOTE+hours+":"+minutes+":00"+OracleConstants.QUOTE);
@@ -2022,14 +1923,12 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 							if(minutes.contains(",")) {
 								for(String minute:minutes.split(",")) {
 									insertQuery=OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.SCHEDULETABLE)
-											.replace("{$data}",OracleConstants.QUOTE+batchDto.getFeedDto().getFeed_name()+"_weeklyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
-													+OracleConstants.QUOTE+batchDto.getFeedDto().getFeed_name()+"_weeklyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
-													+OracleConstants.QUOTE+batchDto.getFeedDto().getFeed_name()+OracleConstants.QUOTE+OracleConstants.COMMA
-													+OracleConstants.QUOTE+"/home/juniper/scripts/pullDataNew.sh"+OracleConstants.QUOTE+OracleConstants.COMMA
-													+OracleConstants.QUOTE+connectionDetails+OracleConstants.QUOTE+OracleConstants.COMMA
-													+OracleConstants.QUOTE+sourceSysDetails+OracleConstants.QUOTE+OracleConstants.COMMA
-													+OracleConstants.QUOTE+targetDetails+OracleConstants.QUOTE+OracleConstants.COMMA
-													+OracleConstants.QUOTE+tableDetails+OracleConstants.QUOTE+OracleConstants.COMMA
+											.replace("{$columns}", "job_id,job_name,batch_id,command,argument_1,weekly_flag,week_run_day,job_schedule_time")
+											.replace("{$data}",OracleConstants.QUOTE+feed_name+"_weeklyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
+													+OracleConstants.QUOTE+feed_name+"_weeklyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
+													+OracleConstants.QUOTE+feed_name+OracleConstants.QUOTE+OracleConstants.COMMA
+													+OracleConstants.QUOTE+SchedulerConstants.script_loc+OracleConstants.QUOTE+OracleConstants.COMMA
+													+OracleConstants.QUOTE+feed_name+OracleConstants.QUOTE+OracleConstants.COMMA
 													+OracleConstants.QUOTE+"Y"+OracleConstants.QUOTE+OracleConstants.COMMA
 													+OracleConstants.QUOTE+daysOfWeek+OracleConstants.QUOTE+OracleConstants.COMMA
 													+OracleConstants.QUOTE+hour+":"+minute+":00"+OracleConstants.QUOTE);
@@ -2037,15 +1936,12 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 								}
 							}else {
 								insertQuery=OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.SCHEDULETABLE)
-										.replace("{$columns}", "job_id,job_name,batch_id,command,argument_1,argument_2,argument_3,argument_4,weekly_flag,week_run_day,job_schedule_time")
-										.replace("{$data}",OracleConstants.QUOTE+batchDto.getFeedDto().getFeed_name()+"_weeklyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
-												+OracleConstants.QUOTE+batchDto.getFeedDto().getFeed_name()+"_weeklyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
-												+OracleConstants.QUOTE+batchDto.getFeedDto().getFeed_name()+OracleConstants.QUOTE+OracleConstants.COMMA
-												+OracleConstants.QUOTE+"/home/juniper/scripts/pullDataNew.sh"+OracleConstants.QUOTE+OracleConstants.COMMA
-												+OracleConstants.QUOTE+connectionDetails+OracleConstants.QUOTE+OracleConstants.COMMA
-												+OracleConstants.QUOTE+sourceSysDetails+OracleConstants.QUOTE+OracleConstants.COMMA
-												+OracleConstants.QUOTE+targetDetails+OracleConstants.QUOTE+OracleConstants.COMMA
-												+OracleConstants.QUOTE+tableDetails+OracleConstants.QUOTE+OracleConstants.COMMA
+										.replace("{$columns}", "job_id,job_name,batch_id,command,argument_1,weekly_flag,week_run_day,job_schedule_time")
+										.replace("{$data}",OracleConstants.QUOTE+feed_name+"_weeklyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
+												+OracleConstants.QUOTE+feed_name+"_weeklyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
+												+OracleConstants.QUOTE+feed_name+OracleConstants.QUOTE+OracleConstants.COMMA
+												+OracleConstants.QUOTE+SchedulerConstants.script_loc+OracleConstants.QUOTE+OracleConstants.COMMA
+												+OracleConstants.QUOTE+feed_name+OracleConstants.QUOTE+OracleConstants.COMMA
 												+OracleConstants.QUOTE+"Y"+OracleConstants.QUOTE+OracleConstants.COMMA
 												+OracleConstants.QUOTE+daysOfWeek+OracleConstants.QUOTE+OracleConstants.COMMA
 												+OracleConstants.QUOTE+hour+":"+minutes+":00"+OracleConstants.QUOTE);
@@ -2057,15 +1953,12 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 						if(minutes.contains(",")) {
 							for(String minute:minutes.split(",")) {
 								insertQuery=OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.SCHEDULETABLE)
-										.replace("{$columns}", "job_id,job_name,batch_id,command,argument_1,argument_2,argument_3,argument_4,weekly_flag,week_run_day,job_schedule_time")
-										.replace("{$data}",OracleConstants.QUOTE+batchDto.getFeedDto().getFeed_name()+"_weeklyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
-												+OracleConstants.QUOTE+batchDto.getFeedDto().getFeed_name()+"_weeklyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
-												+OracleConstants.QUOTE+batchDto.getFeedDto().getFeed_name()+OracleConstants.QUOTE+OracleConstants.COMMA
-												+OracleConstants.QUOTE+"/home/juniper/scripts/pullDataNew.sh"+OracleConstants.QUOTE+OracleConstants.COMMA
-												+OracleConstants.QUOTE+connectionDetails+OracleConstants.QUOTE+OracleConstants.COMMA
-												+OracleConstants.QUOTE+sourceSysDetails+OracleConstants.QUOTE+OracleConstants.COMMA
-												+OracleConstants.QUOTE+targetDetails+OracleConstants.QUOTE+OracleConstants.COMMA
-												+OracleConstants.QUOTE+tableDetails+OracleConstants.QUOTE+OracleConstants.COMMA
+										.replace("{$columns}", "job_id,job_name,batch_id,command,argument_1,weekly_flag,week_run_day,job_schedule_time")
+										.replace("{$data}",OracleConstants.QUOTE+feed_name+"_weeklyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
+												+OracleConstants.QUOTE+feed_name+"_weeklyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
+												+OracleConstants.QUOTE+feed_name+OracleConstants.QUOTE+OracleConstants.COMMA
+												+OracleConstants.QUOTE+SchedulerConstants.script_loc+OracleConstants.QUOTE+OracleConstants.COMMA
+												+OracleConstants.QUOTE+feed_name+OracleConstants.QUOTE+OracleConstants.COMMA
 												+OracleConstants.QUOTE+"Y"+OracleConstants.QUOTE+OracleConstants.COMMA
 												+OracleConstants.QUOTE+daysOfWeek+OracleConstants.QUOTE+OracleConstants.COMMA
 												+OracleConstants.QUOTE+hours+":"+minute+":00"+OracleConstants.QUOTE);
@@ -2073,15 +1966,12 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 							}
 						}else {
 							insertQuery=OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.SCHEDULETABLE)
-									.replace("{$columns}", "job_id,job_name,batch_id,command,argument_1,argument_2,argument_3,argument_4,weekly_flag,week_run_day,job_schedule_time")
-									.replace("{$data}",OracleConstants.QUOTE+batchDto.getFeedDto().getFeed_name()+"_weeklyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
-											+OracleConstants.QUOTE+batchDto.getFeedDto().getFeed_name()+"_weeklyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
-											+OracleConstants.QUOTE+batchDto.getFeedDto().getFeed_name()+OracleConstants.QUOTE+OracleConstants.COMMA
-											+OracleConstants.QUOTE+"/home/juniper/scripts/pullDataNew.sh"+OracleConstants.QUOTE+OracleConstants.COMMA
-											+OracleConstants.QUOTE+connectionDetails+OracleConstants.QUOTE+OracleConstants.COMMA
-											+OracleConstants.QUOTE+sourceSysDetails+OracleConstants.QUOTE+OracleConstants.COMMA
-											+OracleConstants.QUOTE+targetDetails+OracleConstants.QUOTE+OracleConstants.COMMA
-											+OracleConstants.QUOTE+tableDetails+OracleConstants.QUOTE+OracleConstants.COMMA
+									.replace("{$columns}", "job_id,job_name,batch_id,command,argument_1,weekly_flag,week_run_day,job_schedule_time")
+									.replace("{$data}",OracleConstants.QUOTE+feed_name+"_weeklyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
+											+OracleConstants.QUOTE+feed_name+"_weeklyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
+											+OracleConstants.QUOTE+feed_name+OracleConstants.QUOTE+OracleConstants.COMMA
+											+OracleConstants.QUOTE+SchedulerConstants.script_loc+OracleConstants.QUOTE+OracleConstants.COMMA
+											+OracleConstants.QUOTE+feed_name+OracleConstants.QUOTE+OracleConstants.COMMA
 											+OracleConstants.QUOTE+"Y"+OracleConstants.QUOTE+OracleConstants.COMMA
 											+OracleConstants.QUOTE+daysOfWeek+OracleConstants.QUOTE+OracleConstants.COMMA
 											+OracleConstants.QUOTE+hours+":"+minutes+":00"+OracleConstants.QUOTE);
