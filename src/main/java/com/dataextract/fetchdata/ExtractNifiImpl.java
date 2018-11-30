@@ -1,15 +1,8 @@
 package com.dataextract.fetchdata;
 
-
-
-import java.io.ByteArrayInputStream;
-
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.Map;
-import java.util.Properties;
 import java.util.Random;
 import java.util.UUID;
 import org.apache.http.HttpEntity;
@@ -29,7 +22,6 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
-import com.dataextract.constants.GenericConstants;
 import com.dataextract.constants.NifiConstants;
 import com.dataextract.dao.IExtractionDAO;
 import com.dataextract.dto.FileMetadataDto;
@@ -37,12 +29,7 @@ import com.dataextract.dto.RealTimeExtractDto;
 import com.dataextract.dto.TableMetadataDto;
 import com.dataextract.dto.TargetDto;
 import com.dataextract.repositories.DataExtractRepositories;
-import com.jcraft.jsch.Channel;
-import com.jcraft.jsch.ChannelSftp;
-import com.jcraft.jsch.JSch;
-import com.jcraft.jsch.JSchException;
-import com.jcraft.jsch.Session;
-import com.jcraft.jsch.SftpException;
+
 
 @Repository
 public class ExtractNifiImpl implements IExtract {
@@ -181,11 +168,27 @@ public class ExtractNifiImpl implements IExtract {
 	
 	}
 	
+	@SuppressWarnings("static-access")
 	@Override
 	public String callNifiUnixRealTime(RealTimeExtractDto rtExtractDto, String date, Long runId) throws UnsupportedOperationException, Exception {
+		int index=0;
+		String trigger_flag="N";
+		String processGroupStatus="";
+		do {
+			Thread.currentThread().sleep(10000);
+			index=1;
+			//index=getRandomNumberInRange(1, NifiConstants.NOOFUNIXPROCESSORS);
+			processGroupStatus=dataExtractRepositories.checkProcessGroupStatus(index,rtExtractDto.getConnDto().getConn_type());
+			if(processGroupStatus.equalsIgnoreCase("FREE")) {
+				
+				trigger_flag="Y";
+				
+			}
+			
+		}while(trigger_flag.equalsIgnoreCase("N"));
 		
 		String listener=NifiConstants.UNIXLISTENER1;
-		JSONArray jsonArr=createUnixJsonObject(rtExtractDto,date, runId);
+		JSONArray jsonArr=createUnixJsonObject(rtExtractDto,index,date, runId);
 		invokeNifiFull(jsonArr,listener);
 		return "success";
 		
@@ -408,6 +411,7 @@ public class ExtractNifiImpl implements IExtract {
 		String clientId="";
 		String controllerVersion="";
 		String password=iExtract.decyptPassword(encrypted_key, encrypted_password);
+		System.out.println("decrypted password is "+password);
 		
 		do {
 			Thread.currentThread().sleep(5000);
@@ -629,38 +633,55 @@ public class ExtractNifiImpl implements IExtract {
 	}
 	
 	@SuppressWarnings("unchecked")
-	private  JSONArray createUnixJsonObject(RealTimeExtractDto rtExtractDto,String date,Long runId) {
+	private  JSONArray createUnixJsonObject(RealTimeExtractDto rtExtractDto,int index,String date,Long runId) throws Exception {
 
 		JSONArray arr = new JSONArray();
+		StringBuffer gcsTarget=new StringBuffer();
+		StringBuffer hdfsTarget=new StringBuffer();
 		for(FileMetadataDto file: rtExtractDto.getFileInfoDto().getFileMetadataArr()) {
 			JSONObject json=new JSONObject();
+			json.put("process_group", index);
+			json.put("project_sequence", rtExtractDto.getFeedDto().getProject_sequence());
+			json.put("feed_id", rtExtractDto.getFeedDto().getFeed_id());
+			json.put("file_sequence", file.getFile_sequence());
 			json.put("file_name", file.getFile_name());
 			json.put("avro_conv_flg", file.getAvro_conv_flag());
 			json.put("field_list", file.getField_list());
+			json.put("date", date);
 			json.put("file_type", file.getFile_type());
 			json.put("file_delimiter", file.getFile_delimiter());
-			json.put("src_unique_name", rtExtractDto.getFeedDto().getFeed_name());
+			json.put("feed_name", rtExtractDto.getFeedDto().getFeed_name());
 			json.put("country_code", rtExtractDto.getFeedDto().getCountry_code());
 			json.put("file_path", rtExtractDto.getFeedDto().getFilePath());
 			json.put("run_id", runId);
 			json.put("date", date);
-			int i=1;
 			for(TargetDto targetDto :rtExtractDto.getTargetArr()) {
 				if(targetDto.getTarget_type().equalsIgnoreCase("gcs")) {
-					json.put("target_type"+Integer.toString(i), "gcs");
-					json.put("bucket"+Integer.toString(i), targetDto.getTarget_bucket());
+					gcsTarget.append(targetDto.getTarget_project()+"~");
+					gcsTarget.append(targetDto.getService_account()+"~");
+					gcsTarget.append(targetDto.getTarget_bucket()+",");
 				}
 				if(targetDto.getTarget_type().equalsIgnoreCase("hdfs")) {
-					json.put("target_type"+Integer.toString(i), "hdfs");
-					json.put("knox_url"+Integer.toString(i), targetDto.getTarget_knox_url());
-					json.put("knox_user"+Integer.toString(i), targetDto.getTarget_user());
-					json.put("knox_password"+Integer.toString(i), targetDto.getTarget_password());
-					json.put("hdfs_path"+Integer.toString(i), targetDto.getTarget_hdfs_path());
+					
+					String password=iExtract.decyptPassword(targetDto.getEncrypted_key(), targetDto.getEncrypted_password());
+					
+					hdfsTarget.append(targetDto.getTarget_knox_url()+"~");
+					hdfsTarget.append(targetDto.getTarget_user()+"~");
+					hdfsTarget.append(password+"~");
+					hdfsTarget.append(targetDto.getTarget_hdfs_path()+",");
 				}
 				
-				i++;
+				
 			}
-		
+			if(gcsTarget.length()>1) {
+				gcsTarget.setLength(gcsTarget.length()-1);
+				json.put("gcsTarget", gcsTarget.toString());
+			}
+			if(hdfsTarget.length()>1) {
+				hdfsTarget.setLength(hdfsTarget.length()-1);
+				json.put("hdfsTarget", hdfsTarget.toString());
+			}
+			
 			arr.add(json);
 			
 		}

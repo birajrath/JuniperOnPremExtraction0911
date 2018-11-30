@@ -466,9 +466,11 @@ public class DataExtractController {
 		String status="";
 		String message="";
 		String response="";
-		String src_sys_id_str= (String) requestDto.getBody().get("data").get("src_sys_id");
+		String feed_id_str= (String) requestDto.getBody().get("data").get("feed_id");
 		String dataPath=(String) requestDto.getBody().get("data").get("data_path");
-		int src_sys_id=Integer.parseInt(src_sys_id_str);
+		String project=(String) requestDto.getBody().get("data").get("project");
+		String user=(String) requestDto.getBody().get("data").get("user");
+		int feed_id=Integer.parseInt(feed_id_str);
 		ArrayList<Map<String,String>> fileMetadata=(ArrayList<Map<String,String>>) requestDto.getBody().get("data").get("file_details");
 		ArrayList<Map<String,String>> fieldMetadata=(ArrayList<Map<String,String>>) requestDto.getBody().get("data").get("field_details");
 		ArrayList<FileMetadataDto> fileMetadataArr= new ArrayList<FileMetadataDto>();
@@ -482,21 +484,44 @@ public class DataExtractController {
 			fileMetadataDto.setHeader_count((String)file.get("header_count"));
 			fileMetadataDto.setTrailer_count((String)file.get("trailer_count"));
 			fileMetadataDto.setAvro_conv_flag((String)file.get("avro_conv_flag"));
+			fileMetadataDto.setBus_dt_format((String)file.get("bus_dt_format"));
+			fileMetadataDto.setBus_dt_loc((String)(file.get("bus_dt_loc")));
+			fileMetadataDto.setBus_dt_start(Integer.parseInt(file.get("bus_dt_start")));
+			fileMetadataDto.setCount_loc((String)file.get("count_loc"));
+			String count_start=file.get("count_start");
+			if(count_start==null||count_start.isEmpty()) {
+				fileMetadataDto.setCount_start(Integer.parseInt(file.get("count_start")));
+			}
+			String count_length=file.get("count_legnth");
+			if(count_length==null||count_length.isEmpty()) {
+				fileMetadataDto.setCount_legnth(Integer.parseInt(file.get("count_legnth")));
+			}
+			
             fileMetadataArr.add(fileMetadataDto);
 		}
 		for(Map<String,String> field:fieldMetadata) {
 			FieldMetadataDto fieldMetadataDto=new FieldMetadataDto();
 			fieldMetadataDto.setFile_name((String)field.get("file_id"));
 			fieldMetadataDto.setField_name((String)field.get("field_name"));
-			fieldMetadataDto.setField_position((String)field.get("field_pos"));
+			String field_pos=field.get("field_pos");
+			if(!(field_pos==null||field_pos.isEmpty())) {
+				fieldMetadataDto.setField_position(Integer.parseInt(field_pos));
+			}
+			
+			String length=(String)field.get("length");
+			if(!(length==null||length.isEmpty())) {
+				fieldMetadataDto.setLength(Integer.parseInt(field.get("length")));
+			}
 			fieldMetadataDto.setField_datatype((String)field.get("field_datatype"));
             fieldMetadataArr.add(fieldMetadataDto);
 			
 		}
             
       FileInfoDto fileInfoDto=new FileInfoDto();
-      fileInfoDto.setSrc_sys_id(src_sys_id);
+      fileInfoDto.setFeed_id(feed_id);
       fileInfoDto.setDataPath(dataPath);
+      fileInfoDto.setProject(project);
+      fileInfoDto.setJuniper_user(user);
       fileInfoDto.setFileMetadataArr(fileMetadataArr);
       fileInfoDto.setFieldMetadataArr(fieldMetadataArr);
       
@@ -557,6 +582,7 @@ public class DataExtractController {
 		String message="";
 		RealTimeExtractDto rtExtractDto = new RealTimeExtractDto();
 		String feed_name=requestDto.getBody().get("data").get("feed_name");
+		
 		rtExtractDto.setConnDto(dataExtractRepositories.getConnectionObject(feed_name));
 		rtExtractDto.setFeedDto(dataExtractRepositories.getFeedObject(feed_name));
 		String targetList=rtExtractDto.getFeedDto().getTarget();
@@ -610,13 +636,14 @@ public class DataExtractController {
 		String message="";
 		
 		String feed_name=requestDto.getBody().get("data").get("feed_name");
+		String project=requestDto.getBody().get("data").get("project");
 		String cron=requestDto.getBody().get("data").get("cron");
 		
 		
 		
 		
 		try {
-			 response=dataExtractRepositories.batchExtract(feed_name,cron);
+			 response=dataExtractRepositories.batchExtract(feed_name,project,cron);
 			if(response.equalsIgnoreCase("success")) {
 				status="Success";
 				message="Batch Scheduled Successfully";

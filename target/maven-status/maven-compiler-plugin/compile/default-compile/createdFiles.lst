@@ -35,6 +35,7 @@ com/dataextract/driver/DataExtractionApplication.class
 com/dataextract/dto/FieldMetadataDto.class
 com/dataextract/dto/ResponseDto.class
 com/dataextract/constants/OracleConstants.class
+com/dataextract/constants/StagingServerConstants.class
 com/dataextract/dto/DataExtractDto.class
 com/dataextract/dto/BatchExtractDto.class
 com/dataextract/fetchdata/ExtractNifiImpl.class

@@ -5,24 +5,42 @@ import java.util.ArrayList;
 public class FileInfoDto {
 	
 	
-	int src_sys_id;
+	int feed_id;
 	String dataPath;
 	ArrayList<FileMetadataDto> fileMetadataArr;
 	ArrayList<FieldMetadataDto> fieldMetadataArr;
+	String project;
+	String juniper_user;
 	
 	
 	
+	
+	
+	public String getProject() {
+		return project;
+	}
+	public void setProject(String project) {
+		this.project = project;
+	}
+	
+	public String getJuniper_user() {
+		return juniper_user;
+	}
+	public void setJuniper_user(String juniper_user) {
+		this.juniper_user = juniper_user;
+	}
 	public String getDataPath() {
 		return dataPath;
 	}
 	public void setDataPath(String dataPath) {
 		this.dataPath = dataPath;
 	}
-	public int getSrc_sys_id() {
-		return src_sys_id;
+	
+	public int getFeed_id() {
+		return feed_id;
 	}
-	public void setSrc_sys_id(int src_sys_id) {
-		this.src_sys_id = src_sys_id;
+	public void setFeed_id(int feed_id) {
+		this.feed_id = feed_id;
 	}
 	public ArrayList<FileMetadataDto> getFileMetadataArr() {
 		return fileMetadataArr;

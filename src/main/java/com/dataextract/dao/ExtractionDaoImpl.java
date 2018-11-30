@@ -30,10 +30,9 @@ import org.json.simple.parser.JSONParser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import com.dataextract.constants.EncryptionConstants;
-import com.dataextract.constants.NifiConstants;
 import com.dataextract.constants.OracleConstants;
 import com.dataextract.constants.SchedulerConstants;
-import com.dataextract.dto.BatchExtractDto;
+import com.dataextract.constants.StagingServerConstants;
 import com.dataextract.dto.ConnectionDto;
 import com.dataextract.dto.FieldMetadataDto;
 import com.dataextract.dto.FileInfoDto;
@@ -87,7 +86,9 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 		PreparedStatement pstm=null;
 		if(system_sequence!=0 && project_sequence!=0) {
 			
-			    encrypted_key=getEncryptedKey(conn,system_sequence,project_sequence);
+			if(!(dto.getPassword()==null||dto.getPassword().isEmpty())) {
+				
+				encrypted_key=getEncryptedKey(conn,system_sequence,project_sequence);
 			    if(encrypted_key==null) {
 			    	
 			    	return "Encryption key not found";
@@ -99,6 +100,8 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 			    }
 			    	
 			  }
+			}
+			    
 		
 		if(dto.getConn_type().equalsIgnoreCase("ORACLE")||dto.getConn_type().equalsIgnoreCase("HADOOP")||dto.getConn_type().equalsIgnoreCase("TERADATA")) 
 		{
@@ -919,18 +922,16 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 	
 		StringBuffer fileList=new StringBuffer();
 		String insertFileMaster="";
+		String insertFieldMaster="";
 		String sequence="";
-		String file_path=getFilePath(conn, fileInfoDto.getSrc_sys_id(),fileInfoDto.getDataPath());
+		String file_path=getFilePath(conn, fileInfoDto.getFeed_id(),fileInfoDto.getDataPath());
 		String put_status;
+		int project_sequence=getProjectSequence(conn, fileInfoDto.getProject());
+		String juniper_user=fileInfoDto.getJuniper_user();
+		
+		
 		for(FileMetadataDto file:fileInfoDto.getFileMetadataArr()) {
-			StringBuffer fieldList=new StringBuffer();
-			for(FieldMetadataDto field:fileInfoDto.getFieldMetadataArr()) {
-				
-				if(field.getFile_name().equalsIgnoreCase(file.getFile_name())) {
-					fieldList.append(field.getField_name()+",");
-				}
-			}
-			fieldList.setLength(fieldList.length()-1);
+			
 			String delimiter="";
 			if(file.getFile_delimiter().equalsIgnoreCase("comma")) {
 				delimiter=",";
@@ -948,28 +949,31 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 				delimiter=null;
 			}
 			insertFileMaster=OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.FILEDETAILSTABLE)
-					.replace("{$columns}","src_sys_id,file_name,file_type,file_delimiter,header_count,trailer_count,field_list,avro_conv_flg" )
-					.replace("{$data}",fileInfoDto.getSrc_sys_id() +OracleConstants.COMMA
+					.replace("{$columns}","feed_sequence,file_name,file_type,file_delimiter,header_count,trailer_count,avro_conv_flg,bus_dt_format,bus_dt_loc,bus_dt_start,count_loc,count_start,count_length,project_sequence,created_by" )
+					.replace("{$data}",fileInfoDto.getFeed_id() +OracleConstants.COMMA
 							+OracleConstants.QUOTE+file.getFile_name()+OracleConstants.QUOTE+OracleConstants.COMMA
 							+OracleConstants.QUOTE+file.getFile_type()+OracleConstants.QUOTE+OracleConstants.COMMA
 							+OracleConstants.QUOTE+delimiter+OracleConstants.QUOTE+OracleConstants.COMMA
 							+file.getHeader_count()+OracleConstants.COMMA
 							+file.getTrailer_count()+OracleConstants.COMMA
-							+OracleConstants.QUOTE+fieldList+OracleConstants.QUOTE+OracleConstants.COMMA
-							+OracleConstants.QUOTE+file.getAvro_conv_flag()+OracleConstants.QUOTE
+							+OracleConstants.QUOTE+file.getAvro_conv_flag()+OracleConstants.QUOTE+OracleConstants.COMMA
+							+OracleConstants.QUOTE+file.getBus_dt_format()+OracleConstants.QUOTE+OracleConstants.COMMA
+							+OracleConstants.QUOTE+file.getBus_dt_loc()+OracleConstants.QUOTE+OracleConstants.COMMA
+							+file.getBus_dt_start()+OracleConstants.COMMA
+							+OracleConstants.QUOTE+file.getCount_loc()+OracleConstants.QUOTE+OracleConstants.COMMA
+							+file.getCount_start()+OracleConstants.COMMA
+							+file.getCount_legnth()+OracleConstants.COMMA
+							+project_sequence+OracleConstants.COMMA
+							+OracleConstants.QUOTE+juniper_user+OracleConstants.QUOTE
 							);
 			try {	
 				Statement statement = conn.createStatement();
-				System.out.println(insertFileMaster);
 				 statement.executeUpdate(insertFileMaster);
-				 String query=OracleConstants.GETSEQUENCEID.replace("${tableName}", OracleConstants.FILEDETAILSTABLE).replace("${columnName}", "FILE_ID");
-				 System.out.println("query is "+query);
+				 String query=OracleConstants.GETSEQUENCEID.replace("${tableName}", OracleConstants.FILEDETAILSTABLE).replace("${columnName}", "FILE_SEQUENCE");
 				 ResultSet rs=statement.executeQuery(query);
 				 if(rs.isBeforeFirst()) {
 					 rs.next();
 					 sequence=rs.getString(1).split("\\.")[1];
-					 //System.out.println("sequence is "+sequence);
-					 //statement.executeQuery("select "+sequence+".nextval from dual");
 					 rs=statement.executeQuery(OracleConstants.GETLASTROWID.replace("${id}", sequence));
 					 if(rs.isBeforeFirst()) {
 						 rs.next();
@@ -988,12 +992,47 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 			
 			
 		}
+		
+		for(FileMetadataDto file:fileInfoDto.getFileMetadataArr()) {
+		
+			for(FieldMetadataDto field:fileInfoDto.getFieldMetadataArr()) {
+				if(field.getFile_name().equalsIgnoreCase(file.getFile_name())) {
+					
+					insertFieldMaster=OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.FIELDDETAILSTABLE)
+							.replace("{$columns}","feed_sequence,file_name,field_pos,field_name,field_data_type,project_sequence,created_by" )
+							.replace("{$data}",fileInfoDto.getFeed_id()+OracleConstants.COMMA
+									+OracleConstants.QUOTE+file.getFile_name()+OracleConstants.QUOTE+OracleConstants.COMMA
+									+field.getField_position()+OracleConstants.COMMA
+									+OracleConstants.QUOTE+field.getField_name()+OracleConstants.QUOTE+OracleConstants.COMMA
+									+OracleConstants.QUOTE+field.getField_datatype()+OracleConstants.QUOTE+OracleConstants.COMMA
+									+project_sequence+OracleConstants.COMMA
+									+OracleConstants.QUOTE+juniper_user+OracleConstants.QUOTE);
+					try {	
+						Statement statement = conn.createStatement();
+						 statement.executeUpdate(insertFieldMaster);
+						 
+						
+					}catch (SQLException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+						//TODO: Log the error message
+						return e.getMessage();
+						
+						
+					}
+					
+				}
+			}
+			
+		}
+		
+		
+		
 		fileList.setLength(fileList.length()-1);
 		String fileListStr=fileList.toString();
 		String updateExtractionMaster="update "+OracleConstants.FEEDTABLE+" set file_list="+OracleConstants.QUOTE+fileListStr+OracleConstants.QUOTE+OracleConstants.COMMA
 				+ "file_path="+OracleConstants.QUOTE+file_path+OracleConstants.QUOTE
-				+" where src_sys_id="+fileInfoDto.getSrc_sys_id();
-		System.out.println("update query is "+updateExtractionMaster);
+				+" where feed_sequence="+fileInfoDto.getFeed_id();
 		try {	
 			Statement statement = conn.createStatement();
 			statement.execute(updateExtractionMaster);
@@ -1033,11 +1072,10 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 			
 			try {
 				JSch obj_JSch = new JSch();
-				//obj_JSch.addIdentity("/Users/birajrath/.ssh/id_rsa");
 				Session obj_Session = null;
-				obj_Session = obj_JSch.getSession("extraction_user", NifiConstants.NIFINSTANCEIP);
+				obj_Session = obj_JSch.getSession(StagingServerConstants.stagingServerUser, StagingServerConstants.stagingServerIp);
 				obj_Session.setPort(22);
-				obj_Session.setPassword("Infy@123");
+				obj_Session.setPassword(StagingServerConstants.stagingServerUserPassword);
 				Properties obj_Properties = new Properties();
 				obj_Properties.put("StrictHostKeyChecking", "no");
 				obj_Session.setConfig(obj_Properties);
@@ -1045,16 +1083,20 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 				Channel obj_Channel = obj_Session.openChannel("sftp");
 				obj_Channel.connect();
 				ChannelSftp obj_SFTPChannel = (ChannelSftp) obj_Channel;
-				fileDetails.append("src_sys_id,file_name,file_type,file_delimiter,header_count,trailer_count,avro_conv_flg");
+				fileDetails.append("feed_sequence,file_name,file_type,file_delimiter,header_count,trailer_count,avro_conv_flg,bus_dt_format,bus_dt_loc,bus_dt_start,count_loc,count_start,count_length");
 				fileDetails.append("\n");
 				for(FileMetadataDto file:fileInfoDto.getFileMetadataArr()) {
-					fileDetails.append(fileInfoDto.getSrc_sys_id()+","+file.getFile_name()+","+file.getFile_type()+","+file.getFile_delimiter()+","+file.getHeader_count()+","+file.getTrailer_count()+","+file.getAvro_conv_flag());
+					fileDetails.append(fileInfoDto.getFeed_id()+","+file.getFile_name()+","+file.getFile_type()+","+file.getFile_delimiter()
+					+","+file.getHeader_count()+","+file.getTrailer_count()+","+file.getAvro_conv_flag()
+					+","+file.getBus_dt_format()+","+file.getBus_dt_loc()+","+file.getBus_dt_start()
+					+","+file.getCount_loc()+","+file.getCount_start()+","+file.getCount_legnth());
+					
 					fileDetails.append("\n");
 				}
-				fieldDetails.append("src_sys_id,file_id,field_pos,field_name,field_datatype");
+				fieldDetails.append("feed_sequence,file_id,field_pos,length,field_name,field_datatype");
 				fieldDetails.append("\n");
 				for(FieldMetadataDto field:fileInfoDto.getFieldMetadataArr()) {
-					fieldDetails.append(fileInfoDto.getSrc_sys_id()+","+field.getFile_name()+","+field.getField_position()+","+field.getField_name()+","+field.getField_datatype());
+					fieldDetails.append(fileInfoDto.getFeed_id()+","+field.getFile_name()+","+field.getField_position()+","+field.getLength()+","+field.getField_name()+","+field.getField_datatype());
 					fieldDetails.append("\n");
 				}
 				InputStream fileInputStream = new ByteArrayInputStream(fileDetails.toString().getBytes());
@@ -1085,9 +1127,9 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 
 	}
 
-	private String getFilePath(Connection conn,int src_sys_id, String dataPath) {
+	private String getFilePath(Connection conn,int feed_id, String dataPath) {
 
-		String query1="select connection_id from "+OracleConstants.FEEDTABLE+" where src_sys_id="+src_sys_id;
+		String query1="select src_conn_sequence from "+OracleConstants.FEEDTABLE+" where feed_sequence="+feed_id;
 		int conn_id;
 		int drive_id;
 		String drive_path;
@@ -1098,12 +1140,12 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 			if(rs.isBeforeFirst()) {
 				rs.next();
 				conn_id=rs.getInt(1);
-				String query2="select drive_id from "+OracleConstants.CONNECTIONTABLE+" where connection_id="+conn_id;
+				String query2="select drive_sequence from "+OracleConstants.CONNECTIONTABLE+" where src_conn_sequence="+conn_id;
 				rs=statement.executeQuery(query2);
 				if(rs.isBeforeFirst()) {
 					rs.next();
 					drive_id=rs.getInt(1);
-					String query3="select mounted_path from "+OracleConstants.DRIVETABLE+" where drive_id="+drive_id;
+					String query3="select mounted_path from "+OracleConstants.DRIVETABLE+" where drive_sequence="+drive_id;
 					rs=statement.executeQuery(query3);
 					if(rs.isBeforeFirst()) {
 						rs.next();
@@ -1145,7 +1187,6 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 					connDto.setUserName(rs.getString(4));
 					connDto.setEncrypted_password(rs.getBytes(5));
 					connDto.setEncr_key(rs.getBytes(6));
-					
 					connDto.setDbName(rs.getString(7));
 					connDto.setServiceName(rs.getString(8));
 					String drive_id=rs.getString(9);
@@ -1347,29 +1388,53 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 	public FileInfoDto getFileInfoObject(Connection conn, String fileList) throws SQLException{
 		FileInfoDto fileInfoDto= new FileInfoDto();
 		ArrayList<FileMetadataDto> fileMetadataArr=new ArrayList<FileMetadataDto>();
+		
 		String[] fileIds=fileList.split(",");
 		try {
 			for(String fileId:fileIds) {
-				String query="select file_name,file_type,file_delimiter,header_count,trailer_count,field_list,avro_conv_flg from "+OracleConstants.FILEDETAILSTABLE+" where file_sequence="+fileId;
+				StringBuffer fieldList=new StringBuffer();
+				FileMetadataDto fileMetadataDto= new FileMetadataDto();
+				String query="select file_name,file_type,file_delimiter,header_count,trailer_count,avro_conv_flg,bus_dt_format,bus_dt_loc,bus_dt_start,count_loc,count_start,count_length from "+OracleConstants.FILEDETAILSTABLE+" where file_sequence="+fileId;
 				Statement statement=conn.createStatement();
 				ResultSet rs = statement.executeQuery(query);
 				if(rs.isBeforeFirst()) {
 					rs.next();
-					FileMetadataDto fileMetadataDto= new FileMetadataDto();
+					fileMetadataDto.setFile_sequence(Integer.parseInt(fileId));
 					fileMetadataDto.setFile_name(rs.getString(1));
 					fileMetadataDto.setFile_type(rs.getString(2));
 					fileMetadataDto.setFile_delimiter(rs.getString(3));
 					fileMetadataDto.setHeader_count(rs.getString(4));
 					fileMetadataDto.setTrailer_count(rs.getString(5));
-					fileMetadataDto.setField_list(rs.getString(6));
-					fileMetadataDto.setAvro_conv_flag(rs.getString(7));
-					fileMetadataArr.add(fileMetadataDto);
+					fileMetadataDto.setAvro_conv_flag(rs.getString(6));
+					fileMetadataDto.setBus_dt_format(rs.getString(7));
+					fileMetadataDto.setBus_dt_loc(rs.getString(8));
+					fileMetadataDto.setBus_dt_start(Integer.parseInt(rs.getString(9)));
+					fileMetadataDto.setCount_loc(rs.getString(10));
+					fileMetadataDto.setCount_start(Integer.parseInt(rs.getString(11)));
+					fileMetadataDto.setCount_legnth(Integer.parseInt(rs.getString(12)));
+					
 				}
-			
+				
+				String query2="select fd.field_name from "+OracleConstants.FIELDDETAILSTABLE
+						+" fd inner join "+OracleConstants.FILEDETAILSTABLE
+						+" fi on fi.file_name=fd.file_name where fi.file_sequence="+fileId;
+				ResultSet rs2 = statement.executeQuery(query2);
+				if(rs2.isBeforeFirst()) {
+					while(rs2.next()) {
+						fieldList.append(rs2.getString(1)+",");
+					}
+					fieldList.setLength(fieldList.length()-1);
+					fileMetadataDto.setField_list(fieldList.toString());
+					
+				
+				}
+				
+			fileMetadataArr.add(fileMetadataDto);
 				
 			}
 		}catch(SQLException e) {
 			e.printStackTrace();
+			throw e;
 		}finally {
 			conn.close();
 		}
@@ -1542,15 +1607,12 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 
 	
 	@Override
-	public String createDag(Connection conn,String feed_name, String cron) throws SQLException{
+	public String createDag(Connection conn,String feed_name, String project,String cron) throws SQLException{
 
-		StringBuffer targetDetails=new StringBuffer();
-		String connectionDetails="";
-		String dataDetails="";
+	 
 		
 		
-		
-		String status=insertScheduleMetadata(conn,feed_name,cron);
+		String status=insertScheduleMetadata(conn,feed_name,project,cron);
 		if(status.equalsIgnoreCase("success")) {
 			return "success";
 		}
@@ -1609,7 +1671,7 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 
 
 
-	private String insertScheduleMetadata(Connection conn,String feed_name,String cron) throws SQLException {
+	private String insertScheduleMetadata(Connection conn,String feed_name,String project,String cron) throws SQLException {
 		
 		Statement statement=conn.createStatement();
 		String insertQuery="";
@@ -1623,6 +1685,9 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 		String dates=temp[2];
 		String months=temp[3];
 		String daysOfWeek=temp[4];
+		int project_sequence=0;
+		
+		project_sequence=getProjectSequence(conn, project);
 		if(hours.equals("*")&&dates.equals("*")&&months.equals("*")&&(daysOfWeek.equals("*")) ) {
 			hourlyFlag="Y";
 		}
@@ -1648,14 +1713,15 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 						if(minutes.contains(",")) {
 							for(String minute:minutes.split(",")) {
 								insertQuery=OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.SCHEDULETABLE)
-										.replace("{$columns}", "job_id,job_name,batch_id,command,argument_1,daily_flag,job_schedule_time")
+										.replace("{$columns}", "job_id,job_name,batch_id,command,argument_1,daily_flag,job_schedule_time,project_id")
 										.replace("{$data}",OracleConstants.QUOTE+feed_name+"_dailyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
 												+OracleConstants.QUOTE+feed_name+"_dailyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
 												+OracleConstants.QUOTE+feed_name+OracleConstants.QUOTE+OracleConstants.COMMA
 												+OracleConstants.QUOTE+SchedulerConstants.script_loc+OracleConstants.QUOTE+OracleConstants.COMMA
 												+OracleConstants.QUOTE+feed_name+OracleConstants.QUOTE+OracleConstants.COMMA
 												+OracleConstants.QUOTE+"Y"+OracleConstants.QUOTE+OracleConstants.COMMA
-												+OracleConstants.QUOTE+hour+":"+minute+":00"+OracleConstants.QUOTE);
+												+OracleConstants.QUOTE+hour+":"+minute+":00"+OracleConstants.QUOTE
+												+OracleConstants.COMMA+project_sequence);
 								System.out.println(insertQuery);
 								statement.execute(insertQuery);
 
@@ -1663,14 +1729,15 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 							}
 						}else {
 							insertQuery=OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.SCHEDULETABLE)
-									.replace("{$columns}", "job_id,job_name,batch_id,command,argument_1,daily_flag,job_schedule_time")
+									.replace("{$columns}", "job_id,job_name,batch_id,command,argument_1,daily_flag,job_schedule_time,project_id")
 									.replace("{$data}",OracleConstants.QUOTE+feed_name+"_dailyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
 											+OracleConstants.QUOTE+feed_name+"_dailyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
 											+OracleConstants.QUOTE+feed_name+OracleConstants.QUOTE+OracleConstants.COMMA
 											+OracleConstants.QUOTE+SchedulerConstants.script_loc+OracleConstants.QUOTE+OracleConstants.COMMA
 											+OracleConstants.QUOTE+feed_name+OracleConstants.QUOTE+OracleConstants.COMMA
 											+OracleConstants.QUOTE+"Y"+OracleConstants.QUOTE+OracleConstants.COMMA
-											+OracleConstants.QUOTE+hour+":"+minutes+":00"+OracleConstants.QUOTE);
+											+OracleConstants.QUOTE+hour+":"+minutes+":00"+OracleConstants.QUOTE
+											+OracleConstants.COMMA+project_sequence);;
 							System.out.println(insertQuery);
 							statement.execute(insertQuery);
 						}
@@ -1679,14 +1746,15 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 					if(minutes.contains(",")) {
 						for(String minute:minutes.split(",")) {
 							insertQuery=OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.SCHEDULETABLE)
-									.replace("{$columns}", "job_id,job_name,batch_id,command,argument_1,daily_flag,job_schedule_time")
+									.replace("{$columns}", "job_id,job_name,batch_id,command,argument_1,daily_flag,job_schedule_time,project_id")
 									.replace("{$data}",OracleConstants.QUOTE+feed_name+"_dailyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
 											+OracleConstants.QUOTE+feed_name+"_dailyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
 											+OracleConstants.QUOTE+feed_name+OracleConstants.QUOTE+OracleConstants.COMMA
 											+OracleConstants.QUOTE+SchedulerConstants.script_loc+OracleConstants.QUOTE+OracleConstants.COMMA
 											+OracleConstants.QUOTE+feed_name+OracleConstants.QUOTE+OracleConstants.COMMA
 											+OracleConstants.QUOTE+"Y"+OracleConstants.QUOTE+OracleConstants.COMMA
-											+OracleConstants.QUOTE+hours+":"+minute+":00"+OracleConstants.QUOTE);
+											+OracleConstants.QUOTE+hours+":"+minute+":00"+OracleConstants.QUOTE
+											+OracleConstants.COMMA+project_sequence);
 							System.out.println(insertQuery);
 							statement.execute(insertQuery);
 
@@ -1694,14 +1762,15 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 						}
 					}else {
 						insertQuery=OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.SCHEDULETABLE)
-								.replace("{$columns}", "job_id,job_name,batch_id,command,argument_1,daily_flag,job_schedule_time")
+								.replace("{$columns}", "job_id,job_name,batch_id,command,argument_1,daily_flag,job_schedule_time,project_id")
 								.replace("{$data}",OracleConstants.QUOTE+feed_name+"_dailyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
 										+OracleConstants.QUOTE+feed_name+"dailyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
 										+OracleConstants.QUOTE+feed_name+OracleConstants.QUOTE+OracleConstants.COMMA
 										+OracleConstants.QUOTE+SchedulerConstants.script_loc+OracleConstants.QUOTE+OracleConstants.COMMA
 										+OracleConstants.QUOTE+feed_name+OracleConstants.QUOTE+OracleConstants.COMMA
 										+OracleConstants.QUOTE+"Y"+OracleConstants.QUOTE+OracleConstants.COMMA
-										+OracleConstants.QUOTE+hours+":"+minutes+":00"+OracleConstants.QUOTE);
+										+OracleConstants.QUOTE+hours+":"+minutes+":00"+OracleConstants.QUOTE
+										+OracleConstants.COMMA+project_sequence);
 						System.out.println(insertQuery);
 						statement.execute(insertQuery);
 					}
@@ -1714,7 +1783,7 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 								if(minutes.contains(",")) {
 									for(String minute:minutes.split(",")) {
 										insertQuery=OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.SCHEDULETABLE)
-												.replace("{$columns}", "job_id,job_name,batch_id,command,argument_1,monthly_flag,month_run_day,job_schedule_time")
+												.replace("{$columns}", "job_id,job_name,batch_id,command,argument_1,daily_flag,job_schedule_time,project_id")
 												.replace("{$data}",OracleConstants.QUOTE+feed_name+"_monthlyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
 														+OracleConstants.QUOTE+feed_name+"_monthlyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
 														+OracleConstants.QUOTE+feed_name+OracleConstants.QUOTE+OracleConstants.COMMA
@@ -1722,7 +1791,8 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 														+OracleConstants.QUOTE+feed_name+OracleConstants.QUOTE+OracleConstants.COMMA
 														+OracleConstants.QUOTE+"Y"+OracleConstants.QUOTE+OracleConstants.COMMA
 														+OracleConstants.QUOTE+date+OracleConstants.QUOTE+OracleConstants.COMMA
-														+OracleConstants.QUOTE+hour+":"+minute+":00"+OracleConstants.QUOTE);
+														+OracleConstants.QUOTE+hour+":"+minute+":00"+OracleConstants.QUOTE
+														+OracleConstants.COMMA+project_sequence);
 										System.out.println(insertQuery);
 										statement.execute(insertQuery); 
 									}
@@ -1730,7 +1800,7 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 								}
 								else {
 									insertQuery=OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.SCHEDULETABLE)
-											.replace("{$columns}", "job_id,job_name,batch_id,command,argument_1,monthly_flag,month_run_day,job_schedule_time")
+											.replace("{$columns}", "job_id,job_name,batch_id,command,argument_1,daily_flag,job_schedule_time,project_id")
 											.replace("{$data}",OracleConstants.QUOTE+feed_name+"_monthlyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
 													+OracleConstants.QUOTE+feed_name+"_monthlyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
 													+OracleConstants.QUOTE+feed_name+OracleConstants.QUOTE+OracleConstants.COMMA
@@ -1738,7 +1808,8 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 													+OracleConstants.QUOTE+feed_name+OracleConstants.QUOTE+OracleConstants.COMMA
 													+OracleConstants.QUOTE+"Y"+OracleConstants.QUOTE+OracleConstants.COMMA
 													+OracleConstants.QUOTE+date+OracleConstants.QUOTE+OracleConstants.COMMA
-													+OracleConstants.QUOTE+hour+":"+minutes+":00"+OracleConstants.QUOTE);
+													+OracleConstants.QUOTE+hour+":"+minutes+":00"+OracleConstants.QUOTE
+													+OracleConstants.COMMA+project_sequence);
 									System.out.println(insertQuery);
 									statement.execute(insertQuery);
 								}
@@ -1751,7 +1822,7 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 							if(minutes.contains(",")) {
 								for(String minute:minutes.split(",")) {
 									insertQuery=OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.SCHEDULETABLE)
-											.replace("{$columns}", "job_id,job_name,batch_id,command,argument_1,monthly_flag,month_run_day,job_schedule_time")
+											.replace("{$columns}", "job_id,job_name,batch_id,command,argument_1,daily_flag,job_schedule_time,project_id")
 											.replace("{$data}",OracleConstants.QUOTE+feed_name+"_monthlyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
 													+OracleConstants.QUOTE+feed_name+"_monthlyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
 													+OracleConstants.QUOTE+feed_name+OracleConstants.QUOTE+OracleConstants.COMMA
@@ -1759,14 +1830,15 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 													+OracleConstants.QUOTE+feed_name+OracleConstants.QUOTE+OracleConstants.COMMA
 													+OracleConstants.QUOTE+"Y"+OracleConstants.QUOTE+OracleConstants.COMMA
 													+OracleConstants.QUOTE+date+OracleConstants.QUOTE+OracleConstants.COMMA
-													+OracleConstants.QUOTE+hours+":"+minute+":00"+OracleConstants.QUOTE);
+													+OracleConstants.QUOTE+hours+":"+minute+":00"+OracleConstants.QUOTE
+													+OracleConstants.COMMA+project_sequence);
 									System.out.println(insertQuery);
 									statement.execute(insertQuery); 
 								}
 
 							} 			else {
 								insertQuery=OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.SCHEDULETABLE)
-										.replace("{$columns}", "job_id,job_name,batch_id,command,argument_1,monthly_flag,month_run_day,job_schedule_time")
+										.replace("{$columns}", "job_id,job_name,batch_id,command,argument_1,daily_flag,job_schedule_time,project_id")
 										.replace("{$data}",OracleConstants.QUOTE+feed_name+"_monthlyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
 												+OracleConstants.QUOTE+feed_name+"_monthlyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
 												+OracleConstants.QUOTE+feed_name+OracleConstants.QUOTE+OracleConstants.COMMA
@@ -1774,7 +1846,8 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 												+OracleConstants.QUOTE+feed_name+OracleConstants.QUOTE+OracleConstants.COMMA
 												+OracleConstants.QUOTE+"Y"+OracleConstants.QUOTE+OracleConstants.COMMA
 												+OracleConstants.QUOTE+date+OracleConstants.QUOTE+OracleConstants.COMMA
-												+OracleConstants.QUOTE+hours+":"+minutes+":00"+OracleConstants.QUOTE);
+												+OracleConstants.QUOTE+hours+":"+minutes+":00"+OracleConstants.QUOTE
+												+OracleConstants.COMMA+project_sequence);
 								System.out.println(insertQuery);
 								statement.execute(insertQuery); 
 							}	
@@ -1787,7 +1860,7 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 							if(minutes.contains(",")) {
 								for(String minute:minutes.split(",")) {
 									insertQuery=OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.SCHEDULETABLE)
-											.replace("{$columns}", "job_id,job_name,batch_id,command,argument_1,monthly_flag,month_run_day,job_schedule_time")
+											.replace("{$columns}", "job_id,job_name,batch_id,command,argument_1,daily_flag,job_schedule_time,project_id")
 											.replace("{$data}",OracleConstants.QUOTE+feed_name+"_monthlyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
 													+OracleConstants.QUOTE+feed_name+"_monthlyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
 													+OracleConstants.QUOTE+feed_name+OracleConstants.QUOTE+OracleConstants.COMMA
@@ -1795,7 +1868,8 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 													+OracleConstants.QUOTE+feed_name+OracleConstants.COMMA
 													+OracleConstants.QUOTE+"Y"+OracleConstants.QUOTE+OracleConstants.COMMA
 													+OracleConstants.QUOTE+dates+OracleConstants.QUOTE+OracleConstants.COMMA
-													+OracleConstants.QUOTE+hour+":"+minute+":00"+OracleConstants.QUOTE);
+													+OracleConstants.QUOTE+hour+":"+minute+":00"+OracleConstants.QUOTE
+													+OracleConstants.COMMA+project_sequence);
 									System.out.println(insertQuery);
 									statement.execute(insertQuery); 
 								}
@@ -1803,7 +1877,7 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 							}
 							else {
 								insertQuery=OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.SCHEDULETABLE)
-										.replace("{$columns}", "job_id,job_name,batch_id,command,argument_1,monthly_flag,month_run_day,job_schedule_time")
+										.replace("{$columns}", "job_id,job_name,batch_id,command,argument_1,daily_flag,job_schedule_time,project_id")
 										.replace("{$data}",OracleConstants.QUOTE+feed_name+"_monthlyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
 												+OracleConstants.QUOTE+feed_name+"_monthlyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
 												+OracleConstants.QUOTE+feed_name+OracleConstants.QUOTE+OracleConstants.COMMA
@@ -1811,7 +1885,8 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 												+OracleConstants.QUOTE+feed_name+OracleConstants.QUOTE+OracleConstants.COMMA
 												+OracleConstants.QUOTE+"Y"+OracleConstants.QUOTE+OracleConstants.COMMA
 												+OracleConstants.QUOTE+dates+OracleConstants.QUOTE+OracleConstants.COMMA
-												+OracleConstants.QUOTE+hour+":"+minutes+":00"+OracleConstants.QUOTE);
+												+OracleConstants.QUOTE+hour+":"+minutes+":00"+OracleConstants.QUOTE
+												+OracleConstants.COMMA+project_sequence);
 								System.out.println(insertQuery);
 								statement.execute(insertQuery);
 							}
@@ -1824,7 +1899,7 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 						if(minutes.contains(",")) {
 							for(String minute:minutes.split(",")) {
 								insertQuery=OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.SCHEDULETABLE)
-										.replace("{$columns}", "job_id,job_name,batch_id,command,argument_1,monthly_flag,month_run_day,job_schedule_time")
+										.replace("{$columns}", "job_id,job_name,batch_id,command,argument_1,daily_flag,job_schedule_time,project_id")
 										.replace("{$data}",OracleConstants.QUOTE+feed_name+"_monthlyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
 												+OracleConstants.QUOTE+feed_name+"_monthlyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
 												+OracleConstants.QUOTE+feed_name+OracleConstants.QUOTE+OracleConstants.COMMA
@@ -1832,14 +1907,15 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 												+OracleConstants.QUOTE+feed_name+OracleConstants.QUOTE+OracleConstants.COMMA
 												+OracleConstants.QUOTE+"Y"+OracleConstants.QUOTE+OracleConstants.COMMA
 												+OracleConstants.QUOTE+dates+OracleConstants.QUOTE+OracleConstants.COMMA
-												+OracleConstants.QUOTE+hours+":"+minute+":00"+OracleConstants.QUOTE);
+												+OracleConstants.QUOTE+hours+":"+minute+":00"+OracleConstants.QUOTE
+												+OracleConstants.COMMA+project_sequence);
 								System.out.println(insertQuery);
 								statement.execute(insertQuery); 
 							}
 
 						}else {
 							insertQuery=OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.SCHEDULETABLE)
-									.replace("{$columns}", "job_id,job_name,batch_id,command,argument_1,monthly_flag,month_run_day,job_schedule_time")
+									.replace("{$columns}", "job_id,job_name,batch_id,command,argument_1,daily_flag,job_schedule_time,project_id")
 									.replace("{$data}",OracleConstants.QUOTE+feed_name+"_monthlyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
 											+OracleConstants.QUOTE+feed_name+"_monthlyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
 											+OracleConstants.QUOTE+feed_name+OracleConstants.QUOTE+OracleConstants.COMMA
@@ -1847,7 +1923,8 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 											+OracleConstants.QUOTE+feed_name+OracleConstants.QUOTE+OracleConstants.COMMA
 											+OracleConstants.QUOTE+"Y"+OracleConstants.QUOTE+OracleConstants.COMMA
 											+OracleConstants.QUOTE+dates+OracleConstants.QUOTE+OracleConstants.COMMA
-											+OracleConstants.QUOTE+hours+":"+minutes+":00"+OracleConstants.QUOTE);
+											+OracleConstants.QUOTE+hours+":"+minutes+":00"+OracleConstants.QUOTE
+											+OracleConstants.COMMA+project_sequence);
 							System.out.println(insertQuery);
 							statement.execute(insertQuery);
 						}	
@@ -1861,7 +1938,7 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 								if(minutes.contains(",")) {
 									for(String minute:minutes.split(",")) {
 										insertQuery=OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.SCHEDULETABLE)
-												.replace("{$columns}", "job_id,job_name,batch_id,command,argument_1,weekly_flag,week_run_day,job_schedule_time")
+												.replace("{$columns}", "job_id,job_name,batch_id,command,argument_1,daily_flag,job_schedule_time,project_id")
 												.replace("{$data}",OracleConstants.QUOTE+feed_name+"_weeklyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
 														+OracleConstants.QUOTE+feed_name+"_weeklyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
 														+OracleConstants.QUOTE+feed_name+OracleConstants.QUOTE+OracleConstants.COMMA
@@ -1869,12 +1946,13 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 														+OracleConstants.QUOTE+feed_name+OracleConstants.QUOTE+OracleConstants.COMMA
 														+OracleConstants.QUOTE+"Y"+OracleConstants.QUOTE+OracleConstants.COMMA
 														+OracleConstants.QUOTE+day+OracleConstants.QUOTE+OracleConstants.COMMA
-														+OracleConstants.QUOTE+hour+":"+minute+":00"+OracleConstants.QUOTE);
+														+OracleConstants.QUOTE+hour+":"+minute+":00"+OracleConstants.QUOTE
+														+OracleConstants.COMMA+project_sequence);
 										statement.execute(insertQuery);
 									}
 								}else {
 									insertQuery=OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.SCHEDULETABLE)
-											.replace("{$columns}", "job_id,job_name,batch_id,command,argument_1,weekly_flag,week_run_day,job_schedule_time")
+											.replace("{$columns}", "job_id,job_name,batch_id,command,argument_1,daily_flag,job_schedule_time,project_id")
 											.replace("{$data}",OracleConstants.QUOTE+feed_name+"_weekExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
 													+OracleConstants.QUOTE+feed_name+"_weeklyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
 													+OracleConstants.QUOTE+feed_name+OracleConstants.QUOTE+OracleConstants.COMMA
@@ -1882,7 +1960,8 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 													+OracleConstants.QUOTE+feed_name+OracleConstants.QUOTE+OracleConstants.COMMA
 													+OracleConstants.QUOTE+"Y"+OracleConstants.QUOTE+OracleConstants.COMMA
 													+OracleConstants.QUOTE+day+OracleConstants.QUOTE+OracleConstants.COMMA
-													+OracleConstants.QUOTE+hour+":"+minutes+":00"+OracleConstants.QUOTE);
+													+OracleConstants.QUOTE+hour+":"+minutes+":00"+OracleConstants.QUOTE
+													+OracleConstants.COMMA+project_sequence);
 									statement.execute(insertQuery);
 								}
 							}
@@ -1891,7 +1970,7 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 							if(minutes.contains(",")) {
 								for(String minute:minutes.split(",")) {
 									insertQuery=OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.SCHEDULETABLE)
-											.replace("{$columns}", "job_id,job_name,batch_id,command,argument_1,weekly_flag,week_run_day,job_schedule_time")
+											.replace("{$columns}", "job_id,job_name,batch_id,command,argument_1,daily_flag,job_schedule_time,project_id")
 											.replace("{$data}",OracleConstants.QUOTE+feed_name+"_weeklyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
 													+OracleConstants.QUOTE+feed_name+"_weeklyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
 													+OracleConstants.QUOTE+feed_name+OracleConstants.QUOTE+OracleConstants.COMMA
@@ -1899,12 +1978,13 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 													+OracleConstants.QUOTE+feed_name+OracleConstants.QUOTE+OracleConstants.COMMA
 													+OracleConstants.QUOTE+"Y"+OracleConstants.QUOTE+OracleConstants.COMMA
 													+OracleConstants.QUOTE+day+OracleConstants.QUOTE+OracleConstants.COMMA
-													+OracleConstants.QUOTE+hours+":"+minute+":00"+OracleConstants.QUOTE);
+													+OracleConstants.QUOTE+hours+":"+minute+":00"+OracleConstants.QUOTE
+													+OracleConstants.COMMA+project_sequence);
 									statement.execute(insertQuery);
 								}
 							}else {
 								insertQuery=OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.SCHEDULETABLE)
-										.replace("{$columns}", "job_id,job_name,batch_id,command,argument_1,weekly_flag,week_run_day,job_schedule_time")
+										.replace("{$columns}", "job_id,job_name,batch_id,command,argument_1,daily_flag,job_schedule_time,project_id")
 										.replace("{$data}",OracleConstants.QUOTE+feed_name+"_weeklyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
 												+OracleConstants.QUOTE+feed_name+"_weeklyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
 												+OracleConstants.QUOTE+feed_name+OracleConstants.QUOTE+OracleConstants.COMMA
@@ -1912,7 +1992,8 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 												+OracleConstants.QUOTE+feed_name+OracleConstants.QUOTE+OracleConstants.COMMA
 												+OracleConstants.QUOTE+"Y"+OracleConstants.QUOTE+OracleConstants.COMMA
 												+OracleConstants.QUOTE+day+OracleConstants.QUOTE+OracleConstants.COMMA
-												+OracleConstants.QUOTE+hours+":"+minutes+":00"+OracleConstants.QUOTE);
+												+OracleConstants.QUOTE+hours+":"+minutes+":00"+OracleConstants.QUOTE
+												+OracleConstants.COMMA+project_sequence);
 								statement.execute(insertQuery);
 							}
 						}
@@ -1923,7 +2004,7 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 							if(minutes.contains(",")) {
 								for(String minute:minutes.split(",")) {
 									insertQuery=OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.SCHEDULETABLE)
-											.replace("{$columns}", "job_id,job_name,batch_id,command,argument_1,weekly_flag,week_run_day,job_schedule_time")
+											.replace("{$columns}", "job_id,job_name,batch_id,command,argument_1,daily_flag,job_schedule_time,project_id")
 											.replace("{$data}",OracleConstants.QUOTE+feed_name+"_weeklyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
 													+OracleConstants.QUOTE+feed_name+"_weeklyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
 													+OracleConstants.QUOTE+feed_name+OracleConstants.QUOTE+OracleConstants.COMMA
@@ -1931,12 +2012,13 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 													+OracleConstants.QUOTE+feed_name+OracleConstants.QUOTE+OracleConstants.COMMA
 													+OracleConstants.QUOTE+"Y"+OracleConstants.QUOTE+OracleConstants.COMMA
 													+OracleConstants.QUOTE+daysOfWeek+OracleConstants.QUOTE+OracleConstants.COMMA
-													+OracleConstants.QUOTE+hour+":"+minute+":00"+OracleConstants.QUOTE);
+													+OracleConstants.QUOTE+hour+":"+minute+":00"+OracleConstants.QUOTE
+													+OracleConstants.COMMA+project_sequence);
 									statement.execute(insertQuery);
 								}
 							}else {
 								insertQuery=OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.SCHEDULETABLE)
-										.replace("{$columns}", "job_id,job_name,batch_id,command,argument_1,weekly_flag,week_run_day,job_schedule_time")
+										.replace("{$columns}", "job_id,job_name,batch_id,command,argument_1,daily_flag,job_schedule_time,project_id")
 										.replace("{$data}",OracleConstants.QUOTE+feed_name+"_weeklyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
 												+OracleConstants.QUOTE+feed_name+"_weeklyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
 												+OracleConstants.QUOTE+feed_name+OracleConstants.QUOTE+OracleConstants.COMMA
@@ -1944,7 +2026,8 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 												+OracleConstants.QUOTE+feed_name+OracleConstants.QUOTE+OracleConstants.COMMA
 												+OracleConstants.QUOTE+"Y"+OracleConstants.QUOTE+OracleConstants.COMMA
 												+OracleConstants.QUOTE+daysOfWeek+OracleConstants.QUOTE+OracleConstants.COMMA
-												+OracleConstants.QUOTE+hour+":"+minutes+":00"+OracleConstants.QUOTE);
+												+OracleConstants.QUOTE+hour+":"+minutes+":00"+OracleConstants.QUOTE
+												+OracleConstants.COMMA+project_sequence);
 								statement.execute(insertQuery);
 							}
 						}
@@ -1953,7 +2036,7 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 						if(minutes.contains(",")) {
 							for(String minute:minutes.split(",")) {
 								insertQuery=OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.SCHEDULETABLE)
-										.replace("{$columns}", "job_id,job_name,batch_id,command,argument_1,weekly_flag,week_run_day,job_schedule_time")
+										.replace("{$columns}", "job_id,job_name,batch_id,command,argument_1,daily_flag,job_schedule_time,project_id")
 										.replace("{$data}",OracleConstants.QUOTE+feed_name+"_weeklyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
 												+OracleConstants.QUOTE+feed_name+"_weeklyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
 												+OracleConstants.QUOTE+feed_name+OracleConstants.QUOTE+OracleConstants.COMMA
@@ -1961,12 +2044,13 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 												+OracleConstants.QUOTE+feed_name+OracleConstants.QUOTE+OracleConstants.COMMA
 												+OracleConstants.QUOTE+"Y"+OracleConstants.QUOTE+OracleConstants.COMMA
 												+OracleConstants.QUOTE+daysOfWeek+OracleConstants.QUOTE+OracleConstants.COMMA
-												+OracleConstants.QUOTE+hours+":"+minute+":00"+OracleConstants.QUOTE);
+												+OracleConstants.QUOTE+hours+":"+minute+":00"+OracleConstants.QUOTE
+												+OracleConstants.COMMA+project_sequence);
 								statement.execute(insertQuery);
 							}
 						}else {
 							insertQuery=OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.SCHEDULETABLE)
-									.replace("{$columns}", "job_id,job_name,batch_id,command,argument_1,weekly_flag,week_run_day,job_schedule_time")
+									.replace("{$columns}", "job_id,job_name,batch_id,command,argument_1,daily_flag,job_schedule_time,project_id")
 									.replace("{$data}",OracleConstants.QUOTE+feed_name+"_weeklyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
 											+OracleConstants.QUOTE+feed_name+"_weeklyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
 											+OracleConstants.QUOTE+feed_name+OracleConstants.QUOTE+OracleConstants.COMMA
@@ -1974,7 +2058,8 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 											+OracleConstants.QUOTE+feed_name+OracleConstants.QUOTE+OracleConstants.COMMA
 											+OracleConstants.QUOTE+"Y"+OracleConstants.QUOTE+OracleConstants.COMMA
 											+OracleConstants.QUOTE+daysOfWeek+OracleConstants.QUOTE+OracleConstants.COMMA
-											+OracleConstants.QUOTE+hours+":"+minutes+":00"+OracleConstants.QUOTE);
+											+OracleConstants.QUOTE+hours+":"+minutes+":00"+OracleConstants.QUOTE
+											+OracleConstants.COMMA+project_sequence);
 							statement.execute(insertQuery);
 						}
 					}

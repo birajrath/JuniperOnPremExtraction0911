@@ -3,20 +3,30 @@ package com.dataextract.dto;
 public class FieldMetadataDto {
 
 	String file_name;
-	String field_position;
+	int field_position;
 	String field_name;
 	String field_datatype;
+	int length;
 	
+	
+	
+	public int getLength() {
+		return length;
+	}
+	public void setLength(int length) {
+		this.length = length;
+	}
 	public String getFile_name() {
 		return file_name;
 	}
 	public void setFile_name(String file_name) {
 		this.file_name = file_name;
 	}
-	public String getField_position() {
+	
+	public int getField_position() {
 		return field_position;
 	}
-	public void setField_position(String field_position) {
+	public void setField_position(int field_position) {
 		this.field_position = field_position;
 	}
 	public String getField_name() {

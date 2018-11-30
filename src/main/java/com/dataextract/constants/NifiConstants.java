@@ -90,7 +90,7 @@ public class NifiConstants {
 			"	\"clientId\": \"\" \n"+
 			"  }\n" + 
 			"}";
-	
+		
 	public static String UPDATEGENERATETABLEFETCH="{\n" + 
 			"  \"status\": {\n" + 
 			"    \"runStatus\": \"RUNNING\"\n" + 

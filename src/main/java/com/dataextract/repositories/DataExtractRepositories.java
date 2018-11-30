@@ -12,7 +12,6 @@ import com.dataextract.dto.RealTimeExtractDto;
 import com.dataextract.dto.FeedDto;
 import com.dataextract.dto.TableInfoDto;
 import com.dataextract.dto.TargetDto;
-import com.dataextract.dto.BatchExtractDto;
 import com.dataextract.dto.ConnectionDto;
 
 /**
@@ -32,7 +31,7 @@ public String realTimeExtract(RealTimeExtractDto rtExtractDto) throws IOExceptio
 public String testConnection(ConnectionDto dto);
 public String addTargetDetails(TargetDto target) throws SQLException;
 public ArrayList<TargetDto> getTargetObject(String targetList) throws SQLException;
-public String batchExtract(String feed_name,String cron) throws SQLException;
+public String batchExtract(String feed_name,String project,String cron) throws SQLException;
 public String updateConnectionDetails(ConnectionDto connDto) throws SQLException;
 public String deleteConnectionDetails(ConnectionDto connDto) throws SQLException ;
 public String updateFeed(FeedDto feedDto)throws SQLException ;
