@@ -3,7 +3,7 @@ package com.dataextract.constants;
 public class OracleConstants {
 
 	public final static String ORACLE_DRIVER="oracle.jdbc.driver.OracleDriver";
-	public static final String HIVE_DRIVER = "org.apache.hadoop.hive.jdbc.HiveDriver";
+	public static final String HIVE_DRIVER = "org.apache.hive.jdbc.HiveDriver";
 	public final static String ORACLE_IP_PORT_SID="35.227.48.30:1521:orcl";
 	public final static String ORACLE_USER_NAME="juniper_admin";
 	public final static String ORACLE_JDBC_URL="jdbc:oracle:thin:@"+ORACLE_IP_PORT_SID+"";
