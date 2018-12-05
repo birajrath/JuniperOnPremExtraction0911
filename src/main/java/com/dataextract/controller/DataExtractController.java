@@ -94,7 +94,7 @@ public class DataExtractController {
 				response = dataExtractRepositories.addConnectionDetails(connDto);
 				if(response.toLowerCase().contains("success")) {
 					status="Success";
-					message="Connection created with Connection Id:"+response.split(":")[1];
+					message="Connection created with Connection Id-"+response.split(":")[1];
 				}
 				else {
 					status="Failed";
@@ -198,7 +198,7 @@ public class DataExtractController {
 		if (response.equalsIgnoreCase("Success")) {
 			
 			status="success";
-			message = "Connection updated Successfully";
+			message = "Connection deleted Successfully";
 		} 
 		return ResponseUtil.createResponse(status, message);
 	}
@@ -307,7 +307,7 @@ public class DataExtractController {
 			response = dataExtractRepositories.updateTargetDetails(target);
 			if(response.equalsIgnoreCase("success")) {
 				status="success";
-				message="Target Details added successfully";
+				message="Target Details updated successfully";
 				
 			}
 			else {
@@ -340,7 +340,7 @@ public class DataExtractController {
 		response=dataExtractRepositories.onboardSystem(feedDto);
 		if(response.toLowerCase().contains("success")) {
 			status="Success";
-			message="Feed created with Feed Id:"+response.split(":")[1];
+			message="Feed created with Feed Id-"+response.split(":")[1];
 		}
 		else {
 			status="Failed";
@@ -397,7 +397,7 @@ public class DataExtractController {
 			
 			if(response.equalsIgnoreCase("success")) {
 				status="Success";
-				message="Source System updated";
+				message="Feed deleted";
 			}
 			else {
 				status="Failed";
@@ -446,7 +446,7 @@ public class DataExtractController {
 		response=dataExtractRepositories.addTableDetails(tableInfoDto);
 		if(response.toLowerCase().contains("success")) {
 			status="Success";
-			message="Table Details Added Successfully. Table IDs are:"+response.split(":")[1];
+			message="Table Details Added Successfully. Table IDs are "+response.split(":")[1];
 		}
 		else {
 			status="Failed";
@@ -486,14 +486,17 @@ public class DataExtractController {
 			fileMetadataDto.setAvro_conv_flag((String)file.get("avro_conv_flag"));
 			fileMetadataDto.setBus_dt_format((String)file.get("bus_dt_format"));
 			fileMetadataDto.setBus_dt_loc((String)(file.get("bus_dt_loc")));
-			fileMetadataDto.setBus_dt_start(Integer.parseInt(file.get("bus_dt_start")));
+			String bus_dt_start=file.get("bus_dt_start");
+			if(!(bus_dt_start==null || bus_dt_start.isEmpty())) {
+				fileMetadataDto.setBus_dt_start(Integer.parseInt(file.get("bus_dt_start")));
+			}
 			fileMetadataDto.setCount_loc((String)file.get("count_loc"));
 			String count_start=file.get("count_start");
-			if(count_start==null||count_start.isEmpty()) {
+			if(!(count_start==null||count_start.isEmpty())) {
 				fileMetadataDto.setCount_start(Integer.parseInt(file.get("count_start")));
 			}
 			String count_length=file.get("count_legnth");
-			if(count_length==null||count_length.isEmpty()) {
+			if(!(count_length==null||count_length.isEmpty())) {
 				fileMetadataDto.setCount_legnth(Integer.parseInt(file.get("count_legnth")));
 			}
 			

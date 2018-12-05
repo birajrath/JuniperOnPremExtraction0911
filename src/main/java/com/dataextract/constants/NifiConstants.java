@@ -19,6 +19,13 @@ public class NifiConstants {
 	public final static String UNIXPROCESSGROUPURL1="nifi-api/flow/process-groups/3bfa4378-0167-1000-0000-00000f7e2794/controller-services";
 	public static final String UNIXLISTENER1 ="http://35.243.211.145:8085/contentListener";
 	
+	
+	public final static int NOOFTERADATAPROCESSORS=3;
+	public final static String TERADATAPROCESSGROUPURL1="nifi-api/flow/process-groups/89474baa-7de5-39e2-7d1a-9c261737e263/controller-services";
+	public final static String TERADATAPROCESSGROUPURL2="nifi-api/flow/process-groups/01671005-8799-19a9-a371-c2215a397793/controller-services";
+	public final static String TERADATAPROCESSGROUPURL3="nifi-api/flow/process-groups/6d7f34d3-3094-1b3f-e2c3-f1bda03d702e/controller-services";																			
+	public final static String TERADATALISTENER1="http://localhost:8081/contentListener";
+	
 
 	public final static String HADOOPLISTENER1="http://35.231.171.195:8091/contentListener";
 	

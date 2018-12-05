@@ -1,7 +1,5 @@
 package com.dataextract.dao;
 
-
-
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -928,7 +926,7 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 		String put_status;
 		int project_sequence=getProjectSequence(conn, fileInfoDto.getProject());
 		String juniper_user=fileInfoDto.getJuniper_user();
-		
+		int file_sequence=0;
 		
 		for(FileMetadataDto file:fileInfoDto.getFileMetadataArr()) {
 			
@@ -978,10 +976,30 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 					 if(rs.isBeforeFirst()) {
 						 rs.next();
 						 fileList.append(rs.getString(1)+",");
+						 file_sequence=Integer.parseInt(rs.getString(1));
+						 for(FieldMetadataDto field:fileInfoDto.getFieldMetadataArr()) {
+								if(field.getFile_name().equalsIgnoreCase(file.getFile_name())) {
+									
+									insertFieldMaster=OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.FIELDDETAILSTABLE)
+											.replace("{$columns}","feed_sequence,file_sequence,file_name,field_pos,field_name,field_data_type,project_sequence,created_by" )
+											.replace("{$data}",fileInfoDto.getFeed_id()+OracleConstants.COMMA
+													+file_sequence+OracleConstants.COMMA
+													+OracleConstants.QUOTE+file.getFile_name()+OracleConstants.QUOTE+OracleConstants.COMMA
+													+field.getField_position()+OracleConstants.COMMA
+													+OracleConstants.QUOTE+field.getField_name()+OracleConstants.QUOTE+OracleConstants.COMMA
+													+OracleConstants.QUOTE+field.getField_datatype()+OracleConstants.QUOTE+OracleConstants.COMMA
+													+project_sequence+OracleConstants.COMMA
+													+OracleConstants.QUOTE+juniper_user+OracleConstants.QUOTE);
+									
+						
+									 statement.executeUpdate(insertFieldMaster);
+								}
+						 
 					 }
 				 }
 				
-			}catch (SQLException e) {
+			}
+		}catch (SQLException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 				//TODO: Log the error message
@@ -992,41 +1010,6 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 			
 			
 		}
-		
-		for(FileMetadataDto file:fileInfoDto.getFileMetadataArr()) {
-		
-			for(FieldMetadataDto field:fileInfoDto.getFieldMetadataArr()) {
-				if(field.getFile_name().equalsIgnoreCase(file.getFile_name())) {
-					
-					insertFieldMaster=OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.FIELDDETAILSTABLE)
-							.replace("{$columns}","feed_sequence,file_name,field_pos,field_name,field_data_type,project_sequence,created_by" )
-							.replace("{$data}",fileInfoDto.getFeed_id()+OracleConstants.COMMA
-									+OracleConstants.QUOTE+file.getFile_name()+OracleConstants.QUOTE+OracleConstants.COMMA
-									+field.getField_position()+OracleConstants.COMMA
-									+OracleConstants.QUOTE+field.getField_name()+OracleConstants.QUOTE+OracleConstants.COMMA
-									+OracleConstants.QUOTE+field.getField_datatype()+OracleConstants.QUOTE+OracleConstants.COMMA
-									+project_sequence+OracleConstants.COMMA
-									+OracleConstants.QUOTE+juniper_user+OracleConstants.QUOTE);
-					try {	
-						Statement statement = conn.createStatement();
-						 statement.executeUpdate(insertFieldMaster);
-						 
-						
-					}catch (SQLException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-						//TODO: Log the error message
-						return e.getMessage();
-						
-						
-					}
-					
-				}
-			}
-			
-		}
-		
-		
 		
 		fileList.setLength(fileList.length()-1);
 		String fileListStr=fileList.toString();
@@ -1415,9 +1398,8 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 					
 				}
 				
-				String query2="select fd.field_name from "+OracleConstants.FIELDDETAILSTABLE
-						+" fd inner join "+OracleConstants.FILEDETAILSTABLE
-						+" fi on fi.file_name=fd.file_name where fi.file_sequence="+fileId;
+				String query2="select field_name from "+OracleConstants.FIELDDETAILSTABLE
+						+" where file_sequence="+fileId;
 				ResultSet rs2 = statement.executeQuery(query2);
 				if(rs2.isBeforeFirst()) {
 					while(rs2.next()) {
@@ -1596,7 +1578,7 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 		}
 		if(connDto.getConn_type().equalsIgnoreCase("TERADATA"))
 		{
-			return "jdbc:oracle:thin:@"+ connDto.getHostName()+":" +connDto.getPort()+"/"+connDto.getServiceName() ;
+			return "jdbc:teradata://"+ connDto.getHostName() ;
 		}
 
 		return null;
