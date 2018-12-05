@@ -81,6 +81,7 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 		String connectionId="";
 		byte[] encrypted_key=null;
 		byte[] encrypted_password=null;
+		byte[] trust_store_encrypted_password=null;
 		PreparedStatement pstm=null;
 		if(system_sequence!=0 && project_sequence!=0) {
 
@@ -145,6 +146,7 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 			}
 
 			if(dto.getConn_type().equalsIgnoreCase("HIVE")) {
+				trust_store_encrypted_password=encryptPassword(encrypted_key,dto.getTrust_store_password());
 				insertConnDetails="insert into "+OracleConstants.CONNECTIONTABLE+
 						"(src_conn_name,src_conn_type,host_name,port_no,username,password,encrypted_encr_key,system_sequence,project_sequence,created_by,knox_gateway,trust_store_path,trust_store_password) "
 						+ "values(?,?,?,?,?,?,?,?,?,?,?,?,?)";
@@ -161,7 +163,7 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 				pstm.setString(10, dto.getJuniper_user());
 				pstm.setString(11, dto.getKnox_gateway());
 				pstm.setString(12, dto.getTrust_store_path());
-				pstm.setString(13, dto.getTrust_store_password());
+				pstm.setBytes(13, trust_store_encrypted_password);
 
 				try {
 					pstm.executeUpdate();
@@ -573,12 +575,15 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 
 				byte[] encrypted_key=null;
 				byte[] encrypted_password=null;
+				byte[] trust_store_encrypted_password=null;
 				encrypted_key=getEncryptedKey(conn,system_sequence,project_sequence);
+				
 				if(encrypted_key==null){
 					return "Error ocurred while fetching  key for encryption";
 				}
 				else{
 					encrypted_password=encryptPassword(encrypted_key,target.getTarget_password());
+					trust_store_encrypted_password=encryptPassword(encrypted_key,target.getTrust_store_password());
 					if(encrypted_password==null) {
 						return "Error while encrypting password";
 					}
@@ -598,7 +603,7 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 				pstm.setString(9, target.getJuniper_user());
 				pstm.setString(10, target.getKnox_gateway());
 				pstm.setString(11, target.getTrust_store_path());
-				pstm.setString(12, target.getTrust_store_password());
+				pstm.setBytes(12, trust_store_encrypted_password);
 
 				try {
 					pstm.executeUpdate();
