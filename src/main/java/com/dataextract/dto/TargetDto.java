@@ -21,6 +21,10 @@ public class TargetDto {
 	String juniper_user;
 	byte[] encrypted_password;
 	byte[] encrypted_key;
+	String knox_gateway;
+	String trust_store_path;
+	String trust_store_password;
+	
 	
 	
 	
@@ -135,7 +139,22 @@ public class TargetDto {
 	public void setData_path(String data_path) {
 		this.data_path = data_path;
 	}
-	
-	
-
+	public String getKnox_gateway() {
+		return knox_gateway;
+	}
+	public void setKnox_gateway(String knox_gateway) {
+		this.knox_gateway = knox_gateway;
+	}
+	public String getTrust_store_path() {
+		return trust_store_path;
+	}
+	public void setTrust_store_path(String trust_store_path) {
+		this.trust_store_path = trust_store_path;
+	}
+	public String getTrust_store_password() {
+		return trust_store_password;
+	}
+	public void setTrust_store_password(String trust_store_password) {
+		this.trust_store_password = trust_store_password;
+	}
 }
