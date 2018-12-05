@@ -94,13 +94,13 @@ public class DataExtractController {
 			connDto.setSystem(requestDto.getBody().get("data").get("system"));
 			connDto.setConn_name(requestDto.getBody().get("data").get("connection_name"));
 			connDto.setConn_type(requestDto.getBody().get("data").get("connection_type"));
-			connDto.setHostName(requestDto.getBody().get("data").get("host_name"));
-			connDto.setPort(requestDto.getBody().get("data").get("port"));
-			connDto.setKnox_gateway(requestDto.getBody().get("data").get("knox_gateway"));
+			connDto.setHostName(requestDto.getBody().get("data").get("Knox_host_name"));
+			connDto.setPort(requestDto.getBody().get("data").get("Knox_port"));
+			connDto.setKnox_gateway(requestDto.getBody().get("data").get("Knox_gateway"));
 			connDto.setUserName(requestDto.getBody().get("data").get("user_name"));
 			connDto.setPassword(requestDto.getBody().get("data").get("password"));
 			connDto.setTrust_store_path(requestDto.getBody().get("data").get("TS_path"));
-			connDto.setTrust_store_password(requestDto.getBody().get("data").get("trust_store_password"));
+			connDto.setTrust_store_password(requestDto.getBody().get("data").get("TS_password"));
 			connDto.setProject(requestDto.getBody().get("data").get("project"));
 			connDto.setJuniper_user(requestDto.getBody().get("data").get("user"));
 		}

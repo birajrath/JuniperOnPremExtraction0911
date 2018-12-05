@@ -13,6 +13,8 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+
+import org.apache.hadoop.security.UserGroupInformation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 import com.dataextract.constants.OracleConstants;
@@ -246,8 +248,10 @@ public class DataExtractRepositoriesImpl implements DataExtractRepositories {
 		if(dto.getConn_type().equalsIgnoreCase("HIVE")) {
 		String message=null;
 			try {
-				Class.forName(OracleConstants.ORACLE_DRIVER);
 				Class.forName(OracleConstants.HIVE_DRIVER);
+				org.apache.hadoop.conf.Configuration hdpConfig = new org.apache.hadoop.conf.Configuration();
+				hdpConfig.set("hadoop.security.authentication", "Kerberos");
+				UserGroupInformation.setConfiguration(hdpConfig);
 				Connection con = DriverManager.getConnection("jdbc:hive2://"+dto.getHostName()+":"+dto.getPort()+"/;ssl=true;sslTrustStore="+dto.getTrust_store_path()+";trustStorePassword="+dto.getTrust_store_password()+";transportMode=http;httpPath="+dto.getKnox_gateway()+"",""+dto.getUserName()+"",""+dto.getPassword()+"");
 				Statement stmt = con.createStatement();
 				String sql = ("show databases");
@@ -264,7 +268,6 @@ public class DataExtractRepositoriesImpl implements DataExtractRepositories {
 			}
 			return message;
 	}
-
 		return ("invalid source type");
 
 	}

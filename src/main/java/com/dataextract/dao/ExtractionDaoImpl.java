@@ -4,8 +4,10 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.Connection;
+import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
@@ -16,6 +18,8 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.Properties;
 import javax.crypto.SecretKey;
+
+import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpPost;
@@ -148,8 +152,8 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 			if(dto.getConn_type().equalsIgnoreCase("HIVE")) {
 				trust_store_encrypted_password=encryptPassword(encrypted_key,dto.getTrust_store_password());
 				insertConnDetails="insert into "+OracleConstants.CONNECTIONTABLE+
-						"(src_conn_name,src_conn_type,host_name,port_no,username,password,encrypted_encr_key,system_sequence,project_sequence,created_by,knox_gateway,trust_store_path,trust_store_password) "
-						+ "values(?,?,?,?,?,?,?,?,?,?,?,?,?)";
+						"(src_conn_name,src_conn_type,host_name,port_no,username,password,encrypted_encr_key,system_sequence,project_sequence,created_by,knox_gateway,trust_store_path,trust_store_password,job_type) "
+						+ "values(?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
 				pstm = conn.prepareStatement(insertConnDetails);
 				pstm.setString(1, dto.getConn_name());
 				pstm.setString(2, dto.getConn_type());
@@ -164,6 +168,7 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 				pstm.setString(11, dto.getKnox_gateway());
 				pstm.setString(12, dto.getTrust_store_path());
 				pstm.setBytes(13, trust_store_encrypted_password);
+				pstm.setString(14, "P");
 
 				try {
 					pstm.executeUpdate();
@@ -189,6 +194,43 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 				if(rs.isBeforeFirst()){
 					rs.next();
 					connectionId=rs.getString(1);
+				}
+			}
+			
+			try {
+				Class.forName(OracleConstants.HIVE_DRIVER);
+			} catch (ClassNotFoundException e) {
+				e.printStackTrace();
+			}
+			//More parameters can be added later with hdpConfig.
+			/*org.apache.hadoop.conf.Configuration hdpConfig = new org.apache.hadoop.conf.Configuration();
+			hdpConfig.set("hadoop.security.authentication", "Kerberos");
+			UserGroupInformation.setConfiguration(hdpConfig);*/
+			Connection con = DriverManager.getConnection("jdbc:hive2://"+dto.getHostName()+":"+dto.getPort()+"/;ssl=true;sslTrustStore="+dto.getTrust_store_path()+";trustStorePassword="+dto.getTrust_store_password()+";transportMode=http;httpPath="+dto.getKnox_gateway()+"",""+dto.getUserName()+"",""+dto.getPassword()+"");
+			Statement stmt = con.createStatement();
+			String sql = ("show databases");
+			ResultSet res=null;
+			res = stmt.executeQuery(sql);
+			if (res!=null){
+				ResultSetMetaData metadata = res.getMetaData();
+				int columnCount = metadata.getColumnCount(); 
+				while(res.next()){
+					String row="";
+					for (int i = 1; i <= columnCount; i++) {
+						String delim=",";
+						if(i==columnCount){
+							delim="";
+						} 
+						row += res.getString(i) + delim;
+					}					
+					String insertProDbList=OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.DBPROPOGATIONTABLE)
+							.replace("{$columns}", "p_con_id,table_name,created_by")
+							.replace("{$data}",OracleConstants.QUOTE+connectionId+OracleConstants.QUOTE+OracleConstants.COMMA
+									+OracleConstants.QUOTE+row+OracleConstants.QUOTE+OracleConstants.COMMA
+									+"(select user_sequence from JUNIPER_USER_MASTER where user_id='"+dto.getJuniper_user()+"')");
+					System.out.println("Insert into table propagation table "+insertProDbList);
+					statement=conn.createStatement();
+					statement.executeUpdate(insertProDbList);
 				}
 			}
 			return "success:"+connectionId;
@@ -589,8 +631,8 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 					}
 				}
 				insertTargetDetails="insert into "+OracleConstants.TAREGTTABLE+
-						"(target_unique_name,target_type,hdp_knox_url,hdp_user,hdp_encrypted_password,encrypted_key,system_sequence,project_sequence,created_by,knox_gateway,trust_store_path,trust_store_password) "
-						+ "values(?,?,?,?,?,?,?,?,?,?,?,?)";
+						"(target_unique_name,target_type,hdp_knox_url,hdp_user,hdp_encrypted_password,encrypted_key,system_sequence,project_sequence,created_by,knox_gateway,trust_store_path,trust_store_password,job_type) "
+						+ "values(?,?,?,?,?,?,?,?,?,?,?,?,?)";
 				pstm = conn.prepareStatement(insertTargetDetails);
 				pstm.setString(1, target.getTarget_unique_name());
 				pstm.setString(2, target.getTarget_type());
@@ -604,7 +646,8 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 				pstm.setString(10, target.getKnox_gateway());
 				pstm.setString(11, target.getTrust_store_path());
 				pstm.setBytes(12, trust_store_encrypted_password);
-
+				pstm.setString(13, "P");
+				
 				try {
 					pstm.executeUpdate();
 					pstm.close();
