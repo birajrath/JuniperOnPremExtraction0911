@@ -7,7 +7,11 @@ import java.io.IOException;
 
 
 import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
@@ -238,6 +242,28 @@ public class DataExtractRepositoriesImpl implements DataExtractRepositories {
 		if(dto.getConn_type().equalsIgnoreCase("HADOOP")) {
 				return "success";
 		}
+		
+		if(dto.getConn_type().equalsIgnoreCase("HIVE")) {
+		String message=null;
+			try {
+				Class.forName(OracleConstants.ORACLE_DRIVER);
+				Class.forName(OracleConstants.HIVE_DRIVER);
+				Connection con = DriverManager.getConnection("jdbc:hive2://"+dto.getHostName()+":"+dto.getPort()+"/;ssl=true;sslTrustStore="+dto.getTrust_store_path()+";trustStorePassword="+dto.getTrust_store_password()+";transportMode=http;httpPath="+dto.getKnox_gateway()+"",""+dto.getUserName()+"",""+dto.getPassword()+"");
+				Statement stmt = con.createStatement();
+				String sql = ("show databases");
+				ResultSet res=null;
+				res = stmt.executeQuery(sql);
+				if (res!=null){
+					System.out.println("connected to source Database"); 
+					message= "success";
+					con.close();
+				}
+			} catch (Exception e) {
+				e.printStackTrace();
+				message= "failed due to exception " + e.getMessage();
+			}
+			return message;
+	}
 
 		return ("invalid source type");
 
