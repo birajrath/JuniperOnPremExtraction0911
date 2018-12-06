@@ -18,8 +18,6 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.Properties;
 import javax.crypto.SecretKey;
-
-import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpPost;
@@ -196,51 +194,59 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 					connectionId=rs.getString(1);
 				}
 			}
-			
-			try {
+			if(dto.getConn_type().equalsIgnoreCase("HIVE")) {
+				
+				
+				//More parameters can be added later with hdpConfig.
+				/*org.apache.hadoop.conf.Configuration hdpConfig = new org.apache.hadoop.conf.Configuration();
+				hdpConfig.set("hadoop.security.authentication", "Kerberos");
+				UserGroupInformation.setConfiguration(hdpConfig);*/
 				Class.forName(OracleConstants.HIVE_DRIVER);
-			} catch (ClassNotFoundException e) {
-				e.printStackTrace();
-			}
-			//More parameters can be added later with hdpConfig.
-			/*org.apache.hadoop.conf.Configuration hdpConfig = new org.apache.hadoop.conf.Configuration();
-			hdpConfig.set("hadoop.security.authentication", "Kerberos");
-			UserGroupInformation.setConfiguration(hdpConfig);*/
-			Connection con = DriverManager.getConnection("jdbc:hive2://"+dto.getHostName()+":"+dto.getPort()+"/;ssl=true;sslTrustStore="+dto.getTrust_store_path()+";trustStorePassword="+dto.getTrust_store_password()+";transportMode=http;httpPath="+dto.getKnox_gateway()+"",""+dto.getUserName()+"",""+dto.getPassword()+"");
-			Statement stmt = con.createStatement();
-			String sql = ("show databases");
-			ResultSet res=null;
-			res = stmt.executeQuery(sql);
-			if (res!=null){
-				ResultSetMetaData metadata = res.getMetaData();
-				int columnCount = metadata.getColumnCount(); 
-				while(res.next()){
-					String row="";
-					for (int i = 1; i <= columnCount; i++) {
-						String delim=",";
-						if(i==columnCount){
-							delim="";
-						} 
-						row += res.getString(i) + delim;
-					}					
-					String insertProDbList=OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.DBPROPOGATIONTABLE)
-							.replace("{$columns}", "p_con_id,db_name,created_by")
-							.replace("{$data}",OracleConstants.QUOTE+connectionId+OracleConstants.QUOTE+OracleConstants.COMMA
-									+OracleConstants.QUOTE+row+OracleConstants.QUOTE+OracleConstants.COMMA
-									+"(select user_sequence from JUNIPER_USER_MASTER where user_id='"+dto.getJuniper_user()+"')");
-					System.out.println("Insert into table propagation table "+insertProDbList);
-					statement=conn.createStatement();
-					statement.executeUpdate(insertProDbList);
-				}
-			}
-			return "success:"+connectionId;
+				Connection con = DriverManager.getConnection("jdbc:hive2://"+dto.getHostName()+":"+dto.getPort()+"/;ssl=true;sslTrustStore="+dto.getTrust_store_path()+";trustStorePassword="+dto.getTrust_store_password()+";transportMode=http;httpPath="+dto.getKnox_gateway()+"",""+dto.getUserName()+"",""+dto.getPassword()+"");
+				Statement stmt = con.createStatement();
+				String sql = ("show databases");
+				ResultSet res=null;
+				res = stmt.executeQuery(sql);
+				if (res!=null){
+					ResultSetMetaData metadata = res.getMetaData();
+					int columnCount = metadata.getColumnCount(); 
+					while(res.next()){
+						String row="";
+						for (int i = 1; i <= columnCount; i++) {
+							String delim=",";
+							if(i==columnCount){
+								delim="";
+								} 
+							row += res.getString(i) + delim;
+						}					
+						String insertProDbList=OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.DBPROPOGATIONTABLE)
+								.replace("{$columns}", "p_con_id,db_name,created_by")
+								.replace("{$data}",OracleConstants.QUOTE+connectionId+OracleConstants.QUOTE+OracleConstants.COMMA
+										+OracleConstants.QUOTE+row+OracleConstants.QUOTE+OracleConstants.COMMA
+										+"(select user_sequence from JUNIPER_USER_MASTER where user_id='"+dto.getJuniper_user()+"')");
+						System.out.println("Insert into table propagation table "+insertProDbList);
+						statement=conn.createStatement();
+						statement.executeUpdate(insertProDbList);
+						}
+					}
+			
+			
+			
+		
+				
 
-		}catch (SQLException e) {
-			e.printStackTrace();
-			return e.getMessage();
-		}finally {
-			conn.close();
 		}
+				
+			}catch(SQLException | ClassNotFoundException e) {
+				e.printStackTrace();
+				return e.getMessage();
+			}finally {
+				conn.close();
+			}
+		
+	
+		
+		return "success:"+connectionId;
 	}
 
 	@SuppressWarnings("unchecked")
