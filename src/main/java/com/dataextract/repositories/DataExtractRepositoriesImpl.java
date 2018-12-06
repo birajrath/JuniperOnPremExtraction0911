@@ -249,9 +249,9 @@ public class DataExtractRepositoriesImpl implements DataExtractRepositories {
 		String message=null;
 			try {
 				Class.forName(OracleConstants.HIVE_DRIVER);
-				org.apache.hadoop.conf.Configuration hdpConfig = new org.apache.hadoop.conf.Configuration();
+				/*org.apache.hadoop.conf.Configuration hdpConfig = new org.apache.hadoop.conf.Configuration();
 				hdpConfig.set("hadoop.security.authentication", "Kerberos");
-				UserGroupInformation.setConfiguration(hdpConfig);
+				UserGroupInformation.setConfiguration(hdpConfig);*/
 				Connection con = DriverManager.getConnection("jdbc:hive2://"+dto.getHostName()+":"+dto.getPort()+"/;ssl=true;sslTrustStore="+dto.getTrust_store_path()+";trustStorePassword="+dto.getTrust_store_password()+";transportMode=http;httpPath="+dto.getKnox_gateway()+"",""+dto.getUserName()+"",""+dto.getPassword()+"");
 				Statement stmt = con.createStatement();
 				String sql = ("show databases");
