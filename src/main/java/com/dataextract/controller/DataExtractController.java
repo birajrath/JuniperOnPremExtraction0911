@@ -488,6 +488,8 @@ public class DataExtractController {
 		for(int i=1;i<=counter;i++) {
 			TableMetadataDto tableMetadata=new TableMetadataDto();
 			tableMetadata.setTable_name(requestDto.getBody().get("data").get("table_name"+i).toUpperCase());
+			tableMetadata.setView_flag(requestDto.getBody().get("data").get("view_flag"+i));
+			tableMetadata.setView_source_schema(requestDto.getBody().get("data").get("view_src_schema"+i));
 			tableMetadata.setColumns(requestDto.getBody().get("data").get("columns_name"+i).toUpperCase());
 			tableMetadata.setWhere_clause(requestDto.getBody().get("data").get("where_clause"+i));
 			tableMetadata.setFetch_type(requestDto.getBody().get("data").get("fetch_type"+i));

@@ -969,13 +969,15 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 					columns=tableMetadata.getColumns();
 				}
 				String insertTableMaster= OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.TABLEDETAILSTABLE)
-						.replace("{$columns}","feed_sequence,table_name,columns,fetch_type,where_clause,incr_col,project_sequence,created_by" )
+						.replace("{$columns}","feed_sequence,table_name,columns,fetch_type,where_clause,incr_col,view_flag,view_source_schema,project_sequence,created_by" )
 						.replace("{$data}",tableInfoDto.getFeed_id() +OracleConstants.COMMA
 								+OracleConstants.QUOTE+tableMetadata.getTable_name()+OracleConstants.QUOTE+OracleConstants.COMMA
 								+OracleConstants.QUOTE+columns+OracleConstants.QUOTE+OracleConstants.COMMA
 								+OracleConstants.QUOTE+tableMetadata.getFetch_type()+OracleConstants.QUOTE+OracleConstants.COMMA
 								+OracleConstants.QUOTE+tableMetadata.getWhere_clause()+OracleConstants.QUOTE+OracleConstants.COMMA
 								+OracleConstants.QUOTE+tableMetadata.getIncr_col()+OracleConstants.QUOTE+OracleConstants.COMMA
+								+OracleConstants.QUOTE+tableMetadata.getView_flag()+OracleConstants.QUOTE+OracleConstants.COMMA
+								+OracleConstants.QUOTE+tableMetadata.getView_source_schema()+OracleConstants.QUOTE+OracleConstants.COMMA
 								+project_sequence+OracleConstants.COMMA
 								+OracleConstants.QUOTE+tableInfoDto.getJuniper_user()+OracleConstants.QUOTE
 								);
@@ -1453,7 +1455,7 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 		String[] tableIds=table_list.split(",");
 		try {
 			for(String tableId:tableIds) {
-				String query="select table_name,columns,where_clause,fetch_type,incr_col from "+OracleConstants.TABLEDETAILSTABLE+" where table_sequence="+tableId;
+				String query="select table_name,columns,where_clause,fetch_type,incr_col,view_flag,view_source_schema from "+OracleConstants.TABLEDETAILSTABLE+" where table_sequence="+tableId;
 				Statement statement=conn.createStatement();
 				ResultSet rs = statement.executeQuery(query);
 				if(rs.isBeforeFirst()) {
@@ -1464,6 +1466,8 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 					tableMetadata.setWhere_clause( rs.getString(3));
 					tableMetadata.setFetch_type(rs.getString(4));
 					tableMetadata.setIncr_col(rs.getString(5));
+					tableMetadata.setView_flag(rs.getString(6));
+					tableMetadata.setView_source_schema(rs.getString(7));
 					tableMetadataArr.add(tableMetadata);
 
 				}

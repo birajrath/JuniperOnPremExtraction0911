@@ -7,11 +7,22 @@ public class TableMetadataDto {
 	String where_clause;
 	String fetch_type;
 	String incr_col;
+	String view_flag;
+	String view_source_schema;
 	
 	
-	
-	
-	
+	public String getView_flag() {
+		return view_flag;
+	}
+	public void setView_flag(String view_flag) {
+		this.view_flag = view_flag;
+	}
+	public String getView_source_schema() {
+		return view_source_schema;
+	}
+	public void setView_source_schema(String view_source_schema) {
+		this.view_source_schema = view_source_schema;
+	}
 	public String getTable_name() {
 		return table_name;
 	}
