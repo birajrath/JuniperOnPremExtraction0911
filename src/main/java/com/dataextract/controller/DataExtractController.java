@@ -110,7 +110,7 @@ public class DataExtractController {
 			response = dataExtractRepositories.addConnectionDetails(connDto);
 			if(response.toLowerCase().contains("success")) {
 				status="Success";
-				message="Connection created with Connection Id:"+response.split(":")[1];
+				message="Connection created with Connection Id "+response.split(":")[1];
 			}
 			else {
 				status="Failed";
