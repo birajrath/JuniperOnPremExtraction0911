@@ -4,12 +4,7 @@
 package com.dataextract.controller;
 
 import java.sql.SQLException;
-
-
-
 import java.util.ArrayList;
-
-import java.util.HashMap;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,19 +14,19 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
+
+import com.dataextract.dto.ConnectionDto;
+import com.dataextract.dto.FeedDto;
 import com.dataextract.dto.FieldMetadataDto;
 import com.dataextract.dto.FileInfoDto;
 import com.dataextract.dto.FileMetadataDto;
 import com.dataextract.dto.HDFSMetadataDto;
 import com.dataextract.dto.RealTimeExtractDto;
 import com.dataextract.dto.RequestDto;
-import com.dataextract.dto.FeedDto;
 import com.dataextract.dto.TableInfoDto;
 import com.dataextract.dto.TableMetadataDto;
 import com.dataextract.dto.TargetDto;
 import com.dataextract.dto.UnixDataRequestDto;
-import com.dataextract.dto.BatchExtractDto;
-import com.dataextract.dto.ConnectionDto;
 import com.dataextract.repositories.DataExtractRepositories;
 import com.dataextract.util.ResponseUtil;
 import com.jcraft.jsch.SftpException;
@@ -94,13 +89,13 @@ public class DataExtractController {
 			connDto.setSystem(requestDto.getBody().get("data").get("system"));
 			connDto.setConn_name(requestDto.getBody().get("data").get("connection_name"));
 			connDto.setConn_type(requestDto.getBody().get("data").get("connection_type"));
-			connDto.setHostName(requestDto.getBody().get("data").get("Knox_host_name"));
-			connDto.setPort(requestDto.getBody().get("data").get("Knox_port"));
-			connDto.setKnox_gateway(requestDto.getBody().get("data").get("Knox_gateway"));
+			connDto.setHostName(requestDto.getBody().get("data").get("knox_host_name"));
+			connDto.setPort(requestDto.getBody().get("data").get("knox_port"));
+			connDto.setKnox_gateway(requestDto.getBody().get("data").get("knox_gateway"));
 			connDto.setUserName(requestDto.getBody().get("data").get("user_name"));
 			connDto.setPassword(requestDto.getBody().get("data").get("password"));
-			connDto.setTrust_store_path(requestDto.getBody().get("data").get("TS_path"));
-			connDto.setTrust_store_password(requestDto.getBody().get("data").get("TS_password"));
+			connDto.setTrust_store_path(requestDto.getBody().get("data").get("ts_path"));
+			connDto.setTrust_store_password(requestDto.getBody().get("data").get("ts_password"));
 			connDto.setProject(requestDto.getBody().get("data").get("project"));
 			connDto.setJuniper_user(requestDto.getBody().get("data").get("user"));
 		}
@@ -171,13 +166,13 @@ public class DataExtractController {
 			connDto.setSystem(requestDto.getBody().get("data").get("system"));
 			connDto.setConn_name(requestDto.getBody().get("data").get("connection_name"));
 			connDto.setConn_type(requestDto.getBody().get("data").get("connection_type"));
-			connDto.setHostName(requestDto.getBody().get("data").get("host_name"));
-			connDto.setPort(requestDto.getBody().get("data").get("port"));
-			connDto.setKnox_gateway(requestDto.getBody().get("data").get("knox_Gateway"));
+			connDto.setHostName(requestDto.getBody().get("data").get("knox_host_name"));
+			connDto.setPort(requestDto.getBody().get("data").get("knox_port"));
+			connDto.setKnox_gateway(requestDto.getBody().get("data").get("knox_gateway"));
 			connDto.setUserName(requestDto.getBody().get("data").get("user_name"));
 			connDto.setPassword(requestDto.getBody().get("data").get("password"));
-			connDto.setTrust_store_path(requestDto.getBody().get("data").get("TS_path"));
-			connDto.setTrust_store_password(requestDto.getBody().get("data").get("trust_store_password"));
+			connDto.setTrust_store_path(requestDto.getBody().get("data").get("ts_path"));
+			connDto.setTrust_store_password(requestDto.getBody().get("data").get("ts_password"));
 			connDto.setProject(requestDto.getBody().get("data").get("project"));
 			connDto.setJuniper_user(requestDto.getBody().get("data").get("user"));
 		}
@@ -286,8 +281,8 @@ public class DataExtractController {
 			target.setTarget_user(requestDto.getBody().get("data").get("target_user"));
 			target.setTarget_password(requestDto.getBody().get("data").get("password"));
 			target.setKnox_gateway(requestDto.getBody().get("data").get("knox_gateway"));
-			target.setTrust_store_path(requestDto.getBody().get("data").get("TS_path"));
-			target.setTrust_store_password(requestDto.getBody().get("data").get("trust_store_password"));
+			target.setTrust_store_path(requestDto.getBody().get("data").get("ts_path"));
+			target.setTrust_store_password(requestDto.getBody().get("data").get("ts_password"));
 			target.setProject(requestDto.getBody().get("data").get("project"));
 			target.setJuniper_user(requestDto.getBody().get("data").get("user"));
 		}
@@ -357,6 +352,21 @@ public class DataExtractController {
 			target.setDrive_id(requestDto.getBody().get("data").get("drive_id"));
 			target.setData_path(requestDto.getBody().get("data").get("data_path"));
 			target.setSystem(requestDto.getBody().get("data").get("system"));
+			target.setProject(requestDto.getBody().get("data").get("project"));
+			target.setJuniper_user(requestDto.getBody().get("data").get("user"));
+		}
+		
+		if(requestDto.getBody().get("data").get("target_type").equalsIgnoreCase("HIVE")) 
+		{
+			target.setSystem(requestDto.getBody().get("data").get("system"));
+			target.setTarget_unique_name(requestDto.getBody().get("data").get("target_unique_name"));
+			target.setTarget_type(requestDto.getBody().get("data").get("target_type"));
+			target.setTarget_knox_url(requestDto.getBody().get("data").get("knox_url"));
+			target.setTarget_user(requestDto.getBody().get("data").get("target_user"));
+			target.setTarget_password(requestDto.getBody().get("data").get("password"));
+			target.setKnox_gateway(requestDto.getBody().get("data").get("knox_gateway"));
+			target.setTrust_store_path(requestDto.getBody().get("data").get("ts_path"));
+			target.setTrust_store_password(requestDto.getBody().get("data").get("ts_password"));
 			target.setProject(requestDto.getBody().get("data").get("project"));
 			target.setJuniper_user(requestDto.getBody().get("data").get("user"));
 		}
