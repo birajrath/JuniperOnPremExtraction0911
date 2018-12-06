@@ -173,7 +173,7 @@ public class DataExtractController {
 			connDto.setConn_type(requestDto.getBody().get("data").get("connection_type"));
 			connDto.setHostName(requestDto.getBody().get("data").get("host_name"));
 			connDto.setPort(requestDto.getBody().get("data").get("port"));
-			connDto.setKnox_gateway(requestDto.getBody().get("data").get("knox_gateway"));
+			connDto.setKnox_gateway(requestDto.getBody().get("data").get("knox_Gateway"));
 			connDto.setUserName(requestDto.getBody().get("data").get("user_name"));
 			connDto.setPassword(requestDto.getBody().get("data").get("password"));
 			connDto.setTrust_store_path(requestDto.getBody().get("data").get("TS_path"));
