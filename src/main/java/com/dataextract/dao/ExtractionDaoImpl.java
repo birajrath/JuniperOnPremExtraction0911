@@ -224,7 +224,7 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 						row += res.getString(i) + delim;
 					}					
 					String insertProDbList=OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.DBPROPOGATIONTABLE)
-							.replace("{$columns}", "p_con_id,table_name,created_by")
+							.replace("{$columns}", "p_con_id,db_name,created_by")
 							.replace("{$data}",OracleConstants.QUOTE+connectionId+OracleConstants.QUOTE+OracleConstants.COMMA
 									+OracleConstants.QUOTE+row+OracleConstants.QUOTE+OracleConstants.COMMA
 									+"(select user_sequence from JUNIPER_USER_MASTER where user_id='"+dto.getJuniper_user()+"')");
