@@ -195,8 +195,6 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 				}
 			}
 			if(dto.getConn_type().equalsIgnoreCase("HIVE")) {
-				
-				
 				//More parameters can be added later with hdpConfig.
 				/*org.apache.hadoop.conf.Configuration hdpConfig = new org.apache.hadoop.conf.Configuration();
 				hdpConfig.set("hadoop.security.authentication", "Kerberos");
@@ -229,12 +227,6 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 						statement.executeUpdate(insertProDbList);
 						}
 					}
-			
-			
-			
-		
-				
-
 		}
 				
 			}catch(SQLException | ClassNotFoundException e) {
