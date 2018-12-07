@@ -104,10 +104,14 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 			}
 
 
-			if(dto.getConn_type().equalsIgnoreCase("ORACLE")||dto.getConn_type().equalsIgnoreCase("HADOOP")||dto.getConn_type().equalsIgnoreCase("TERADATA")) 
+			if(dto.getConn_type().equalsIgnoreCase("ORACLE")||
+					dto.getConn_type().equalsIgnoreCase("HADOOP")||
+					dto.getConn_type().equalsIgnoreCase("TERADATA")) 
 			{
 				insertConnDetails="insert into "+OracleConstants.CONNECTIONTABLE+
-						"(src_conn_name,src_conn_type,host_name,port_no,username,password,encrypted_encr_key,database_name,service_name,system_sequence,project_sequence,created_by) "
+						"(src_conn_name,src_conn_type,host_name,port_no,"
+						+ "username,password,encrypted_encr_key,database_name,service_name,"
+						+ "system_sequence,project_sequence,created_by) "
 						+ "values(?,?,?,?,?,?,?,?,?,?,?,?)";
 				pstm = conn.prepareStatement(insertConnDetails);
 				pstm.setString(1, dto.getConn_name());
@@ -150,7 +154,9 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 			if(dto.getConn_type().equalsIgnoreCase("HIVE")) {
 				trust_store_encrypted_password=encryptPassword(encrypted_key,dto.getTrust_store_password());
 				insertConnDetails="insert into "+OracleConstants.CONNECTIONTABLE+
-						"(src_conn_name,src_conn_type,host_name,port_no,username,password,encrypted_encr_key,system_sequence,project_sequence,created_by,knox_gateway,trust_store_path,trust_store_password,job_type) "
+						"(src_conn_name,src_conn_type,host_name,"
+						+ "port_no,username,password,encrypted_encr_key,system_sequence,"
+						+ "project_sequence,created_by,knox_gateway,trust_store_path,trust_store_password,job_type) "
 						+ "values(?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
 				pstm = conn.prepareStatement(insertConnDetails);
 				pstm.setString(1, dto.getConn_name());
@@ -1067,7 +1073,9 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 				delimiter=null;
 			}
 			insertFileMaster=OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.FILEDETAILSTABLE)
-					.replace("{$columns}","feed_sequence,file_name,file_type,file_delimiter,header_count,trailer_count,avro_conv_flg,bus_dt_format,bus_dt_loc,bus_dt_start,count_loc,count_start,count_length,project_sequence,created_by" )
+					.replace("{$columns}","feed_sequence,file_name,file_type,file_delimiter,"
+							+ "header_count,trailer_count,avro_conv_flg,bus_dt_format,bus_dt_loc,bus_dt_start,"
+							+ "count_loc,count_start,count_length,project_sequence,created_by" )
 					.replace("{$data}",fileInfoDto.getFeed_id() +OracleConstants.COMMA
 							+OracleConstants.QUOTE+file.getFile_name()+OracleConstants.QUOTE+OracleConstants.COMMA
 							+OracleConstants.QUOTE+file.getFile_type()+OracleConstants.QUOTE+OracleConstants.COMMA
@@ -1101,7 +1109,8 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 								if(field.getFile_name().equalsIgnoreCase(file.getFile_name())) {
 									
 									insertFieldMaster=OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.FIELDDETAILSTABLE)
-											.replace("{$columns}","feed_sequence,file_sequence,file_name,field_pos,field_name,field_data_type,project_sequence,created_by" )
+											.replace("{$columns}","feed_sequence,file_sequence,file_name,field_pos,field_name,"
+													+ "field_data_type,project_sequence,created_by" )
 											.replace("{$data}",fileInfoDto.getFeed_id()+OracleConstants.COMMA
 													+file_sequence+OracleConstants.COMMA
 													+OracleConstants.QUOTE+file.getFile_name()+OracleConstants.QUOTE+OracleConstants.COMMA
@@ -1500,7 +1509,9 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 			for(String fileId:fileIds) {
 				StringBuffer fieldList=new StringBuffer();
 				FileMetadataDto fileMetadataDto= new FileMetadataDto();
-				String query="select file_name,file_type,file_delimiter,header_count,trailer_count,avro_conv_flg,bus_dt_format,bus_dt_loc,bus_dt_start,count_loc,count_start,count_length from "+OracleConstants.FILEDETAILSTABLE+" where file_sequence="+fileId;
+				String query="select file_name,file_type,file_delimiter,header_count,trailer_count,"
+						+ "avro_conv_flg,bus_dt_format,bus_dt_loc,bus_dt_start,"
+						+ "count_loc,count_start,count_length from "+OracleConstants.FILEDETAILSTABLE+" where file_sequence="+fileId;
 				Statement statement=conn.createStatement();
 				ResultSet rs = statement.executeQuery(query);
 				if(rs.isBeforeFirst()) {

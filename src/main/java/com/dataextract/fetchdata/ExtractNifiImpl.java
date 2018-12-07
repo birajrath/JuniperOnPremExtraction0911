@@ -585,32 +585,57 @@ public class ExtractNifiImpl implements IExtract {
 			json.put("table_name", tableMetadata.getTable_name());
 			if(!(tableMetadata.getColumns().equalsIgnoreCase("all"))) {
 				
-				if(tableMetadata.getView_flag().equalsIgnoreCase("N")) {
+				if(rtExtractDto.getConnDto().getConn_type().equalsIgnoreCase("TERADATA")) {
+					
+					if(tableMetadata.getView_flag().equalsIgnoreCase("N")) {
+						
+						json.put("columns", tableMetadata.getColumns());
+						json.put("columns_where_clause","where upper(table_name)='"+tableMetadata.getTable_name().split("\\.")[1].toUpperCase()
+								+"' and upper(owner)='"+tableMetadata.getTable_name().split("\\.")[0].toUpperCase()
+								+ "' and upper(column_name) in("+columnsWithQuotes.toString().toUpperCase()+")");
+					}
+					else {
+						json.put("columns", tableMetadata.getColumns());
+						json.put("columns_where_clause","where upper(table_name)='"+tableMetadata.getTable_name().split("\\.")[1].toUpperCase()
+								+"' and upper(owner)='"+tableMetadata.getView_source_schema().toUpperCase()
+								+ "' and upper(column_name) in("+columnsWithQuotes.toString().toUpperCase()+")");
+					}
+					
+				}
+				else {
 					
 					json.put("columns", tableMetadata.getColumns());
 					json.put("columns_where_clause","where upper(table_name)='"+tableMetadata.getTable_name().split("\\.")[1].toUpperCase()
 							+"' and upper(owner)='"+tableMetadata.getTable_name().split("\\.")[0].toUpperCase()
 							+ "' and upper(column_name) in("+columnsWithQuotes.toString().toUpperCase()+")");
+					
 				}
-				else {
-					json.put("columns", tableMetadata.getColumns());
-					json.put("columns_where_clause","where upper(table_name)='"+tableMetadata.getTable_name().split("\\.")[1].toUpperCase()
-							+"' and upper(owner)='"+tableMetadata.getView_source_schema().toUpperCase()
-							+ "' and upper(column_name) in("+columnsWithQuotes.toString().toUpperCase()+")");
-				}
+				
+				
 				
 			}else {
 				
-				if(tableMetadata.getView_flag().equalsIgnoreCase("N")) {
+				if(rtExtractDto.getConnDto().getConn_type().equalsIgnoreCase("TERADATA")) {
+					
+					if(tableMetadata.getView_flag().equalsIgnoreCase("N")) {
+						
+						json.put("columns_where_clause","where upper(table_name)='"+tableMetadata.getTable_name().split("\\.")[1].toUpperCase()
+								+"' and upper(owner)='"+tableMetadata.getTable_name().split("\\.")[0].toUpperCase()+"'");
+					}
+					else {
+						
+						json.put("columns_where_clause","where upper(table_name)='"+tableMetadata.getTable_name().split("\\.")[1].toUpperCase()
+								+"' and upper(owner)='"+tableMetadata.getView_source_schema().toUpperCase()+"'");
+					}
+					
+				}
+				else {
 					
 					json.put("columns_where_clause","where upper(table_name)='"+tableMetadata.getTable_name().split("\\.")[1].toUpperCase()
 							+"' and upper(owner)='"+tableMetadata.getTable_name().split("\\.")[0].toUpperCase()+"'");
 				}
-				else {
-					
-					json.put("columns_where_clause","where upper(table_name)='"+tableMetadata.getTable_name().split("\\.")[1].toUpperCase()
-							+"' and upper(owner)='"+tableMetadata.getView_source_schema().toUpperCase()+"'");
-				}
+				
+				
 				
 			}
 			
