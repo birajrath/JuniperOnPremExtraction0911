@@ -29,7 +29,7 @@ public ConnectionDto getConnectionObject(String feed_name) throws SQLException;
 public FeedDto getFeedObject(String feed_name) throws SQLException;
 public TableInfoDto getTableInfoObject(String table_list) throws SQLException;
 public String realTimeExtract(RealTimeExtractDto rtExtractDto) throws IOException , SQLException;
-public String testConnection(ConnectionDto dto);
+public String testConnection(ConnectionDto dto) throws SQLException;
 public String addTargetDetails(TargetDto target) throws SQLException;
 public ArrayList<TargetDto> getTargetObject(String targetList) throws SQLException;
 public String batchExtract(String feed_name,String project,String cron) throws SQLException;

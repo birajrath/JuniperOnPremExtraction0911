@@ -207,7 +207,7 @@ public class DataExtractRepositoriesImpl implements DataExtractRepositories {
 
 
 	@Override
-	public String testConnection(ConnectionDto dto) {
+	public String testConnection(ConnectionDto dto) throws SQLException {
 
 		String connectionUrl;
 		//Connection connection=null;
@@ -247,25 +247,28 @@ public class DataExtractRepositoriesImpl implements DataExtractRepositories {
 		
 		if(dto.getConn_type().equalsIgnoreCase("HIVE")) {
 		String message=null;
+		Connection con =null;
 			try {
 				Class.forName(OracleConstants.HIVE_DRIVER);
 				/*org.apache.hadoop.conf.Configuration hdpConfig = new org.apache.hadoop.conf.Configuration();
 				hdpConfig.set("hadoop.security.authentication", "Kerberos");
 				UserGroupInformation.setConfiguration(hdpConfig);*/
-				Connection con = DriverManager.getConnection("jdbc:hive2://"+dto.getHostName()+":"+dto.getPort()+"/;ssl=true;sslTrustStore="+dto.getTrust_store_path()+";trustStorePassword="+dto.getTrust_store_password()+";transportMode=http;httpPath="+dto.getKnox_gateway()+"",""+dto.getUserName()+"",""+dto.getPassword()+"");
+				con = DriverManager.getConnection("jdbc:hive2://"+dto.getHostName()+":"+dto.getPort()+"/;ssl=true;sslTrustStore="+dto.getTrust_store_path()+";trustStorePassword="+dto.getTrust_store_password()+";transportMode=http;httpPath="+dto.getKnox_gateway()+"",""+dto.getUserName()+"",""+dto.getPassword()+"");
 				Statement stmt = con.createStatement();
 				String sql = ("show databases");
 				ResultSet res=null;
 				res = stmt.executeQuery(sql);
 				if (res!=null){
-					System.out.println("connected to source Database"); 
+					System.out.println("hive connection successful"); 
 					message= "success";
 					con.close();
 				}
 			} catch (Exception e) {
 				e.printStackTrace();
 				message= "failed due to exception " + e.getMessage();
+				con.close();
 			}
+			
 			return message;
 	}
 		return ("invalid source type");
