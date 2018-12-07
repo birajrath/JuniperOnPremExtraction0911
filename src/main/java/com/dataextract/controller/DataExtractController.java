@@ -5,6 +5,8 @@ package com.dataextract.controller;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,6 +23,7 @@ import com.dataextract.dto.FieldMetadataDto;
 import com.dataextract.dto.FileInfoDto;
 import com.dataextract.dto.FileMetadataDto;
 import com.dataextract.dto.HDFSMetadataDto;
+import com.dataextract.dto.HiveDbMetadataDto;
 import com.dataextract.dto.RealTimeExtractDto;
 import com.dataextract.dto.RequestDto;
 import com.dataextract.dto.TableInfoDto;
@@ -645,6 +648,33 @@ public class DataExtractController {
 		}
 		return ResponseUtil.createResponse(status, message);
 	}
+	
+	
+	
+	@RequestMapping(value = "/addHivePropagateDbInfo", method = RequestMethod.POST, consumes = "application/json")
+	@ResponseBody
+	public String addHivePropagateDatabaseInfo(@RequestBody RequestDto requestDto) throws SQLException, SftpException {
+		String status="";
+		String message="";
+		String response="";
+		
+		HiveDbMetadataDto hivedbDto = new HiveDbMetadataDto();
+		String src_sys_id_str= requestDto.getBody().get("data").get("src_sys_id");
+		int src_sys_id=Integer.parseInt(src_sys_id_str);
+		hivedbDto.setSrc_sys_id(src_sys_id);
+		String hiveDbString=requestDto.getBody().get("data").get("hive_db_list");
+		List<String> hiveDbList = Arrays.asList(hiveDbString.split(","));
+		hivedbDto.setHiveDbList(hiveDbList);
+		response=dataExtractRepositories.addHivePropagateDbDetails(hivedbDto);
+		if(response.equalsIgnoreCase("Success")) {
+			status="success";
+			message="Hive Metadata Added Successfully";
+		}
+		else {
+			status="failed";
+		}
+		return ResponseUtil.createResponse(status, message);
+	}
 
 
 	@RequestMapping(value = "/extractData", method = RequestMethod.POST)
@@ -673,10 +703,7 @@ public class DataExtractController {
 				String fileList=rtExtractDto.getFeedDto().getFileList();
 				rtExtractDto.setHdfsInfoDto(dataExtractRepositories.getHDFSInfoObject(fileList));
 			}
-
 		}
-
-
 
 		try {
 			response=dataExtractRepositories.realTimeExtract(rtExtractDto);

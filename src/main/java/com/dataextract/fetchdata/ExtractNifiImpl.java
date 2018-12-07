@@ -213,7 +213,40 @@ public class ExtractNifiImpl implements IExtract {
 	}
 	
 	
+	@Override
+	public String callNifiHivePropagateRealTime(RealTimeExtractDto rtExtractDto, String date, Long runId) throws UnsupportedOperationException, Exception{
+		String listener=NifiConstants.HIVEPROPAGATELISTENER1;
+		JSONArray jsonArr=createHivePropagateJsonObject(rtExtractDto,date, runId);
+		invokeNifiFull(jsonArr,listener);
+		return "success";
+	}
 	
+	
+	
+	
+
+	private JSONArray createHivePropagateJsonObject(RealTimeExtractDto rtExtractDto, String date, Long runId) {
+		
+		JSONArray arr = new JSONArray();
+		for(String dbList: rtExtractDto.getHiveInfoDto().getHiveDbList()) {
+			JSONObject json=new JSONObject();
+			json.put("db_list", dbList);
+			json.put("knox_url", "https://"+rtExtractDto.getConnDto().getHostName()+":"+rtExtractDto.getConnDto().getPort());
+			json.put("knox_user", rtExtractDto.getConnDto().getUserName());
+			json.put("knox_password", rtExtractDto.getConnDto().getPassword());
+			int i=1;
+			for(TargetDto tarDto: rtExtractDto.getTargetArr()) {
+				if(tarDto.getTarget_type().equalsIgnoreCase("hive")) {
+					//json.put("target_type"+Integer.toString(i), "gcs");
+					//json.put("bucket"+Integer.toString(i), tarDto.getTarget_bucket());
+				}
+				i++;
+			}
+			arr.add(json);
+			
+		}
+		return arr;
+	}
 
 	private  int getRandomNumberInRange(int min, int max) {
 
@@ -784,6 +817,7 @@ public class ExtractNifiImpl implements IExtract {
 			}
 			
 		}
+
 	
 	
 	

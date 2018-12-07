@@ -6,6 +6,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import com.dataextract.dto.FileInfoDto;
 import com.dataextract.dto.HDFSMetadataDto;
+import com.dataextract.dto.HiveDbMetadataDto;
 import com.dataextract.dto.RealTimeExtractDto;
 import com.dataextract.dto.FeedDto;
 import com.dataextract.dto.TableInfoDto;
@@ -39,6 +40,8 @@ public interface IExtractionDAO {
 	public int getProcessGroup(Connection conn, String feed_name, String country_code) throws SQLException;
 	public String checkProcessGroupStatus(Connection conn, int index, String conn_type) throws SQLException;
 	public String decyptPassword(byte[] encrypted_key, byte[] encrypted_password) throws Exception;
+	public String insertHivePropagateMetadata(Connection conn, HiveDbMetadataDto hivedbDto) throws SQLException;
+	public HiveDbMetadataDto getHivePropagateInfoObject(Connection conn, String dbList) throws SQLException;
 	
 	
 	

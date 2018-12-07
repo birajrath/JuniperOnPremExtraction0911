@@ -11,6 +11,7 @@ import com.dataextract.dto.ConnectionDto;
 import com.dataextract.dto.FeedDto;
 import com.dataextract.dto.FileInfoDto;
 import com.dataextract.dto.HDFSMetadataDto;
+import com.dataextract.dto.HiveDbMetadataDto;
 import com.dataextract.dto.RealTimeExtractDto;
 import com.dataextract.dto.TableInfoDto;
 import com.dataextract.dto.TargetDto;
@@ -45,6 +46,8 @@ public HDFSMetadataDto getHDFSInfoObject(String fileList)throws SQLException;
 public String updateNifiProcessgroupDetails(RealTimeExtractDto rtDto,String path, String date,String run_id,int index) throws SQLException;
 public int getProcessGroup(String feed_name, String country_code)throws SQLException;
 public String checkProcessGroupStatus(int index, String conn_type) throws SQLException;
+public String addHivePropagateDbDetails(HiveDbMetadataDto hivedbDto) throws SQLException;
+HiveDbMetadataDto getHivePropagateInfoObject(String dbList) throws SQLException;
 
 
 

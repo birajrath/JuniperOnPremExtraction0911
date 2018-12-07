@@ -9,6 +9,7 @@ public class RealTimeExtractDto {
 	TableInfoDto tableInfoDto;
 	FileInfoDto fileInfoDto;
 	HDFSMetadataDto hdfsInfoDto;
+	HiveDbMetadataDto hiveInfoDto;
 	ArrayList<TargetDto> targetArr;
 	
 	
@@ -49,7 +50,10 @@ public class RealTimeExtractDto {
 	public void setHdfsInfoDto(HDFSMetadataDto hdfsInfoDto) {
 		this.hdfsInfoDto = hdfsInfoDto;
 	}
-	
-	
-
+	public HiveDbMetadataDto getHiveInfoDto() {
+		return hiveInfoDto;
+	}
+	public void setHiveInfoDto(HiveDbMetadataDto hiveInfoDto) {
+		this.hiveInfoDto = hiveInfoDto;
+	}
 }

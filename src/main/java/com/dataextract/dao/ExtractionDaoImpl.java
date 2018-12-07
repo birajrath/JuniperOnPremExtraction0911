@@ -38,6 +38,7 @@ import com.dataextract.dto.FieldMetadataDto;
 import com.dataextract.dto.FileInfoDto;
 import com.dataextract.dto.FileMetadataDto;
 import com.dataextract.dto.HDFSMetadataDto;
+import com.dataextract.dto.HiveDbMetadataDto;
 import com.dataextract.dto.RealTimeExtractDto;
 import com.dataextract.dto.FeedDto;
 import com.dataextract.dto.TableInfoDto;
@@ -1648,11 +1649,24 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 				dataPull_status= extract.callNifiHadoopRealTime(rtExtractDto,date,runId);
 				return "success";
 			} catch (UnsupportedOperationException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 				return e.getMessage();
 			} catch (Exception e) {
-				// TODO Auto-generated catch block
+				e.printStackTrace();
+				return e.getMessage();
+			}
+
+		}
+		if(rtExtractDto.getConnDto().getConn_type().equalsIgnoreCase("HIVE")) {
+			Long runId=getRunId();
+			String date=getDate();
+			try {
+				dataPull_status= extract.callNifiHivePropagateRealTime(rtExtractDto,date,runId);
+				return "success";
+			} catch (UnsupportedOperationException e) {
+				e.printStackTrace();
+				return e.getMessage();
+			} catch (Exception e) {
 				e.printStackTrace();
 				return e.getMessage();
 			}
@@ -2265,6 +2279,78 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 		}
 
 		return hdfsInfoDto;
+	}
+
+	@Override
+	public String insertHivePropagateMetadata(Connection conn, HiveDbMetadataDto hivedbDto) throws SQLException {
+		StringBuffer dbList=new StringBuffer();
+		String insertHiveMaster="";
+		String sequence="";
+		for(String hivedb:hivedbDto.getHiveDbList()) {
+
+			insertHiveMaster=OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.DBPROPOGATIONTABLE)
+					.replace("{$columns}","src_sys_id,db_name" )
+					.replace("{$data}",hivedbDto.getSrc_sys_id() +OracleConstants.COMMA
+							+OracleConstants.QUOTE+hivedb+OracleConstants.QUOTE);
+			try {	
+				Statement statement = conn.createStatement();
+				System.out.println(insertHiveMaster);
+				statement.executeUpdate(insertHiveMaster);
+				String query=OracleConstants.GETSEQUENCEID.replace("${tableName}", OracleConstants.DBPROPOGATIONTABLE).replace("${columnName}", "HDB_ID");
+				System.out.println("query is "+query);
+				ResultSet rs=statement.executeQuery(query);
+				if(rs.isBeforeFirst()) {
+					rs.next();
+					sequence=rs.getString(1).split("\\.")[1];
+					rs=statement.executeQuery(OracleConstants.GETLASTROWID.replace("${id}", sequence));
+					if(rs.isBeforeFirst()) {
+						rs.next();
+						dbList.append(rs.getString(1)+",");
+					}
+				}
+			}catch (SQLException e) {
+				e.printStackTrace();
+				return e.getMessage();
+			}
+		}
+		dbList.setLength(dbList.length()-1);
+		String dbListStr=dbList.toString();
+		String updateExtractionMaster="update "+OracleConstants.FEEDTABLE+" set table_list='"+dbListStr+"' where src_sys_id="+hivedbDto.getSrc_sys_id();
+		try {	
+			Statement statement = conn.createStatement();
+			statement.execute(updateExtractionMaster);
+			return "Success";
+
+		}catch (SQLException e) {
+			return e.getMessage();
+		}finally {
+			conn.close();
+		}
+	}
+
+	@Override
+	public HiveDbMetadataDto getHivePropagateInfoObject(Connection conn, String dbList) throws SQLException {
+
+		HiveDbMetadataDto hiveInfoDto= new HiveDbMetadataDto();
+		ArrayList<String> dbPaths=new ArrayList<String>();
+		String[] dbIds=dbList.split(",");
+		try {
+			for(String dbId:dbIds) {
+				String query="select db_name from "+OracleConstants.DBPROPOGATIONTABLE+" where hdb_id="+dbId;
+				Statement statement=conn.createStatement();
+				ResultSet rs = statement.executeQuery(query);
+				if(rs.isBeforeFirst()) {
+					rs.next();
+					dbPaths.add(rs.getString(1));
+				}
+			}
+			hiveInfoDto.setHiveDbList(dbPaths);
+		}catch(SQLException e) {
+			e.printStackTrace();
+		}finally {
+			conn.close();
+		}
+		return hiveInfoDto;
 	}
 }
 

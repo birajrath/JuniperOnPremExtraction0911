@@ -106,5 +106,4 @@ public class FeedDto {
 	public void setEncryptionStatus(String encryptionStatus) {
 		this.encryptionStatus = encryptionStatus;
 	}
-
 }

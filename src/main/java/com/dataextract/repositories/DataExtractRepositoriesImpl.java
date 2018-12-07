@@ -21,6 +21,7 @@ import com.dataextract.constants.OracleConstants;
 import com.dataextract.dao.IExtractionDAO;
 import com.dataextract.dto.FileInfoDto;
 import com.dataextract.dto.HDFSMetadataDto;
+import com.dataextract.dto.HiveDbMetadataDto;
 import com.dataextract.dto.RealTimeExtractDto;
 import com.dataextract.dto.FeedDto;
 import com.dataextract.dto.TableInfoDto;
@@ -299,6 +300,22 @@ public class DataExtractRepositoriesImpl implements DataExtractRepositories {
 		conn=ConnectionUtils.connectToOracle(OracleConstants.ORACLE_IP_PORT_SID, OracleConstants.ORACLE_USER_NAME, OracleConstants.ORACLE_PASSWORD);
 		//conn= ConnectionUtils.connectToMySql(MySQLConstants.MYSQLIP, MySQLConstants.MYSQLPORT, MySQLConstants.DB,MySQLConstants.USER , MySQLConstants.PASSWORD);
 		return extractionDao.updateNifiProcessgroupDetails(conn, rtDto,path ,date, run_id,index);
+	}
+
+	@Override
+	public String addHivePropagateDbDetails(HiveDbMetadataDto hivedbDto) throws SQLException {
+		Connection conn=null;
+		conn=ConnectionUtils.connectToOracle(OracleConstants.ORACLE_IP_PORT_SID, OracleConstants.ORACLE_USER_NAME, OracleConstants.ORACLE_PASSWORD);
+		return extractionDao.insertHivePropagateMetadata(conn, hivedbDto);
+	}
+	
+	
+	@Override
+	public HiveDbMetadataDto getHivePropagateInfoObject(String dbList) throws SQLException {
+		Connection conn=null;
+		conn=ConnectionUtils.connectToOracle(OracleConstants.ORACLE_IP_PORT_SID, OracleConstants.ORACLE_USER_NAME, OracleConstants.ORACLE_PASSWORD);
+		//conn= ConnectionUtils.connectToMySql(MySQLConstants.MYSQLIP, MySQLConstants.MYSQLPORT, MySQLConstants.DB,MySQLConstants.USER , MySQLConstants.PASSWORD);
+		return extractionDao.getHivePropagateInfoObject(conn,dbList);
 	}
 }
 
