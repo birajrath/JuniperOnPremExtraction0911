@@ -225,21 +225,27 @@ public class ExtractNifiImpl implements IExtract {
 	
 	
 
+	@SuppressWarnings("unchecked")
 	private JSONArray createHivePropagateJsonObject(RealTimeExtractDto rtExtractDto, String date, Long runId) {
 		
 		JSONArray arr = new JSONArray();
 		for(String dbList: rtExtractDto.getHiveInfoDto().getHiveDbList()) {
 			JSONObject json=new JSONObject();
 			json.put("db_list", dbList);
-			json.put("knox_url", "https://"+rtExtractDto.getConnDto().getHostName()+":"+rtExtractDto.getConnDto().getPort());
-			json.put("knox_user", rtExtractDto.getConnDto().getUserName());
-			json.put("knox_password", rtExtractDto.getConnDto().getPassword());
+			json.put("source_knox_url", "https://"+rtExtractDto.getConnDto().getHostName()+":"+rtExtractDto.getConnDto().getPort());
+			json.put("source_trust_store_file_path", rtExtractDto.getConnDto().getTrust_store_path());
+			json.put("source_trust_store_password", rtExtractDto.getConnDto().getTrust_store_password());
+			json.put("source_gateway_path", rtExtractDto.getConnDto().getKnox_gateway());
+			json.put("source_knox_user", rtExtractDto.getConnDto().getUserName());
+			json.put("source_knox_password", rtExtractDto.getConnDto().getPassword());
+			
 			int i=1;
 			for(TargetDto tarDto: rtExtractDto.getTargetArr()) {
-				if(tarDto.getTarget_type().equalsIgnoreCase("hive")) {
-					//json.put("target_type"+Integer.toString(i), "gcs");
-					//json.put("bucket"+Integer.toString(i), tarDto.getTarget_bucket());
-				}
+					json.put("target_type"+Integer.toString(i), "hive");
+					json.put("target_knox_url"+Integer.toString(i), tarDto.getTarget_knox_url());
+					json.put("target_knox_user"+Integer.toString(i), tarDto.getTarget_user());
+					json.put("target_knox_password"+Integer.toString(i), tarDto.getTarget_password());
+					//json.put("hdfs_path"+Integer.toString(i), tarDto.getTarget_hdfs_path());
 				i++;
 			}
 			arr.add(json);

@@ -4,7 +4,7 @@ import java.util.List;
 
 public class HiveDbMetadataDto {
 	
-	int src_sys_id;
+	int feed_id;
 	List<String> hiveDbList;
 	String project;
 	String juniper_user;
@@ -12,17 +12,17 @@ public class HiveDbMetadataDto {
 
 	
 	
+	public int getFeed_id() {
+		return feed_id;
+	}
+	public void setFeed_id(int feed_id) {
+		this.feed_id = feed_id;
+	}
 	public List<String> getHiveDbList() {
 		return hiveDbList;
 	}
 	public void setHiveDbList(List<String> hiveDbList) {
 		this.hiveDbList = hiveDbList;
-	}
-	public int getSrc_sys_id() {
-		return src_sys_id;
-	}
-	public void setSrc_sys_id(int src_sys_id) {
-		this.src_sys_id = src_sys_id;
 	}
 	public String getProject() {
 		return project;

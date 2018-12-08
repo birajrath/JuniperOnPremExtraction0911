@@ -47,7 +47,8 @@ public String updateNifiProcessgroupDetails(RealTimeExtractDto rtDto,String path
 public int getProcessGroup(String feed_name, String country_code)throws SQLException;
 public String checkProcessGroupStatus(int index, String conn_type) throws SQLException;
 public String addHivePropagateDbDetails(HiveDbMetadataDto hivedbDto) throws SQLException;
-HiveDbMetadataDto getHivePropagateInfoObject(String dbList) throws SQLException;
+public HiveDbMetadataDto getHivePropagateInfoObject(String dbList) throws SQLException;
+
 
 
 

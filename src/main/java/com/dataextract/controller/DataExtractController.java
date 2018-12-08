@@ -659,9 +659,9 @@ public class DataExtractController {
 		String response="";
 		
 		HiveDbMetadataDto hivedbDto = new HiveDbMetadataDto();
-		String src_sys_id_str= requestDto.getBody().get("data").get("src_sys_id");
+		String src_sys_id_str= requestDto.getBody().get("data").get("feed_id");
 		int src_sys_id=Integer.parseInt(src_sys_id_str);
-		hivedbDto.setSrc_sys_id(src_sys_id);
+		hivedbDto.setFeed_id(src_sys_id);
 		String hiveDbString=requestDto.getBody().get("data").get("hive_db_list");
 		List<String> hiveDbList = Arrays.asList(hiveDbString.split(","));
 		hivedbDto.setHiveDbList(hiveDbList);
@@ -691,8 +691,14 @@ public class DataExtractController {
 		String targetList=rtExtractDto.getFeedDto().getTarget();
 		rtExtractDto.setTargetArr(dataExtractRepositories.getTargetObject(targetList));
 		if(!(rtExtractDto.getFeedDto().getTableList()==null||rtExtractDto.getFeedDto().getTableList().isEmpty())) {
-			String tableList=rtExtractDto.getFeedDto().getTableList();
-			rtExtractDto.setTableInfoDto(dataExtractRepositories.getTableInfoObject(tableList));
+			if(rtExtractDto.getConnDto().getConn_type().equalsIgnoreCase("HIVE")) {
+				String dbList=rtExtractDto.getFeedDto().getTableList();
+				rtExtractDto.setHiveInfoDto(dataExtractRepositories.getHivePropagateInfoObject(dbList));
+			}
+			else {
+				String tableList=rtExtractDto.getFeedDto().getTableList();
+				rtExtractDto.setTableInfoDto(dataExtractRepositories.getTableInfoObject(tableList));
+			}
 		}
 		if(!(rtExtractDto.getFeedDto().getFileList()==null||rtExtractDto.getFeedDto().getFileList().isEmpty())) {
 			if(rtExtractDto.getConnDto().getConn_type().equalsIgnoreCase("UNIX")) {

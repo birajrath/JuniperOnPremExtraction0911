@@ -262,14 +262,12 @@ public class DataExtractRepositoriesImpl implements DataExtractRepositories {
 				if (res!=null){
 					System.out.println("hive connection successful"); 
 					message= "success";
-					con.close();
 				}
 			} catch (Exception e) {
 				e.printStackTrace();
 				message= "failed due to exception " + e.getMessage();
-				con.close();
 			}
-			
+			con.close();
 			return message;
 	}
 		return ("invalid source type");

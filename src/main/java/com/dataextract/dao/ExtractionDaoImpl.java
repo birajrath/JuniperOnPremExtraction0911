@@ -200,51 +200,16 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 					rs.next();
 					connectionId=rs.getString(1);
 				}
-			}
-			if(dto.getConn_type().equalsIgnoreCase("HIVE")) {
-				//More parameters can be added later with hdpConfig.
-				/*org.apache.hadoop.conf.Configuration hdpConfig = new org.apache.hadoop.conf.Configuration();
-				hdpConfig.set("hadoop.security.authentication", "Kerberos");
-				UserGroupInformation.setConfiguration(hdpConfig);*/
-				Class.forName(OracleConstants.HIVE_DRIVER);
-				Connection con = DriverManager.getConnection("jdbc:hive2://"+dto.getHostName()+":"+dto.getPort()+"/;ssl=true;sslTrustStore="+dto.getTrust_store_path()+";trustStorePassword="+dto.getTrust_store_password()+";transportMode=http;httpPath="+dto.getKnox_gateway()+"",""+dto.getUserName()+"",""+dto.getPassword()+"");
-				Statement stmt = con.createStatement();
-				String sql = ("show databases");
-				ResultSet res=null;
-				res = stmt.executeQuery(sql);
-				if (res!=null){
-					ResultSetMetaData metadata = res.getMetaData();
-					int columnCount = metadata.getColumnCount(); 
-					while(res.next()){
-						String row="";
-						for (int i = 1; i <= columnCount; i++) {
-							String delim=",";
-							if(i==columnCount){
-								delim="";
-								} 
-							row += res.getString(i) + delim;
-						}					
-						String insertProDbList=OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.DBPROPOGATIONTABLE)
-								.replace("{$columns}", "p_con_id,db_name,created_by")
-								.replace("{$data}",OracleConstants.QUOTE+connectionId+OracleConstants.QUOTE+OracleConstants.COMMA
-										+OracleConstants.QUOTE+row+OracleConstants.QUOTE+OracleConstants.COMMA
-										+"(select user_sequence from JUNIPER_USER_MASTER where user_id='"+dto.getJuniper_user()+"')");
-						System.out.println("Insert into table propagation table "+insertProDbList);
-						statement=conn.createStatement();
-						statement.executeUpdate(insertProDbList);
-						}
-					}
+			}	
+		}catch(SQLException e) {
+			e.printStackTrace();
+			return e.getMessage();
+		}finally {
+			conn.close();
 		}
-				
-			}catch(SQLException | ClassNotFoundException e) {
-				e.printStackTrace();
-				return e.getMessage();
-			}finally {
-				conn.close();
-			}
-		
-	
-		
+
+
+
 		return "success:"+connectionId;
 	}
 
@@ -624,7 +589,7 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 				byte[] encrypted_password=null;
 				byte[] trust_store_encrypted_password=null;
 				encrypted_key=getEncryptedKey(conn,system_sequence,project_sequence);
-				
+
 				if(encrypted_key==null){
 					return "Error ocurred while fetching  key for encryption";
 				}
@@ -652,7 +617,7 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 				pstm.setString(11, target.getTrust_store_path());
 				pstm.setBytes(12, trust_store_encrypted_password);
 				pstm.setString(13, "P");
-				
+
 				try {
 					pstm.executeUpdate();
 					pstm.close();
@@ -1045,7 +1010,7 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 		int project_sequence=getProjectSequence(conn, fileInfoDto.getProject());
 		String juniper_user=fileInfoDto.getJuniper_user();
 		int file_sequence=0;
-		
+
 
 		for(FileMetadataDto file:fileInfoDto.getFileMetadataArr()) {
 
@@ -1087,41 +1052,41 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 							);
 			try {	
 				Statement statement = conn.createStatement();
-				 statement.executeUpdate(insertFileMaster);
-				 String query=OracleConstants.GETSEQUENCEID.replace("${tableName}", OracleConstants.FILEDETAILSTABLE).replace("${columnName}", "FILE_SEQUENCE");
-				 ResultSet rs=statement.executeQuery(query);
-				 if(rs.isBeforeFirst()) {
-					 rs.next();
-					 sequence=rs.getString(1).split("\\.")[1];
-					 rs=statement.executeQuery(OracleConstants.GETLASTROWID.replace("${id}", sequence));
-					 if(rs.isBeforeFirst()) {
-						 rs.next();
-						 fileList.append(rs.getString(1)+",");
-						 file_sequence=Integer.parseInt(rs.getString(1));
-						 for(FieldMetadataDto field:fileInfoDto.getFieldMetadataArr()) {
-								if(field.getFile_name().equalsIgnoreCase(file.getFile_name())) {
-									
-									insertFieldMaster=OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.FIELDDETAILSTABLE)
-											.replace("{$columns}","feed_sequence,file_sequence,file_name,field_pos,field_name,"
-													+ "field_data_type,project_sequence,created_by" )
-											.replace("{$data}",fileInfoDto.getFeed_id()+OracleConstants.COMMA
-													+file_sequence+OracleConstants.COMMA
-													+OracleConstants.QUOTE+file.getFile_name()+OracleConstants.QUOTE+OracleConstants.COMMA
-													+field.getField_position()+OracleConstants.COMMA
-													+OracleConstants.QUOTE+field.getField_name()+OracleConstants.QUOTE+OracleConstants.COMMA
-													+OracleConstants.QUOTE+field.getField_datatype()+OracleConstants.QUOTE+OracleConstants.COMMA
-													+project_sequence+OracleConstants.COMMA
-													+OracleConstants.QUOTE+juniper_user+OracleConstants.QUOTE);
-									
-						
-									 statement.executeUpdate(insertFieldMaster);
-								}
-						 
-					 }
-				 }
-				
-			}
-		}catch (SQLException e) {
+				statement.executeUpdate(insertFileMaster);
+				String query=OracleConstants.GETSEQUENCEID.replace("${tableName}", OracleConstants.FILEDETAILSTABLE).replace("${columnName}", "FILE_SEQUENCE");
+				ResultSet rs=statement.executeQuery(query);
+				if(rs.isBeforeFirst()) {
+					rs.next();
+					sequence=rs.getString(1).split("\\.")[1];
+					rs=statement.executeQuery(OracleConstants.GETLASTROWID.replace("${id}", sequence));
+					if(rs.isBeforeFirst()) {
+						rs.next();
+						fileList.append(rs.getString(1)+",");
+						file_sequence=Integer.parseInt(rs.getString(1));
+						for(FieldMetadataDto field:fileInfoDto.getFieldMetadataArr()) {
+							if(field.getFile_name().equalsIgnoreCase(file.getFile_name())) {
+
+								insertFieldMaster=OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.FIELDDETAILSTABLE)
+										.replace("{$columns}","feed_sequence,file_sequence,file_name,field_pos,field_name,"
+												+ "field_data_type,project_sequence,created_by" )
+										.replace("{$data}",fileInfoDto.getFeed_id()+OracleConstants.COMMA
+												+file_sequence+OracleConstants.COMMA
+												+OracleConstants.QUOTE+file.getFile_name()+OracleConstants.QUOTE+OracleConstants.COMMA
+												+field.getField_position()+OracleConstants.COMMA
+												+OracleConstants.QUOTE+field.getField_name()+OracleConstants.QUOTE+OracleConstants.COMMA
+												+OracleConstants.QUOTE+field.getField_datatype()+OracleConstants.QUOTE+OracleConstants.COMMA
+												+project_sequence+OracleConstants.COMMA
+												+OracleConstants.QUOTE+juniper_user+OracleConstants.QUOTE);
+
+
+								statement.executeUpdate(insertFieldMaster);
+							}
+
+						}
+					}
+
+				}
+			}catch (SQLException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 				//TODO: Log the error message
@@ -1133,7 +1098,7 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 
 		}
 
-		
+
 		fileList.setLength(fileList.length()-1);
 		String fileListStr=fileList.toString();
 		String updateExtractionMaster="update "+OracleConstants.FEEDTABLE+" set file_list="+OracleConstants.QUOTE+fileListStr+OracleConstants.QUOTE+OracleConstants.COMMA
@@ -1525,11 +1490,11 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 
 				}
 
-				
+
 				String query2="select field_name from "+OracleConstants.FIELDDETAILSTABLE
 						+" where file_sequence="+fileId;
 
-				
+
 				ResultSet rs2 = statement.executeQuery(query2);
 				if(rs2.isBeforeFirst()) {
 					while(rs2.next()) {
@@ -2300,8 +2265,8 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 		for(String hivedb:hivedbDto.getHiveDbList()) {
 
 			insertHiveMaster=OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.DBPROPOGATIONTABLE)
-					.replace("{$columns}","src_sys_id,db_name" )
-					.replace("{$data}",hivedbDto.getSrc_sys_id() +OracleConstants.COMMA
+					.replace("{$columns}","feed_id,db_name" )
+					.replace("{$data}",hivedbDto.getFeed_id() +OracleConstants.COMMA
 							+OracleConstants.QUOTE+hivedb+OracleConstants.QUOTE);
 			try {	
 				Statement statement = conn.createStatement();
@@ -2326,7 +2291,7 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 		}
 		dbList.setLength(dbList.length()-1);
 		String dbListStr=dbList.toString();
-		String updateExtractionMaster="update "+OracleConstants.FEEDTABLE+" set table_list='"+dbListStr+"' where src_sys_id="+hivedbDto.getSrc_sys_id();
+		String updateExtractionMaster="update "+OracleConstants.FEEDTABLE+" set table_list='"+dbListStr+"' where src_sys_id="+hivedbDto.getFeed_id();
 		try {	
 			Statement statement = conn.createStatement();
 			statement.execute(updateExtractionMaster);
