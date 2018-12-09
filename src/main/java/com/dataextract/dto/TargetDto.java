@@ -24,7 +24,7 @@ public class TargetDto {
 	String knox_gateway;
 	String trust_store_path;
 	String trust_store_password;
-	
+	byte[] encrypted_trust_store_password;
 	
 	
 	
@@ -156,5 +156,11 @@ public class TargetDto {
 	}
 	public void setTrust_store_password(String trust_store_password) {
 		this.trust_store_password = trust_store_password;
+	}
+	public byte[] getEncrypted_trust_store_password() {
+		return encrypted_trust_store_password;
+	}
+	public void setEncrypted_trust_store_password(byte[] encrypted_trust_store_password) {
+		this.encrypted_trust_store_password = encrypted_trust_store_password;
 	}
 }

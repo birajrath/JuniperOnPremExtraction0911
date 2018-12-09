@@ -1246,7 +1246,7 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 
 		int connId=getConnectionId(conn,feed_name);
 		ConnectionDto connDto=new ConnectionDto();
-		String query="select src_conn_type,host_name,port_no,username,password,encrypted_encr_key,database_name,service_name,drive_sequence from "+OracleConstants.CONNECTIONTABLE+ " where src_conn_sequence="+connId;
+		String query="select src_conn_type,host_name,port_no,username,password,encrypted_encr_key,database_name,service_name,drive_sequence,knox_gateway,trust_store_path,trust_store_password from "+OracleConstants.CONNECTIONTABLE+ " where src_conn_sequence="+connId;
 		try {
 			Statement statement=conn.createStatement();
 			ResultSet rs=statement.executeQuery(query);
@@ -1265,7 +1265,9 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 
 					connDto.setDrive_id(Integer.parseInt(drive_id));
 				}
-
+				connDto.setKnox_gateway(rs.getString(10));
+				connDto.setTrust_store_path(rs.getString(11));
+				connDto.setEncrypted_trust_store_password(rs.getBytes(12));
 			}
 
 		}catch(SQLException e){
@@ -1348,7 +1350,7 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 		try {
 			for(String target:targets) {
 				TargetDto targetDto=new TargetDto();
-				query=" select target_unique_name,target_type,gcp_sequence,hdp_knox_url,hdp_user,hdp_encrypted_password,encrypted_key,hdp_hdfs_path,drive_sequence,unix_data_path from "+OracleConstants.TAREGTTABLE
+				query=" select target_unique_name,target_type,gcp_sequence,hdp_knox_url,hdp_user,hdp_encrypted_password,encrypted_key,hdp_hdfs_path,drive_sequence,unix_data_path,knox_gateway,trust_store_path,trust_store_password from "+OracleConstants.TAREGTTABLE
 						+ " where target_unique_name='"+target+"'";
 				rs = statement.executeQuery(query);
 				if(rs.isBeforeFirst()) {
@@ -1385,9 +1387,18 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 						String drivePath=getDrivePath(conn,targetDto.getDrive_id());
 						targetDto.setFull_path(drivePath+targetDto.getData_path());
 					}
-
-
-
+					
+					if(rs.getString(2).equalsIgnoreCase("hive")) {
+						targetDto.setTarget_unique_name(rs.getString(1));
+						targetDto.setTarget_type(rs.getString(2));
+						targetDto.setTarget_knox_url(rs.getString(4));
+						targetDto.setTarget_user(rs.getString(5));
+						targetDto.setEncrypted_password(rs.getBytes(6));
+						targetDto.setEncrypted_key(rs.getBytes(7));
+						targetDto.setKnox_gateway(rs.getString(11));
+						targetDto.setTrust_store_path(rs.getString(12));
+						targetDto.setEncrypted_trust_store_password(rs.getBytes(13));
+					}
 				}
 				targetArr.add(targetDto);
 
