@@ -4,30 +4,27 @@
 package com.dataextract.repositories;
 
 import java.io.IOException;
-
-
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 
-import org.apache.hadoop.security.UserGroupInformation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
+
 import com.dataextract.constants.OracleConstants;
 import com.dataextract.dao.IExtractionDAO;
+import com.dataextract.dto.ConnectionDto;
+import com.dataextract.dto.FeedDto;
 import com.dataextract.dto.FileInfoDto;
 import com.dataextract.dto.HDFSMetadataDto;
 import com.dataextract.dto.HiveDbMetadataDto;
 import com.dataextract.dto.RealTimeExtractDto;
-import com.dataextract.dto.FeedDto;
 import com.dataextract.dto.TableInfoDto;
 import com.dataextract.dto.TargetDto;
 import com.dataextract.util.ConnectionUtils;
-import com.dataextract.dto.ConnectionDto;
 
 /**
  * @author sivakumar.r14

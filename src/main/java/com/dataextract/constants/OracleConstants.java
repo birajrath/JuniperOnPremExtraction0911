@@ -33,7 +33,7 @@ public class OracleConstants {
 	public static final String HDFSDETAILSTABLE = "JUNIPER_HDFS_MASTER";
 	public static final String NIFISTATUSTABLE = "JUNIPER_EXT_NIFI_STATUS";
 	public static final String GCPTABLE = "JUNIPER_EXT_GCP_MASTER";
-	public static final String DBPROPOGATIONTABLE="JUNIPER_PROGT_DB_LIST_MASTER";
+	public static final String DBPROPOGATIONTABLE="JUNIPER_PROGT_DB_MASTER";
 	
 	
 	

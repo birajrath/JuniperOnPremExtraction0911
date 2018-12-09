@@ -2265,9 +2265,10 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 		for(String hivedb:hivedbDto.getHiveDbList()) {
 
 			insertHiveMaster=OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.DBPROPOGATIONTABLE)
-					.replace("{$columns}","feed_id,db_name" )
+					.replace("{$columns}","feed_id,db_name,created_by" )
 					.replace("{$data}",hivedbDto.getFeed_id() +OracleConstants.COMMA
-							+OracleConstants.QUOTE+hivedb+OracleConstants.QUOTE);
+							+OracleConstants.QUOTE+hivedb+OracleConstants.QUOTE+OracleConstants.COMMA
+							+"(select user_sequence from JUNIPER_USER_MASTER where user_id='"+hivedbDto.getJuniper_user()+"')");
 			try {	
 				Statement statement = conn.createStatement();
 				System.out.println(insertHiveMaster);
@@ -2291,7 +2292,7 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 		}
 		dbList.setLength(dbList.length()-1);
 		String dbListStr=dbList.toString();
-		String updateExtractionMaster="update "+OracleConstants.FEEDTABLE+" set table_list='"+dbListStr+"' where src_sys_id="+hivedbDto.getFeed_id();
+		String updateExtractionMaster="update "+OracleConstants.FEEDTABLE+" set table_list='"+dbListStr+"' where feed_sequence="+hivedbDto.getFeed_id();
 		try {	
 			Statement statement = conn.createStatement();
 			statement.execute(updateExtractionMaster);

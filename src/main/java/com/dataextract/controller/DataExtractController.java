@@ -662,6 +662,10 @@ public class DataExtractController {
 		String src_sys_id_str= requestDto.getBody().get("data").get("feed_id");
 		int src_sys_id=Integer.parseInt(src_sys_id_str);
 		hivedbDto.setFeed_id(src_sys_id);
+		String project=(String) requestDto.getBody().get("data").get("project");
+		hivedbDto.setProject(project);
+		String user=(String) requestDto.getBody().get("data").get("user");
+		hivedbDto.setJuniper_user(user);
 		String hiveDbString=requestDto.getBody().get("data").get("hive_db_list");
 		List<String> hiveDbList = Arrays.asList(hiveDbString.split(","));
 		hivedbDto.setHiveDbList(hiveDbList);
