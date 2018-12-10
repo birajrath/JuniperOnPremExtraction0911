@@ -230,9 +230,11 @@ public class ExtractNifiImpl implements IExtract {
 		
 		JSONArray arr = new JSONArray();
 		for(String dbList: rtExtractDto.getHiveInfoDto().getHiveDbList()) {
+			StringBuffer target=new StringBuffer();
 			JSONObject json=new JSONObject();
-			json.put("db_list", dbList);
-			json.put("source_knox_url", "https://"+rtExtractDto.getConnDto().getHostName()+":"+rtExtractDto.getConnDto().getPort());
+			json.put("souce_db_name", dbList);
+			json.put("source_knox_url", rtExtractDto.getConnDto().getHostName());
+			json.put("source_knox_port", rtExtractDto.getConnDto().getPort());
 			json.put("source_trust_store_file_path", rtExtractDto.getConnDto().getTrust_store_path());
 			
 			String sourceDecryptedTrustStorePassword=iExtract.decyptPassword(rtExtractDto.getConnDto().getEncr_key(), rtExtractDto.getConnDto().getEncrypted_trust_store_password());
@@ -243,24 +245,20 @@ public class ExtractNifiImpl implements IExtract {
 			String sourceDecryptedPassword=iExtract.decyptPassword(rtExtractDto.getConnDto().getEncr_key(), rtExtractDto.getConnDto().getEncrypted_password());	
 			json.put("source_knox_password", sourceDecryptedPassword);
 			
-			int i=1;
+			
+			
+			
 			for(TargetDto tarDto: rtExtractDto.getTargetArr()) {
-					json.put("target_type"+Integer.toString(i), tarDto.getTarget_type());
-					json.put("target_knox_url"+Integer.toString(i), tarDto.getTarget_knox_url());
-					json.put("target_trust_store_file_path"+Integer.toString(i), tarDto.getTrust_store_path());
+				
+				String targetDecryptedTrustStorePassword=iExtract.decyptPassword(tarDto.getEncrypted_key(), tarDto.getEncrypted_trust_store_password());
+				String targetDecryptedPassword=iExtract.decyptPassword(tarDto.getEncrypted_key(), tarDto.getEncrypted_password());	
+				target.append(tarDto.getTarget_type()+"~"+tarDto.getTarget_knox_url()+"~"
+						+tarDto.getTrust_store_path()+"~"+targetDecryptedTrustStorePassword
+						+"~"+tarDto.getKnox_gateway()+"~"+tarDto.getTarget_user()+"~"+targetDecryptedPassword+",");
 					
-					String targetDecryptedTrustStorePassword=iExtract.decyptPassword(tarDto.getEncrypted_key(), tarDto.getEncrypted_trust_store_password());
-					json.put("target_trust_store_password"+Integer.toString(i), targetDecryptedTrustStorePassword);
-					
-					json.put("source_gateway_path"+Integer.toString(i), tarDto.getKnox_gateway());
-					json.put("target_knox_user"+Integer.toString(i), tarDto.getTarget_user());
-					
-					
-					String targetDecryptedPassword=iExtract.decyptPassword(tarDto.getEncrypted_key(), tarDto.getEncrypted_password());	
-					json.put("source_knox_password"+Integer.toString(i), targetDecryptedPassword);
-
-				i++;
 			}
+			target.setLength(target.length()-1);
+			json.put("target", target.toString());
 			arr.add(json);
 			
 		}

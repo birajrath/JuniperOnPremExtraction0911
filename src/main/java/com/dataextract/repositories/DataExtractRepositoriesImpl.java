@@ -263,8 +263,10 @@ public class DataExtractRepositoriesImpl implements DataExtractRepositories {
 			} catch (Exception e) {
 				e.printStackTrace();
 				message= "failed due to exception " + e.getMessage();
+			}finally {
+				con.close();
 			}
-			con.close();
+			
 			return message;
 	}
 		return ("invalid source type");
