@@ -37,5 +37,6 @@
 /Users/birajrath/Documents/GitHub/OnPrem0911/JuniperOnPremExtraction0911/src/main/java/com/dataextract/dto/ExtractStatusDto.java
 /Users/birajrath/Documents/GitHub/OnPrem0911/JuniperOnPremExtraction0911/src/main/java/com/dataextract/dto/FeedDto.java
 /Users/birajrath/Documents/GitHub/OnPrem0911/JuniperOnPremExtraction0911/src/main/java/com/dataextract/dto/FileMetadataDto.java
+/Users/birajrath/Documents/GitHub/OnPrem0911/JuniperOnPremExtraction0911/src/main/java/com/dataextract/dto/HiveDbMetadataDto.java
 /Users/birajrath/Documents/GitHub/OnPrem0911/JuniperOnPremExtraction0911/src/main/java/com/dataextract/util/AuthUtils.java
 /Users/birajrath/Documents/GitHub/OnPrem0911/JuniperOnPremExtraction0911/src/main/java/com/dataextract/dao/IExtractionDAO.java

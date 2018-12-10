@@ -29,7 +29,7 @@ public class NifiConstants {
 
 	public final static String HADOOPLISTENER1="http://35.231.171.195:8091/contentListener";
 	
-	public final static String HIVEPROPAGATELISTENER1="http://35.231.171.195:8092/contentListener";
+	public final static String HIVEPROPAGATELISTENER1="http://35.243.211.145:8092/contentListener";
 	
 	public final static String DISABLECONTROLLERCOMMAND="{\"revision\":{\"clientId\":\"${clientid}\",\"version\":${version}},\"component\":{\"id\":\"${id}\",\"state\":\"DISABLED\"}}";
 	public final static String PROCESSORURL="nifi-api/processors/${id}";

@@ -19,6 +19,7 @@ com/dataextract/util/EncryptUtils.class
 com/dataextract/dto/TableMetadataDto.class
 com/dataextract/dto/ExtractStatusDto.class
 com/dataextract/dto/HDFSMetadataDto.class
+com/dataextract/dto/HiveDbMetadataDto.class
 com/dataextract/dto/TargetDto.class
 com/dataextract/repositories/DataExtractRepositoriesImpl.class
 com/dataextract/util/ScheduleUtils.class
