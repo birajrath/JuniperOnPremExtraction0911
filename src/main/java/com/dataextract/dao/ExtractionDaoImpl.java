@@ -1865,7 +1865,7 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 						insertQuery=OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.SCHEDULETABLE)
 								.replace("{$columns}", "job_id,job_name,batch_id,command,argument_1,daily_flag,job_schedule_time,project_id")
 								.replace("{$data}",OracleConstants.QUOTE+feed_name+"_dailyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
-										+OracleConstants.QUOTE+feed_name+"dailyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
+										+OracleConstants.QUOTE+feed_name+"_dailyExtract"+OracleConstants.QUOTE+OracleConstants.COMMA
 										+OracleConstants.QUOTE+feed_name+OracleConstants.QUOTE+OracleConstants.COMMA
 										+OracleConstants.QUOTE+SchedulerConstants.script_loc+OracleConstants.QUOTE+OracleConstants.COMMA
 										+OracleConstants.QUOTE+feed_name+OracleConstants.QUOTE+OracleConstants.COMMA

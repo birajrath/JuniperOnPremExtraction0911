@@ -232,7 +232,7 @@ public class ExtractNifiImpl implements IExtract {
 		for(String dbList: rtExtractDto.getHiveInfoDto().getHiveDbList()) {
 			StringBuffer target=new StringBuffer();
 			JSONObject json=new JSONObject();
-			json.put("souce_db_name", dbList);
+			json.put("source_db_name", dbList);
 			json.put("source_knox_url", rtExtractDto.getConnDto().getHostName());
 			json.put("source_knox_port", rtExtractDto.getConnDto().getPort());
 			json.put("source_trust_store_file_path", rtExtractDto.getConnDto().getTrust_store_path());
