@@ -177,7 +177,8 @@ public class ExtractNifiImpl implements IExtract {
 		do {
 			Thread.currentThread().sleep(10000);
 			
-			index=getRandomNumberInRange(1, NifiConstants.NOOFUNIXPROCESSORS);
+			index=1;
+			//index=getRandomNumberInRange(1, NifiConstants.NOOFUNIXPROCESSORS);
 			processGroupStatus=dataExtractRepositories.checkProcessGroupStatus(index,rtExtractDto.getConnDto().getConn_type());
 			if(processGroupStatus.equalsIgnoreCase("FREE")) {
 				
@@ -197,7 +198,7 @@ public class ExtractNifiImpl implements IExtract {
 			return "success";
 		}
 		else {
-			return "failed";
+			return updateStatus;
 		}
 		
 		
@@ -745,8 +746,11 @@ public class ExtractNifiImpl implements IExtract {
 		JSONArray arr = new JSONArray();
 		StringBuffer gcsTarget=new StringBuffer();
 		StringBuffer hdfsTarget=new StringBuffer();
+		
 		for(FileMetadataDto file: rtExtractDto.getFileInfoDto().getFileMetadataArr()) {
 			JSONObject json=new JSONObject();
+			String field_metadata=generateSchema(file.getFile_name(),file.getField_list());
+			System.out.println("field metadata----"+field_metadata);
 			json.put("process_group", index);
 			json.put("project_sequence", rtExtractDto.getFeedDto().getProject_sequence());
 			json.put("feed_id", rtExtractDto.getFeedDto().getFeed_id());
@@ -754,7 +758,7 @@ public class ExtractNifiImpl implements IExtract {
 			json.put("file_name", file.getFile_name());
 			json.put("header_count", file.getHeader_count());
 			json.put("avro_conv_flg", file.getAvro_conv_flag());
-			json.put("field_list", file.getField_list());
+			json.put("field_list", field_metadata);
 			json.put("date", date);
 			json.put("file_type", file.getFile_type());
 			json.put("file_delimiter", file.getFile_delimiter());
@@ -797,6 +801,23 @@ public class ExtractNifiImpl implements IExtract {
 		return arr;
 	}
 	
+	private String generateSchema(String tableName,String field_list) {
+		// TODO Auto-generated method stub
+		StringBuffer schema= new StringBuffer();
+		schema.append("{ \"type\":\"record\",\"name\":\"$\",\"fields\":[");
+		for(String fields:field_list.split(",")) {
+			schema.append("{\"name\":\""+fields.split("~")[0]+"\",\"type\":\""+fields.split("~")[1]+"\"},");
+			
+		}
+		schema.setLength(schema.length()-1);
+		schema.append("]}");
+		
+		
+		
+		
+		return schema.toString();
+	}
+
 	@SuppressWarnings("unchecked")	
 	private JSONArray createHadoopJsonObject(RealTimeExtractDto rtExtractDto, String date, Long runId) {
 		

@@ -63,7 +63,7 @@ public class DataExtractController {
 				||requestDto.getBody().get("data").get("connection_type").equalsIgnoreCase("HADOOP")
 				||requestDto.getBody().get("data").get("connection_type").equalsIgnoreCase("TERADATA")) 
 		{
-
+			
 			connDto.setConn_name(requestDto.getBody().get("data").get("connection_name"));
 			connDto.setConn_type(requestDto.getBody().get("data").get("connection_type"));
 			connDto.setHostName(requestDto.getBody().get("data").get("host_name"));
@@ -102,6 +102,7 @@ public class DataExtractController {
 			connDto.setProject(requestDto.getBody().get("data").get("project"));
 			connDto.setJuniper_user(requestDto.getBody().get("data").get("user"));
 		}
+		
 
 		testConnStatus=dataExtractRepositories.testConnection(connDto);
 		if(testConnStatus.equalsIgnoreCase("SUCCESS")) {
@@ -151,7 +152,6 @@ public class DataExtractController {
 			connDto.setPassword(requestDto.getBody().get("data").get("password"));
 			connDto.setDbName(requestDto.getBody().get("data").get("db_name"));
 			connDto.setServiceName(requestDto.getBody().get("data").get("service_name"));
-			connDto.setSystem(requestDto.getBody().get("data").get("system"));
 			connDto.setProject(requestDto.getBody().get("data").get("project"));
 			connDto.setJuniper_user(requestDto.getBody().get("data").get("user"));
 		}
