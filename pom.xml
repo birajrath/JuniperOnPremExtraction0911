@@ -155,7 +155,7 @@
 		
 	</dependencies>
 
-	<dependencyManagement>
+	<!-- <dependencyManagement>
 		<dependencies>
 			<dependency>
 				<groupId>org.springframework.cloud</groupId>
@@ -171,13 +171,13 @@
 				<type>pom</type>
 				<scope>import</scope>
 			</dependency>
-			<!-- https://mvnrepository.com/artifact/org.apache.httpcomponents/httpclient -->
+			https://mvnrepository.com/artifact/org.apache.httpcomponents/httpclient
 
 
 
 		</dependencies>
 	</dependencyManagement>
-
+ -->
  	<build>
 		<plugins>
 			<plugin>

@@ -4,6 +4,8 @@ import java.sql.Connection;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Map;
+
 import com.dataextract.dto.FileInfoDto;
 import com.dataextract.dto.HDFSMetadataDto;
 import com.dataextract.dto.HiveDbMetadataDto;
@@ -42,6 +44,7 @@ public interface IExtractionDAO {
 	public String decyptPassword(byte[] encrypted_key, byte[] encrypted_password) throws Exception;
 	public String insertHivePropagateMetadata(Connection conn, HiveDbMetadataDto hivedbDto) throws SQLException;
 	public HiveDbMetadataDto getHivePropagateInfoObject(Connection conn, String dbList) throws SQLException;
+	public String insertHiveMetadata(Connection conn,ConnectionDto connDto, String dbTables) throws SQLException;
 	
 	
 	

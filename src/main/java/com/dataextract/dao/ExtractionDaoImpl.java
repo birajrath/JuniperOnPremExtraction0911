@@ -16,6 +16,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.Map;
 import java.util.Properties;
 import javax.crypto.SecretKey;
 import org.apache.http.HttpEntity;
@@ -84,12 +85,13 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 		String connectionId="";
 		byte[] encrypted_key=null;
 		byte[] encrypted_password=null;
-		byte[] trust_store_encrypted_password=null;
 		PreparedStatement pstm=null;
 		if(system_sequence!=0 && project_sequence!=0) {
 
-			if(!(dto.getPassword()==null||dto.getPassword().isEmpty())) {
-
+			if(dto.getConn_type().equalsIgnoreCase("ORACLE")|| dto.getConn_type().equalsIgnoreCase("HADOOP")||
+					dto.getConn_type().equalsIgnoreCase("TERADATA")) 
+			{
+				
 				encrypted_key=getEncryptedKey(conn,system_sequence,project_sequence);
 				if(encrypted_key==null) {
 
@@ -102,13 +104,7 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 					}
 
 				}
-			}
-			
-
-			if(dto.getConn_type().equalsIgnoreCase("ORACLE")||
-					dto.getConn_type().equalsIgnoreCase("HADOOP")||
-					dto.getConn_type().equalsIgnoreCase("TERADATA")) 
-			{
+				
 				insertConnDetails="insert into "+OracleConstants.CONNECTIONTABLE+
 						"(src_conn_name,src_conn_type,host_name,port_no,"
 						+ "username,password,encrypted_encr_key,database_name,service_name,"
@@ -134,6 +130,30 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 				}catch(SQLException e) {
 					return e.getMessage();
 				}
+				
+				try {	
+					Statement statement=conn.createStatement();
+					String query=OracleConstants.GETSEQUENCEID.replace("${tableName}", OracleConstants.CONNECTIONTABLE).replace("${columnName}", OracleConstants.CONNECTIONTABLEKEY);
+					ResultSet rs=statement.executeQuery(query);
+					if(rs.isBeforeFirst()){
+						rs.next();
+						sequence=rs.getString(1).split("\\.")[1];
+						rs=statement.executeQuery(OracleConstants.GETLASTROWID.replace("${id}", sequence));
+						if(rs.isBeforeFirst()){
+							rs.next();
+							connectionId=rs.getString(1);
+						}
+					}	
+				}catch(SQLException e) {
+					e.printStackTrace();
+					return e.getMessage();
+				}finally {
+					conn.close();
+				}
+
+
+
+				return "success:"+connectionId;
 
 
 			}
@@ -147,70 +167,51 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 								+system_sequence+OracleConstants.COMMA
 								+project_sequence+OracleConstants.COMMA
 								+OracleConstants.QUOTE+dto.getJuniper_user()+OracleConstants.QUOTE);
-
-				Statement statement=conn.createStatement();
-				statement.executeUpdate(insertConnDetails);
-			}
-
-			if(dto.getConn_type().equalsIgnoreCase("HIVE")) {
-				trust_store_encrypted_password=encryptPassword(encrypted_key,dto.getTrust_store_password());
-				insertConnDetails="insert into "+OracleConstants.CONNECTIONTABLE+
-						"(src_conn_name,src_conn_type,host_name,"
-						+ "port_no,username,password,encrypted_encr_key,system_sequence,"
-						+ "project_sequence,created_by,knox_gateway,trust_store_path,trust_store_password,job_type) "
-						+ "values(?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
-				pstm = conn.prepareStatement(insertConnDetails);
-				pstm.setString(1, dto.getConn_name());
-				pstm.setString(2, dto.getConn_type());
-				pstm.setString(3, dto.getHostName());
-				pstm.setString(4, dto.getPort());
-				pstm.setString(5, dto.getUserName());
-				pstm.setBytes(6,encrypted_password);
-				pstm.setBytes(7,encrypted_key);
-				pstm.setInt(8, system_sequence);
-				pstm.setInt(9, project_sequence);
-				pstm.setString(10, dto.getJuniper_user());
-				pstm.setString(11, dto.getKnox_gateway());
-				pstm.setString(12, dto.getTrust_store_path());
-				pstm.setBytes(13, trust_store_encrypted_password);
-				pstm.setString(14, "P");
-
 				try {
-					pstm.executeUpdate();
-					pstm.close();
+					Statement statement=conn.createStatement();
+					statement.executeUpdate(insertConnDetails);
 				}catch(SQLException e) {
-					System.out.println("eorror "+e);
+					e.printStackTrace();
 					return e.getMessage();
 				}
-			}		
+				
+				
+				try {	
+					Statement statement=conn.createStatement();
+					String query=OracleConstants.GETSEQUENCEID.replace("${tableName}", OracleConstants.CONNECTIONTABLE).replace("${columnName}", OracleConstants.CONNECTIONTABLEKEY);
+					ResultSet rs=statement.executeQuery(query);
+					if(rs.isBeforeFirst()){
+						rs.next();
+						sequence=rs.getString(1).split("\\.")[1];
+						rs=statement.executeQuery(OracleConstants.GETLASTROWID.replace("${id}", sequence));
+						if(rs.isBeforeFirst()){
+							rs.next();
+							connectionId=rs.getString(1);
+						}
+					}	
+				}catch(SQLException e) {
+					e.printStackTrace();
+					return e.getMessage();
+				}finally {
+					conn.close();
+				}
+
+
+
+				return "success:"+connectionId;
+			}
+			else {
+				
+				return "Invalid Source";
+			}
+
+				
 		}
 		else {
 			return "system or project does not exist";
 		}
 
-		try {	
-			Statement statement=conn.createStatement();
-			String query=OracleConstants.GETSEQUENCEID.replace("${tableName}", OracleConstants.CONNECTIONTABLE).replace("${columnName}", OracleConstants.CONNECTIONTABLEKEY);
-			ResultSet rs=statement.executeQuery(query);
-			if(rs.isBeforeFirst()){
-				rs.next();
-				sequence=rs.getString(1).split("\\.")[1];
-				rs=statement.executeQuery(OracleConstants.GETLASTROWID.replace("${id}", sequence));
-				if(rs.isBeforeFirst()){
-					rs.next();
-					connectionId=rs.getString(1);
-				}
-			}	
-		}catch(SQLException e) {
-			e.printStackTrace();
-			return e.getMessage();
-		}finally {
-			conn.close();
-		}
-
-
-
-		return "success:"+connectionId;
+		
 	}
 
 	@SuppressWarnings("unchecked")
@@ -484,6 +485,124 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 			conn.close();
 		}
 
+	}
+	
+	
+	
+	@Override
+	public String insertHiveMetadata(Connection conn,ConnectionDto dto,String dbTables) throws SQLException{
+		
+		int system_sequence=0;
+		int project_sequence=0;
+		byte[] encrypted_key=null;
+		byte[] encrypted_password=null;
+		byte[] trust_store_encrypted_password=null;
+		String insertConnDetails="";
+		PreparedStatement pstm=null;
+		String sequence="";
+		String connectionId="";
+		
+		
+		try {
+			 system_sequence=getSystemSequence(conn,dto.getSystem());
+			 project_sequence=getProjectSequence(conn,dto.getProject());
+		}catch(SQLException e) {
+			e.printStackTrace();
+			return "Error retrieving system and project details";
+		}
+		
+		if(system_sequence!=0 && project_sequence!=0) {
+			
+			encrypted_key=getEncryptedKey(conn,system_sequence,project_sequence);
+			if(encrypted_key==null) {
+
+				return "Encryption key not found";
+			}
+			else {
+				encrypted_password=encryptPassword(encrypted_key,dto.getPassword());
+				trust_store_encrypted_password=encryptPassword(encrypted_key,dto.getTrust_store_password());	
+			}
+			insertConnDetails="insert into "+OracleConstants.CONNECTIONTABLE+
+					"(src_conn_name,src_conn_type,host_name,"
+					+ "port_no,username,password,encrypted_encr_key,system_sequence,"
+					+ "project_sequence,created_by,knox_gateway,trust_store_path,trust_store_password,job_type) "
+					+ "values(?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+			pstm = conn.prepareStatement(insertConnDetails);
+			pstm.setString(1, dto.getConn_name());
+			pstm.setString(2, dto.getConn_type());
+			pstm.setString(3, dto.getHostName());
+			pstm.setString(4, dto.getPort());
+			pstm.setString(5, dto.getUserName());
+			pstm.setBytes(6,encrypted_password);
+			pstm.setBytes(7,encrypted_key);
+			pstm.setInt(8, system_sequence);
+			pstm.setInt(9, project_sequence);
+			pstm.setString(10, dto.getJuniper_user());
+			pstm.setString(11, dto.getKnox_gateway());
+			pstm.setString(12, dto.getTrust_store_path());
+			pstm.setBytes(13, trust_store_encrypted_password);
+			pstm.setString(14, "P");
+
+			try {
+				pstm.executeUpdate();
+				pstm.close();
+			}catch(SQLException e) {
+				e.printStackTrace();
+				return e.getMessage();
+			}
+			
+			try {	
+				Statement statement=conn.createStatement();
+				String query=OracleConstants.GETSEQUENCEID.replace("${tableName}", OracleConstants.CONNECTIONTABLE).replace("${columnName}", OracleConstants.CONNECTIONTABLEKEY);
+				ResultSet rs=statement.executeQuery(query);
+				if(rs.isBeforeFirst()){
+					rs.next();
+					sequence=rs.getString(1).split("\\.")[1];
+					rs=statement.executeQuery(OracleConstants.GETLASTROWID.replace("${id}", sequence));
+					if(rs.isBeforeFirst()){
+						rs.next();
+						connectionId=rs.getString(1);
+						for(String entry:dbTables.split(",")) {
+							
+							String insertTableList=OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.HIVETABLELIST)
+									.replace("{$columns}", "src_conn_sequence,db_name,table_name")
+									.replace("{$data}",connectionId+OracleConstants.COMMA
+											+OracleConstants.QUOTE+entry.split("~")[0]+OracleConstants.QUOTE+OracleConstants.COMMA
+											+OracleConstants.QUOTE+entry.split("~")[1]+OracleConstants.QUOTE);
+							try {
+								statement.executeUpdate(insertTableList);
+							}catch(SQLException e) {
+								e.printStackTrace();
+								return "Error occured while loading Hive DB/Table list";
+							}
+							
+						}
+
+					}
+				}	
+			}catch(SQLException e) {
+				e.printStackTrace();
+				return e.getMessage();
+			}finally {
+				conn.close();
+			}
+
+
+
+			return "success:"+connectionId;
+			
+			
+		}else {
+			
+			return "System/Project is invalid";
+			
+		}
+		
+		
+
+		
+		
+	
 	}
 
 

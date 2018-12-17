@@ -31,6 +31,7 @@ public FeedDto getFeedObject(String feed_name) throws SQLException;
 public TableInfoDto getTableInfoObject(String table_list) throws SQLException;
 public String realTimeExtract(RealTimeExtractDto rtExtractDto) throws IOException , SQLException;
 public String testConnection(ConnectionDto dto) throws SQLException;
+public String testHiveConnection(ConnectionDto dto) throws SQLException;
 public String addTargetDetails(TargetDto target) throws SQLException;
 public ArrayList<TargetDto> getTargetObject(String targetList) throws SQLException;
 public String batchExtract(String feed_name,String project,String cron) throws SQLException;
@@ -48,6 +49,7 @@ public int getProcessGroup(String feed_name, String country_code)throws SQLExcep
 public String checkProcessGroupStatus(int index, String conn_type) throws SQLException;
 public String addHivePropagateDbDetails(HiveDbMetadataDto hivedbDto) throws SQLException;
 public HiveDbMetadataDto getHivePropagateInfoObject(String dbList) throws SQLException;
+public String addHiveConnectionDetails(ConnectionDto connDto, String testConnStatus) throws Exception;
 
 
 

@@ -246,20 +246,22 @@ public class ExtractNifiImpl implements IExtract {
 			String sourceDecryptedPassword=iExtract.decyptPassword(rtExtractDto.getConnDto().getEncr_key(), rtExtractDto.getConnDto().getEncrypted_password());	
 			json.put("source_knox_password", sourceDecryptedPassword);
 			
-			
+			StringBuffer targetBuckets=new StringBuffer();
 			
 			
 			for(TargetDto tarDto: rtExtractDto.getTargetArr()) {
 				
-				String targetDecryptedTrustStorePassword=iExtract.decyptPassword(tarDto.getEncrypted_key(), tarDto.getEncrypted_trust_store_password());
+				
+				targetBuckets.append(tarDto.getTarget_bucket()+",");
+				/*String targetDecryptedTrustStorePassword=iExtract.decyptPassword(tarDto.getEncrypted_key(), tarDto.getEncrypted_trust_store_password());
 				String targetDecryptedPassword=iExtract.decyptPassword(tarDto.getEncrypted_key(), tarDto.getEncrypted_password());	
 				target.append(tarDto.getTarget_type()+"~"+tarDto.getTarget_knox_url()+"~"
 						+tarDto.getTrust_store_path()+"~"+targetDecryptedTrustStorePassword
-						+"~"+tarDto.getKnox_gateway()+"~"+tarDto.getTarget_user()+"~"+targetDecryptedPassword+",");
+						+"~"+tarDto.getKnox_gateway()+"~"+tarDto.getTarget_user()+"~"+targetDecryptedPassword+",");*/
 					
 			}
-			target.setLength(target.length()-1);
-			json.put("target", target.toString());
+			targetBuckets.setLength(targetBuckets.length()-1);
+			json.put("target", targetBuckets.toString());
 			arr.add(json);
 			
 		}

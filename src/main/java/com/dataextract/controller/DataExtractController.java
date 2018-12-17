@@ -75,6 +75,24 @@ public class DataExtractController {
 			connDto.setSystem(requestDto.getBody().get("data").get("system"));
 			connDto.setProject(requestDto.getBody().get("data").get("project"));
 			connDto.setJuniper_user(requestDto.getBody().get("data").get("user"));
+			testConnStatus=dataExtractRepositories.testConnection(connDto);
+			if(testConnStatus.equalsIgnoreCase("SUCCESS")) {
+				response = dataExtractRepositories.addConnectionDetails(connDto);
+				if(response.toLowerCase().contains("success")) {
+					status="Success";
+					message="Connection created with Connection Id "+response.split(":")[1];
+				}
+				else {
+					status="Failed";
+					message=response;
+				}
+
+			}
+			else {
+				status="Failed";
+				message=testConnStatus;
+			}
+
 		}
 
 		if(requestDto.getBody().get("data").get("connection_type").equalsIgnoreCase("UNIX")) 
@@ -85,6 +103,24 @@ public class DataExtractController {
 			connDto.setSystem(requestDto.getBody().get("data").get("system"));
 			connDto.setProject(requestDto.getBody().get("data").get("project"));
 			connDto.setJuniper_user(requestDto.getBody().get("data").get("user"));
+			testConnStatus=dataExtractRepositories.testConnection(connDto);
+			if(testConnStatus.equalsIgnoreCase("SUCCESS")) {
+				response = dataExtractRepositories.addConnectionDetails(connDto);
+				if(response.toLowerCase().contains("success")) {
+					status="Success";
+					message="Connection created with Connection Id "+response.split(":")[1];
+				}
+				else {
+					status="Failed";
+					message=response;
+				}
+
+			}
+			else {
+				status="Failed";
+				message=testConnStatus;
+			}
+
 		}
 	
 		if(requestDto.getBody().get("data").get("connection_type").equalsIgnoreCase("HIVE")) 
@@ -101,27 +137,28 @@ public class DataExtractController {
 			connDto.setTrust_store_password(requestDto.getBody().get("data").get("ts_password"));
 			connDto.setProject(requestDto.getBody().get("data").get("project"));
 			connDto.setJuniper_user(requestDto.getBody().get("data").get("user"));
-		}
-		
+			testConnStatus=dataExtractRepositories.testHiveConnection(connDto);
+			if(!(testConnStatus.equalsIgnoreCase("FAILED"))) {
+				response = dataExtractRepositories.addHiveConnectionDetails(connDto,testConnStatus);
+				if(response.toLowerCase().contains("success")) {
+					status="Success";
+					message="Connection created with Connection Id "+response.split(":")[1];
+				}
+				else {
+					status="Failed";
+					message=response;
+				}
 
-		testConnStatus=dataExtractRepositories.testConnection(connDto);
-		if(testConnStatus.equalsIgnoreCase("SUCCESS")) {
-			response = dataExtractRepositories.addConnectionDetails(connDto);
-			if(response.toLowerCase().contains("success")) {
-				status="Success";
-				message="Connection created with Connection Id "+response.split(":")[1];
 			}
 			else {
 				status="Failed";
-				message=response;
+				message="Erroe while establishing Connection to Hive";
 			}
 
 		}
-		else {
-			status="Failed";
-			message=testConnStatus;
-		}
+		
 
+		
 		return ResponseUtil.createResponse(status, message);
 	}
 

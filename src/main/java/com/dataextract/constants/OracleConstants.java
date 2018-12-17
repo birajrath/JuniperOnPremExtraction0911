@@ -34,6 +34,7 @@ public class OracleConstants {
 	public static final String NIFISTATUSTABLE = "JUNIPER_EXT_NIFI_STATUS";
 	public static final String GCPTABLE = "JUNIPER_EXT_GCP_MASTER";
 	public static final String DBPROPOGATIONTABLE="JUNIPER_PROGT_DB_MASTER";
+	public static final CharSequence HIVETABLELIST = "JUNIPER_EXT_HIVE_TABLE_LIST";
 	
 	
 	

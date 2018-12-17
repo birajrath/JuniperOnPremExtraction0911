@@ -10,6 +10,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
@@ -243,7 +245,15 @@ public class DataExtractRepositoriesImpl implements DataExtractRepositories {
 				return "success";
 		}
 		
-		if(dto.getConn_type().equalsIgnoreCase("HIVE")) {
+		
+		return ("invalid source type");
+
+	}
+	
+	@Override
+	public String testHiveConnection(ConnectionDto dto) throws SQLException {
+
+		StringBuffer dbTables=new StringBuffer();
 		String message=null;
 		Connection con =null;
 			try {
@@ -257,21 +267,50 @@ public class DataExtractRepositoriesImpl implements DataExtractRepositories {
 				ResultSet res=null;
 				res = stmt.executeQuery(sql);
 				if (res!=null){
+					while(res.next()) {
+						
+						Statement stmt2=con.createStatement();
+						ResultSet res2=stmt2.executeQuery("show tables");
+						if(res2.isBeforeFirst()) {
+							while(res2.next()) {
+								dbTables.append(res.getString(1)+"~"+res2.getString(1)+",");
+							}
+						}
+						
+					}
+				dbTables.setLength(dbTables.length()-1);
+				
+				
 					System.out.println("hive connection successful"); 
-					message= "success";
+					message= dbTables.toString();
 				}
-			} catch (Exception e) {
-				e.printStackTrace();
-				message= "failed due to exception " + e.getMessage();
-			}finally {
-				con.close();
-			}
+				
+				else {
+					message="Failed";
+				}
+					
+			
 			
 			return message;
+	
+		
+		}catch(Exception e) {
+			e.printStackTrace();
+			return "Failed";
+			
+		}finally {
+			con.close();
+		}
 	}
-		return ("invalid source type");
-
+	
+	@Override
+	public String addHiveConnectionDetails(ConnectionDto connDto, String testConnStatus) throws Exception {
+		Connection conn=null;
+		conn=ConnectionUtils.connectToOracle(OracleConstants.ORACLE_IP_PORT_SID, OracleConstants.ORACLE_USER_NAME, OracleConstants.ORACLE_PASSWORD);
+		return extractionDao.insertHiveMetadata(conn, connDto,testConnStatus);
 	}
+	
+	
 
 	/* (non-Javadoc)
 	 * @see com.dataextract.repositories.DataExtractRepositories#addHDFSDetails(com.dataextract.dto.HDFSMetadataDto)
