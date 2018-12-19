@@ -8,7 +8,12 @@ public class TargetDto {
 	String target_project;
 	String service_account;
 	String target_bucket;
-	String target_knox_url;
+	String target_knox_host;
+	int target_knox_port;
+	String target_hdfs_gateway;
+	String materialization_flag;
+	String partition_flag;
+	String hive_gateway;
 	String target_user;
 	String target_password;
 	String target_hdfs_path;
@@ -29,6 +34,43 @@ public class TargetDto {
 	
 	
 	
+	public String getTarget_knox_host() {
+		return target_knox_host;
+	}
+	public void setTarget_knox_host(String target_knox_host) {
+		this.target_knox_host = target_knox_host;
+	}
+	
+	public int getTarget_knox_port() {
+		return target_knox_port;
+	}
+	public void setTarget_knox_port(int target_knox_port) {
+		this.target_knox_port = target_knox_port;
+	}
+	public String getTarget_hdfs_gateway() {
+		return target_hdfs_gateway;
+	}
+	public void setTarget_hdfs_gateway(String target_hdfs_gateway) {
+		this.target_hdfs_gateway = target_hdfs_gateway;
+	}
+	public String getMaterialization_flag() {
+		return materialization_flag;
+	}
+	public void setMaterialization_flag(String materialization_flag) {
+		this.materialization_flag = materialization_flag;
+	}
+	public String getPartition_flag() {
+		return partition_flag;
+	}
+	public void setPartition_flag(String partition_flag) {
+		this.partition_flag = partition_flag;
+	}
+	public String getHive_gateway() {
+		return hive_gateway;
+	}
+	public void setHive_gateway(String hive_gateway) {
+		this.hive_gateway = hive_gateway;
+	}
 	public byte[] getEncrypted_password() {
 		return encrypted_password;
 	}
@@ -67,12 +109,7 @@ public class TargetDto {
 	public void setTarget_id(int target_id) {
 		this.target_id = target_id;
 	}
-	public String getTarget_knox_url() {
-		return target_knox_url;
-	}
-	public void setTarget_knox_url(String target_knox_url) {
-		this.target_knox_url = target_knox_url;
-	}
+	
 	public String getTarget_user() {
 		return target_user;
 	}

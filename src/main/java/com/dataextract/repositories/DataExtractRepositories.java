@@ -4,6 +4,7 @@
 package com.dataextract.repositories;
 
 import java.io.IOException;
+
 import java.sql.SQLException;
 import java.util.ArrayList;
 
@@ -25,15 +26,14 @@ public interface DataExtractRepositories {
 public String addConnectionDetails(ConnectionDto dto) throws SQLException, Exception;
 public String onboardSystem(FeedDto feedDto) throws SQLException;
 public String addTableDetails(TableInfoDto tableInfoDto) throws SQLException;
-
 public ConnectionDto getConnectionObject(String feed_name) throws SQLException;
-public FeedDto getFeedObject(String feed_name) throws SQLException;
+public FeedDto getFeedObject(String feed_name,String src_type) throws SQLException, Exception;
 public TableInfoDto getTableInfoObject(String table_list) throws SQLException;
 public String realTimeExtract(RealTimeExtractDto rtExtractDto) throws IOException , SQLException;
-public String testConnection(ConnectionDto dto) throws SQLException;
-public String testHiveConnection(ConnectionDto dto) throws SQLException;
+public String testConnection(ConnectionDto dto) throws SQLException, Exception;
+public String testHiveConnection(ConnectionDto dto) throws SQLException, Exception;
 public String addTargetDetails(TargetDto target) throws SQLException;
-public ArrayList<TargetDto> getTargetObject(String targetList) throws SQLException;
+public ArrayList<TargetDto> getTargetObject(String targetList) throws SQLException, Exception;
 public String batchExtract(String feed_name,String project,String cron) throws SQLException;
 public String updateConnectionDetails(ConnectionDto connDto) throws SQLException;
 public String deleteConnectionDetails(ConnectionDto connDto) throws SQLException ;

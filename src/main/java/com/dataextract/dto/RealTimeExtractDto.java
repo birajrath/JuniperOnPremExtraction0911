@@ -11,8 +11,17 @@ public class RealTimeExtractDto {
 	HDFSMetadataDto hdfsInfoDto;
 	HiveDbMetadataDto hiveInfoDto;
 	ArrayList<TargetDto> targetArr;
+	String encryption_flag;
 	
 	
+	
+	
+	public String getEncryption_flag() {
+		return encryption_flag;
+	}
+	public void setEncryption_flag(String encryption_flag) {
+		this.encryption_flag = encryption_flag;
+	}
 	public FileInfoDto getFileInfoDto() {
 		return fileInfoDto;
 	}

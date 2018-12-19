@@ -65,6 +65,132 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 	@Autowired
 	private EncryptUtils encryptUtil;
 
+	
+	
+	
+	
+	
+	@Override
+	public String testConnection(ConnectionDto dto) throws Exception{
+		
+
+
+		String connectionUrl;
+		//Connection connection=null;
+
+		if(dto.getConn_type().equalsIgnoreCase("ORACLE"))
+		{
+			connectionUrl="jdbc:oracle:thin:@"+dto.getHostName()+":"+dto.getPort()+"/"+dto.getServiceName();
+			try {
+				Class.forName(OracleConstants.ORACLE_DRIVER);
+				//Connection connection = DriverManager.getConnection(connectionUrl, dto.getUserName(), dto.getPassword());
+				System.out.println("connected to source Database"); 
+				//connection.close();
+				return "success";
+
+			} catch (Exception e) {
+				e.printStackTrace();
+				return "failed due to exception " + e.getMessage();
+			}
+
+		}
+		
+		if(dto.getConn_type().equalsIgnoreCase("MSSQL"))
+		{
+			connectionUrl="jdbc:sqlserver://"+ dto.getHostName()+":" +dto.getPort()+";DatabaseName="+dto.getDbName() ;
+			try {
+				/*Class.forName("com.microsoft.sqlserver.jdbc.SQLServerDriver");
+				Connection connection = DriverManager.getConnection(connectionUrl, dto.getUserName(), dto.getPassword());
+				System.out.println("connected to source Database"); 
+				connection.close();*/
+				return "success";
+
+			} catch (Exception e) {
+				e.printStackTrace();
+				return "failed due to exception " + e.getMessage();
+			}
+
+		}
+		
+
+		if(dto.getConn_type().equalsIgnoreCase("TERADATA"))
+		{
+
+			return "success";
+
+		} 
+
+		if(dto.getConn_type().equalsIgnoreCase("UNIX")) {
+
+			return "success";
+		}
+		
+		if(dto.getConn_type().equalsIgnoreCase("HADOOP")) {
+				return "success";
+		}
+		
+		
+		return ("invalid source type");
+
+	
+	}
+	
+	@Override
+	public String testHiveConnection(ConnectionDto dto) throws Exception {
+		
+
+
+		StringBuffer dbTables=new StringBuffer();
+		String message=null;
+		Connection con =null;
+			try {
+				Class.forName(OracleConstants.HIVE_DRIVER);
+				/*org.apache.hadoop.conf.Configuration hdpConfig = new org.apache.hadoop.conf.Configuration();
+				hdpConfig.set("hadoop.security.authentication", "Kerberos");
+				UserGroupInformation.setConfiguration(hdpConfig);*/
+				con = DriverManager.getConnection("jdbc:hive2://"+dto.getHostName()+":"+dto.getPort()+"/;ssl=true;sslTrustStore="+dto.getTrust_store_path()+";trustStorePassword="+dto.getTrust_store_password()+";transportMode=http;httpPath="+dto.getKnox_gateway()+"",""+dto.getUserName()+"",""+dto.getPassword()+"");
+				Statement stmt = con.createStatement();
+				String sql = ("show databases");
+				ResultSet res=null;
+				res = stmt.executeQuery(sql);
+				if (res!=null){
+					while(res.next()) {
+						
+						Statement stmt2=con.createStatement();
+						ResultSet res2=stmt2.executeQuery("show tables");
+						if(res2.isBeforeFirst()) {
+							while(res2.next()) {
+								dbTables.append(res.getString(1)+"~"+res2.getString(1)+",");
+							}
+						}
+						
+					}
+				dbTables.setLength(dbTables.length()-1);
+				
+				
+					System.out.println("hive connection successful"); 
+					message= dbTables.toString();
+				}
+				
+				else {
+					message="Failed";
+				}
+					
+			
+			
+			return message;
+	
+		
+		}catch(Exception e) {
+			e.printStackTrace();
+			return "Failed";
+			
+		}finally {
+			con.close();
+		}
+	
+		
+	}
 
 	@Override
 	public  String  insertConnectionMetadata(Connection conn, ConnectionDto dto) throws SQLException  {
@@ -89,7 +215,7 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 		if(system_sequence!=0 && project_sequence!=0) {
 
 			if(dto.getConn_type().equalsIgnoreCase("ORACLE")|| dto.getConn_type().equalsIgnoreCase("HADOOP")||
-					dto.getConn_type().equalsIgnoreCase("TERADATA")) 
+					dto.getConn_type().equalsIgnoreCase("TERADATA")|| dto.getConn_type().equalsIgnoreCase("MSSQL")) 
 			{
 				
 				encrypted_key=getEncryptedKey(conn,system_sequence,project_sequence);
@@ -682,22 +808,27 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 
 				}
 				insertTargetDetails=OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.TAREGTTABLE)
-						.replace("{$columns}", "target_unique_name,target_type,hdp_knox_url,hdp_user,hdp_encrypted_password,encrypted_key,hdp_hdfs_path,system_sequence,project_sequence,created_by")
-						.replace("{$data}", "?,?,?,?,?,?,?,?,?,?"
+						.replace("{$columns}", "target_unique_name,target_type,hdp_knox_host,hdp_knox_port,hdfs_gateway,hdp_user,hdp_encrypted_password,encrypted_key,hdp_hdfs_path,materialization_flag,partition_flag,hive_gateway,system_sequence,project_sequence,created_by")
+						.replace("{$data}", "?,?,?,?,?,?,?,?,?,?,?,?,?,?,?"
 								);
 
 				try {
 					pstm = conn.prepareStatement(insertTargetDetails);
 					pstm.setString(1, target.getTarget_unique_name());
 					pstm.setString(2, target.getTarget_type());
-					pstm.setString(3, target.getTarget_knox_url());
-					pstm.setString(4, target.getTarget_user());
-					pstm.setBytes(5, encrypted_password);
-					pstm.setBytes(6,encrypted_key);
-					pstm.setString(7, target.getTarget_hdfs_path());
-					pstm.setInt(8, system_sequence);
-					pstm.setInt(9, project_sequence);
-					pstm.setString(10, target.getJuniper_user());
+					pstm.setString(3, target.getTarget_knox_host());
+					pstm.setInt(4, target.getTarget_knox_port());
+					pstm.setString(5, target.getTarget_hdfs_gateway());
+					pstm.setString(6, target.getTarget_user());
+					pstm.setBytes(7, encrypted_password);
+					pstm.setBytes(8,encrypted_key);
+					pstm.setString(9, target.getTarget_hdfs_path());
+					pstm.setString(10, target.getMaterialization_flag());
+					pstm.setString(11,target.getPartition_flag());
+					pstm.setString(12, target.getHive_gateway());
+					pstm.setInt(13, system_sequence);
+					pstm.setInt(14, project_sequence);
+					pstm.setString(15, target.getJuniper_user());
 					pstm.executeUpdate();
 				}catch(SQLException e) {
 					e.printStackTrace();
@@ -744,7 +875,7 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 
 
 
-		if(target.getTarget_type().equalsIgnoreCase("HIVE")) {
+		/*if(target.getTarget_type().equalsIgnoreCase("HIVE")) {
 			try {
 				system_sequence=getSystemSequence(conn, target.getSystem());
 				project_sequence=getProjectSequence(conn,target.getProject());
@@ -798,7 +929,7 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 			}else {
 				return "System/Project Details are not correct";
 			}
-		}
+		}*/
 
 		try {	
 
@@ -934,11 +1065,16 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 
 				updateTargetMaster="update "+OracleConstants.TAREGTTABLE 
 						+" set target_unique_name=?"+OracleConstants.COMMA
-						+"hdp_knox_url=?"+OracleConstants.COMMA
+						+"hdp_knox_host=?"+OracleConstants.COMMA
+						+"hdp_knox_port=?"+OracleConstants.COMMA
+						+"hdfs_gateway=?"+OracleConstants.COMMA
 						+"hdp_user=?"+OracleConstants.COMMA
 						+"hdp_encrypted_password=?"+OracleConstants.COMMA
 						+"encrypted_key=?"+OracleConstants.COMMA
 						+"hdp_hdfs_path=?"+OracleConstants.COMMA
+						+"materialization_flag=?"+OracleConstants.COMMA
+						+"partition_flag=?"+OracleConstants.COMMA
+						+"hive_gateway=?"+OracleConstants.COMMA
 						+"system_sequence=?"+OracleConstants.COMMA
 						+"project_sequence=?"+OracleConstants.COMMA
 						+"updated_by=?"
@@ -947,15 +1083,20 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 				try {
 					pstm = conn.prepareStatement(updateTargetMaster);
 					pstm.setString(1, target.getTarget_unique_name());
-					pstm.setString(2, target.getTarget_knox_url());
-					pstm.setString(3, target.getTarget_user());
-					pstm.setBytes(4, encrypted_password);
-					pstm.setBytes(5,encrypted_key);
-					pstm.setString(6, target.getTarget_hdfs_path());
-					pstm.setInt(7, system_sequence);
-					pstm.setInt(8, project_sequence);
-					pstm.setString(9, target.getJuniper_user());
-					pstm.setInt(10, target.getTarget_id());
+					pstm.setString(2, target.getTarget_knox_host());
+					pstm.setInt(3, target.getTarget_knox_port());
+					pstm.setString(4, target.getTarget_hdfs_gateway());
+					pstm.setString(5, target.getTarget_user());
+					pstm.setBytes(6, encrypted_password);
+					pstm.setBytes(7,encrypted_key);
+					pstm.setString(8, target.getTarget_hdfs_path());
+					pstm.setString(9, target.getMaterialization_flag());
+					pstm.setString(10, target.getPartition_flag());
+					pstm.setString(11, target.getHive_gateway());
+					pstm.setInt(12, system_sequence);
+					pstm.setInt(13, project_sequence);
+					pstm.setString(14, target.getJuniper_user());
+					pstm.setInt(15, target.getTarget_id());
 					pstm.executeUpdate();
 					return "success";
 				
@@ -1043,6 +1184,7 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 
 		int project_sequence=0;
 		String insertFeedMaster="";
+		String insertSrcTgtLink="";
 		String feed_id="";
 		String sequence="";
 
@@ -1057,12 +1199,10 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 		if(project_sequence!=0) {
 
 			insertFeedMaster=OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.FEEDTABLE)
-					.replace("{$columns}", "feed_unique_name,src_conn_sequence,country_code,extraction_type,target,project_sequence,created_by")
+					.replace("{$columns}", "feed_unique_name,country_code,extraction_type,project_sequence,created_by")
 					.replace("{$data}", OracleConstants.QUOTE +feedDto.getFeed_name() +OracleConstants.QUOTE+OracleConstants.COMMA
-							+feedDto.getSrc_conn_id()+OracleConstants.COMMA
 							+OracleConstants.QUOTE+feedDto.getCountry_code()+OracleConstants.QUOTE+OracleConstants.COMMA
 							+OracleConstants.QUOTE+feedDto.getFeed_extract_type()+OracleConstants.QUOTE+OracleConstants.COMMA
-							+OracleConstants.QUOTE+feedDto.getTarget()+OracleConstants.QUOTE+OracleConstants.COMMA
 							+project_sequence+OracleConstants.COMMA
 							+OracleConstants.QUOTE+feedDto.getJuniper_user()+OracleConstants.QUOTE
 							);
@@ -1079,6 +1219,17 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 					if(rs.isBeforeFirst()) {
 						rs.next();
 						feed_id=rs.getString(1);
+						for(String target:feedDto.getTarget().split(",")) {
+							insertSrcTgtLink=OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.SRCTGTLINKTABLE)
+									.replace("{$columns}", "feed_sequence,src_conn_sequence,target_sequence,created_by")
+									.replace("{$data}", feed_id+OracleConstants.COMMA
+											+feedDto.getSrc_conn_id()+OracleConstants.COMMA
+											+target+OracleConstants.COMMA
+											+OracleConstants.QUOTE+feedDto.getJuniper_user()+OracleConstants.QUOTE
+											);
+							statement.execute(insertSrcTgtLink);
+						}
+						
 					}
 				}
 			}catch (SQLException e) {
@@ -1103,6 +1254,8 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 
 		int project_sequence=0;
 		String updateFeedMaster="";
+		String insertSrcTgtLink="";
+		String deleteSrcTgtLink="";
 		try {
 			project_sequence=getProjectSequence(conn,feedDto.getProject());
 
@@ -1118,14 +1271,30 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 					+" set extraction_type="+OracleConstants.QUOTE+feedDto.getFeed_extract_type()+OracleConstants.QUOTE+OracleConstants.COMMA
 					+"feed_unique_name="+OracleConstants.QUOTE+feedDto.getFeed_name()+OracleConstants.QUOTE+OracleConstants.COMMA
 					+"country_code="+OracleConstants.QUOTE+feedDto.getCountry_code()+OracleConstants.QUOTE+OracleConstants.COMMA
-					+"target="+OracleConstants.QUOTE+feedDto.getTarget()+OracleConstants.QUOTE+OracleConstants.COMMA
-					+"src_conn_sequence="+OracleConstants.QUOTE+feedDto.getSrc_conn_id()+OracleConstants.QUOTE+OracleConstants.COMMA
 					+"project_sequence="+project_sequence+OracleConstants.COMMA
 					+"updated_by="+OracleConstants.QUOTE+feedDto.getJuniper_user()+OracleConstants.QUOTE
 					+" where feed_sequence="+feedDto.getFeed_id();
+			
+			deleteSrcTgtLink="delete from "+OracleConstants.SRCTGTLINKTABLE
+					+" where feed_sequence="+feedDto.getFeed_id();
+			
+			for(String target:feedDto.getTarget().split(",")) {
+				insertSrcTgtLink=OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.SRCTGTLINKTABLE)
+						.replace("{$columns}", "feed_sequence,src_conn_sequence,target_sequence,created_by")
+						.replace("{$data}", feedDto.getFeed_id()+OracleConstants.COMMA
+								+feedDto.getSrc_conn_id()+OracleConstants.COMMA
+								+target+OracleConstants.COMMA
+								+OracleConstants.QUOTE+feedDto.getJuniper_user()+OracleConstants.QUOTE
+								);
+			}
+			
+			
+			
 			try {	
 				Statement statement = conn.createStatement();
 				statement.execute(updateFeedMaster);
+				statement.executeQuery(deleteSrcTgtLink);
+				statement.execute(insertSrcTgtLink);
 				return "Success";
 
 			}catch (SQLException e) {
@@ -1147,9 +1316,11 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 	@Override
 	public String deleteFeed(Connection conn, FeedDto feedDto)throws SQLException{
 		String deleteFeedMaster="delete from "+OracleConstants.FEEDTABLE+" where feed_sequence="+feedDto.getFeed_id();
+		String deleteSrcTgtLink="delete from "+OracleConstants.SRCTGTLINKTABLE+" where feed_sequence="+feedDto.getFeed_id();
 
 		try {	
 			Statement statement = conn.createStatement();
+			statement.executeQuery(deleteSrcTgtLink);
 			statement.execute(deleteFeedMaster);
 			return "Success";
 
@@ -1179,79 +1350,114 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 		}
 
 		if(project_sequence!=0) {
+			
+			if(tableInfoDto.getLoad_type().equalsIgnoreCase("ind")) {
+				
+				for(TableMetadataDto tableMetadata:tableInfoDto.getTableMetadataArr()) {
 
-			for(TableMetadataDto tableMetadata:tableInfoDto.getTableMetadataArr()) {
-
-				String columns="";
-				if(tableMetadata.getColumns().equalsIgnoreCase("*")) {
-					columns="all";
-				}
-				else {
-					columns=tableMetadata.getColumns();
-				}
-				String insertTableMaster= OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.TABLEDETAILSTABLE)
-						.replace("{$columns}","feed_sequence,table_name,columns,fetch_type,where_clause,incr_col,view_flag,view_source_schema,project_sequence,created_by" )
-						.replace("{$data}",tableInfoDto.getFeed_id() +OracleConstants.COMMA
-								+OracleConstants.QUOTE+tableMetadata.getTable_name()+OracleConstants.QUOTE+OracleConstants.COMMA
-								+OracleConstants.QUOTE+columns+OracleConstants.QUOTE+OracleConstants.COMMA
-								+OracleConstants.QUOTE+tableMetadata.getFetch_type()+OracleConstants.QUOTE+OracleConstants.COMMA
-								+OracleConstants.QUOTE+tableMetadata.getWhere_clause()+OracleConstants.QUOTE+OracleConstants.COMMA
-								+OracleConstants.QUOTE+tableMetadata.getIncr_col()+OracleConstants.QUOTE+OracleConstants.COMMA
-								+OracleConstants.QUOTE+tableMetadata.getView_flag()+OracleConstants.QUOTE+OracleConstants.COMMA
-								+OracleConstants.QUOTE+tableMetadata.getView_source_schema()+OracleConstants.QUOTE+OracleConstants.COMMA
-								+project_sequence+OracleConstants.COMMA
-								+OracleConstants.QUOTE+tableInfoDto.getJuniper_user()+OracleConstants.QUOTE
-								);
-				try {	
-					Statement statement = conn.createStatement();
-					statement.executeUpdate(insertTableMaster);
-					String query=OracleConstants.GETSEQUENCEID.replace("${tableName}", OracleConstants.TABLEDETAILSTABLE).replace("${columnName}", OracleConstants.TABLEKEY);
-					ResultSet rs=statement.executeQuery(query);
-					if(rs.isBeforeFirst()) {
-						rs.next();
-						sequence=rs.getString(1).split("\\.")[1];
-						rs=statement.executeQuery(OracleConstants.GETLASTROWID.replace("${id}", sequence));
+					String columns="";
+					if(tableMetadata.getColumns().equalsIgnoreCase("*")) {
+						columns="all";
+					}
+					else {
+						columns=tableMetadata.getColumns();
+					}
+					String insertTableMaster= OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.TABLEDETAILSTABLE)
+							.replace("{$columns}","feed_sequence,table_name,columns,fetch_type,where_clause,incr_col,view_flag,view_source_schema,project_sequence,created_by" )
+							.replace("{$data}",tableInfoDto.getFeed_id() +OracleConstants.COMMA
+									+OracleConstants.QUOTE+tableMetadata.getTable_name()+OracleConstants.QUOTE+OracleConstants.COMMA
+									+OracleConstants.QUOTE+columns+OracleConstants.QUOTE+OracleConstants.COMMA
+									+OracleConstants.QUOTE+tableMetadata.getFetch_type()+OracleConstants.QUOTE+OracleConstants.COMMA
+									+OracleConstants.QUOTE+tableMetadata.getWhere_clause()+OracleConstants.QUOTE+OracleConstants.COMMA
+									+OracleConstants.QUOTE+tableMetadata.getIncr_col()+OracleConstants.QUOTE+OracleConstants.COMMA
+									+OracleConstants.QUOTE+tableMetadata.getView_flag()+OracleConstants.QUOTE+OracleConstants.COMMA
+									+OracleConstants.QUOTE+tableMetadata.getView_source_schema()+OracleConstants.QUOTE+OracleConstants.COMMA
+									+project_sequence+OracleConstants.COMMA
+									+OracleConstants.QUOTE+tableInfoDto.getJuniper_user()+OracleConstants.QUOTE
+									);
+					try {	
+						Statement statement = conn.createStatement();
+						statement.executeUpdate(insertTableMaster);
+						String query=OracleConstants.GETSEQUENCEID.replace("${tableName}", OracleConstants.TABLEDETAILSTABLE).replace("${columnName}", OracleConstants.TABLEKEY);
+						ResultSet rs=statement.executeQuery(query);
 						if(rs.isBeforeFirst()) {
 							rs.next();
-							tableIdList.append(rs.getString(1)+",");
+							sequence=rs.getString(1).split("\\.")[1];
+							rs=statement.executeQuery(OracleConstants.GETLASTROWID.replace("${id}", sequence));
+							if(rs.isBeforeFirst()) {
+								rs.next();
+								tableIdList.append(rs.getString(1)+",");
+							}
 						}
+						else {
+							return "Error while adding table Details";
+						}
+						
+
+					}catch (SQLException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+						//TODO: Log the error message
+						conn.close();
+						return e.getMessage();
+
+
 					}
-
-				}catch (SQLException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-					//TODO: Log the error message
-					return e.getMessage();
-
-
 				}
-
 			}
+			
+			else {
+				
+				
+			}
+			
+	
+			conn.close();
 			tableIdList.setLength(tableIdList.length()-1);
-			String tableIdListStr=tableIdList.toString();
-			String updateExtractionMaster="update "+OracleConstants.FEEDTABLE+" set table_list='"+tableIdListStr+"' where feed_sequence="+tableInfoDto.getFeed_id();
-			try {	
-				Statement statement = conn.createStatement();
-				statement.execute(updateExtractionMaster);
-				return "Success:"+tableIdListStr;
-
-			}catch (SQLException e) {
-				// TODO Auto-generated catch block
-				//e.printStackTrace();
-				//TODO: Log the error message
-				return e.getMessage();
-
-
-			}finally {
-				conn.close();
-			}
+			return "Success:"+tableIdList;
+			
 
 		}
 		else {
+			conn.close();
 			return "Project Details invalid";
 		}
 
 
+	}
+	
+	private String validateMetadata(Connection conn,TableInfoDto tableInfoDto) {
+		
+		String connection_type="";
+		String host="";
+		String port="";
+		String service_name="";
+		String database_name="";
+		String user="";
+		byte[] encrypted_password=null;
+		byte[] encrypted_key=null;
+		
+		String query="select src_conn_type from "+OracleConstants.CONNECTIONTABLE+
+				" where src_conn_sequence=(select src_conn_sequence from "+OracleConstants.SRCTGTLINKTABLE
+				+" where feed_sequence="+tableInfoDto.getFeed_id();
+		try {
+			Statement statement=conn.createStatement();
+			ResultSet rs=statement.executeQuery(query);
+			if(rs.isBeforeFirst()) {
+				connection_type=rs.getString(1);
+			}
+			
+		}catch(SQLException e){
+			e.printStackTrace();
+		}
+		
+		if(connection_type.equalsIgnoreCase("ORACLE")) {
+			
+			
+			
+		}
+		
+		return null;
 	}
 
 
@@ -1542,7 +1748,8 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 	private int getConnectionId (Connection conn,String feed_name) throws SQLException {
 
 		int connectionId=0;
-		String query="select src_conn_sequence from "+OracleConstants.FEEDTABLE+" where feed_unique_name='"+feed_name+"'";
+		String query="select src_conn_sequence from "+OracleConstants.SRCTGTLINKTABLE+" where feed_sequence=(select feed_sequence from "
+		+OracleConstants.FEEDTABLE+" where feed_unique_name='"+feed_name+"')";
 		Statement statement=conn.createStatement();
 		ResultSet rs = statement.executeQuery(query);
 		if(rs.isBeforeFirst()) {
@@ -1556,12 +1763,13 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 	}
 
 	@Override
-	public FeedDto getFeedObject(Connection conn,String feed_name) throws SQLException{
+	public FeedDto getFeedObject(Connection conn,String feed_name,String src_type) throws Exception{
 
 		FeedDto feedDto=new FeedDto();
 
-		String query=" select feed_sequence,feed_unique_name,country_code,target,table_list,file_list,file_path,project_sequence from "+OracleConstants.FEEDTABLE
+		String query="select feed_sequence,feed_unique_name,country_code,project_sequence from "+OracleConstants.FEEDTABLE
 				+ " where feed_unique_name='"+feed_name+"'";
+		
 
 		try {
 			Statement statement=conn.createStatement();
@@ -1571,33 +1779,109 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 				feedDto.setFeed_id(Integer.parseInt(rs.getString(1)));
 				feedDto.setFeed_name(rs.getString(2));
 				feedDto.setCountry_code(rs.getString(3));
-
-				feedDto.setTarget(rs.getString(4));
-				feedDto.setTableList(rs.getString(5));
-				feedDto.setFileList(rs.getString(6));
-				feedDto.setFilePath(rs.getString(7));
-				String projectSequence=rs.getString(8);
+				String projectSequence=rs.getString(4);
 				if(!(projectSequence==null)) {
 					feedDto.setProject_sequence(Integer.parseInt(projectSequence));
 				}
-
-
 			}
-
-
 
 		}catch(SQLException e) {
 			e.printStackTrace();
-		}finally {
-			conn.close();
+			throw new Exception("Exception occured while retrieving feed details");
 		}
-
+		String query2="select target_sequence from "+OracleConstants.SRCTGTLINKTABLE
+				+" where feed_sequence="+feedDto.getFeed_id();
+		StringBuffer targetList=new StringBuffer();
+		try {
+			Statement statement=conn.createStatement();
+			ResultSet rs = statement.executeQuery(query2);
+			if(rs.isBeforeFirst()) {
+				while(rs.next()) {
+					targetList.append(rs.getString(1)+",");
+				}
+			}
+		}catch(SQLException e) {
+			e.printStackTrace();
+			throw new Exception("Exception occured while fetching target information of the feed");
+		}
+		targetList.setLength(targetList.length()-1);
+		feedDto.setTarget(targetList.toString());
+		
+		if(src_type.equalsIgnoreCase("ORACLE")||src_type.equalsIgnoreCase("TERADATA")||src_type.equalsIgnoreCase("MSSQL")) {
+			StringBuffer tableList=new StringBuffer();
+			String query3="select table_sequence from "+OracleConstants.TABLEDETAILSTABLE+
+					" where feed_sequence="+feedDto.getFeed_id();
+			try {
+				Statement statement=conn.createStatement();
+				ResultSet rs = statement.executeQuery(query3);
+				if(rs.isBeforeFirst()) {
+					while(rs.next()) {
+						tableList.append(rs.getString(1)+",");
+					}
+				}
+			}catch(SQLException e) {
+				e.printStackTrace();
+				throw new Exception("Exception occured while fetching table information of the feed");
+			}finally {
+				conn.close();
+			}
+			tableList.setLength(tableList.length()-1);
+			feedDto.setTableList(tableList.toString());
+		}
+		if(src_type.equalsIgnoreCase("UNIX")) {
+			
+			StringBuffer fileList=new StringBuffer();
+			String query3="select file_sequence from "+OracleConstants.FIELDDETAILSTABLE+
+					" where feed_sequence="+feedDto.getFeed_id();
+			try {
+				Statement statement=conn.createStatement();
+				ResultSet rs = statement.executeQuery(query3);
+				if(rs.isBeforeFirst()) {
+					while(rs.next()) {
+						fileList.append(rs.getString(1)+",");
+					}
+				}
+			}catch(SQLException e) {
+				e.printStackTrace();
+				throw new Exception("Exception occured while fetching File information of the feed");
+			}finally {
+				conn.close();
+			}
+			fileList.setLength(fileList.length()-1);
+			feedDto.setFileList(fileList.toString());
+		}
+		
+		if(src_type.equalsIgnoreCase("HIVE")) {
+			
+			String query3="select hdb_id from "+OracleConstants.DBPROPOGATIONTABLE
+					+" where feed_id="+feedDto.getFeed_id();
+			
+			StringBuffer dbList=new StringBuffer();
+			try {
+				Statement statement=conn.createStatement();
+				ResultSet rs = statement.executeQuery(query3);
+				if(rs.isBeforeFirst()) {
+					while(rs.next()) {
+						dbList.append(rs.getString(1)+",");
+					}
+				}
+			}catch(SQLException e) {
+				e.printStackTrace();
+				throw new Exception("Exception occured while fetching Database Information of the feed");
+			}finally {
+				conn.close();
+			}
+			dbList.setLength(dbList.length()-1);
+			feedDto.setDbList(dbList.toString());
+		}
+		
+		
 		return feedDto;
 
 	}
 
 	@Override
-	public ArrayList<TargetDto> getTargetObject(Connection conn,String targetList) throws SQLException{
+	public ArrayList<TargetDto> getTargetObject(Connection conn,String targetList) throws Exception{
 
 		ArrayList<TargetDto> targetArr=new ArrayList<TargetDto>();
 		Statement statement=conn.createStatement();
@@ -1607,8 +1891,8 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 		try {
 			for(String target:targets) {
 				TargetDto targetDto=new TargetDto();
-				query=" select target_unique_name,target_type,gcp_sequence,hdp_knox_url,hdp_user,hdp_encrypted_password,encrypted_key,hdp_hdfs_path,drive_sequence,unix_data_path,knox_gateway,trust_store_path,trust_store_password from "+OracleConstants.TAREGTTABLE
-						+ " where target_unique_name='"+target+"'";
+				query=" select target_unique_name,target_type,gcp_sequence,hdp_knox_host,hdp_user,hdp_encrypted_password,encrypted_key,hdp_hdfs_path,drive_sequence,unix_data_path,hdfs_gateway from "+OracleConstants.TAREGTTABLE
+						+ " where target_conn_sequence='"+target+"'";
 				rs = statement.executeQuery(query);
 				if(rs.isBeforeFirst()) {
 					rs.next();
@@ -1630,7 +1914,7 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 					if(rs.getString(2).equalsIgnoreCase("hdfs")) {
 						targetDto.setTarget_unique_name(rs.getString(1));
 						targetDto.setTarget_type(rs.getString(2));
-						targetDto.setTarget_knox_url(rs.getString(4));
+						targetDto.setTarget_knox_host(rs.getString(4));
 						targetDto.setTarget_user(rs.getString(5));
 						targetDto.setEncrypted_password(rs.getBytes(6));
 						targetDto.setEncrypted_key(rs.getBytes(7));
@@ -1648,7 +1932,7 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 					if(rs.getString(2).equalsIgnoreCase("hive")) {
 						targetDto.setTarget_unique_name(rs.getString(1));
 						targetDto.setTarget_type(rs.getString(2));
-						targetDto.setTarget_knox_url(rs.getString(4));
+						targetDto.setTarget_knox_host(rs.getString(4));
 						targetDto.setTarget_user(rs.getString(5));
 						targetDto.setEncrypted_password(rs.getBytes(6));
 						targetDto.setEncrypted_key(rs.getBytes(7));
@@ -1662,6 +1946,7 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 			}
 		}catch(SQLException e) {
 			e.printStackTrace();
+			throw new Exception("Exception Occured while retrieving target details");
 		}finally {
 			conn.close();
 		}
@@ -1713,6 +1998,9 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 				if(table.getFetch_type().equalsIgnoreCase("incr")) {
 					tableInfoDto.setIncr_flag("Y");
 					break;
+				}
+				else {
+					tableInfoDto.setIncr_flag("N");
 				}
 			}
 		}catch(SQLException e) {
@@ -1847,7 +2135,9 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 
 
 		String dataPull_status="";
-		if(rtExtractDto.getConnDto().getConn_type().equalsIgnoreCase("ORACLE")||rtExtractDto.getConnDto().getConn_type().equalsIgnoreCase("TERADATA")) {
+		if(rtExtractDto.getConnDto().getConn_type().equalsIgnoreCase("ORACLE")
+				||rtExtractDto.getConnDto().getConn_type().equalsIgnoreCase("TERADATA")
+				||rtExtractDto.getConnDto().getConn_type().equalsIgnoreCase("MSSQL")) {
 			String connectionString=getConnectionString(rtExtractDto.getConnDto());
 			Long runId=getRunId();
 			String date=getDate();
@@ -2547,7 +2837,7 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 							+"(select user_sequence from JUNIPER_USER_MASTER where user_id='"+hivedbDto.getJuniper_user()+"')");
 			try {	
 				Statement statement = conn.createStatement();
-				System.out.println(insertHiveMaster);
+				//System.out.println(insertHiveMaster);
 				statement.executeUpdate(insertHiveMaster);
 				String query=OracleConstants.GETSEQUENCEID.replace("${tableName}", OracleConstants.DBPROPOGATIONTABLE).replace("${columnName}", "HDB_ID");
 				System.out.println("query is "+query);
@@ -2564,21 +2854,17 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 			}catch (SQLException e) {
 				e.printStackTrace();
 				return e.getMessage();
+			}finally {
+				conn.close();
 			}
 		}
-		dbList.setLength(dbList.length()-1);
-		String dbListStr=dbList.toString();
-		String updateExtractionMaster="update "+OracleConstants.FEEDTABLE+" set table_list='"+dbListStr+"' where feed_sequence="+hivedbDto.getFeed_id();
-		try {	
-			Statement statement = conn.createStatement();
-			statement.execute(updateExtractionMaster);
+		//dbList.setLength(dbList.length()-1);
+		//String dbListStr=dbList.toString();
+		//String updateExtractionMaster="update "+OracleConstants.FEEDTABLE+" set table_list='"+dbListStr+"' where feed_sequence="+hivedbDto.getFeed_id();
+	
 			return "Success";
 
-		}catch (SQLException e) {
-			return e.getMessage();
-		}finally {
-			conn.close();
-		}
+		
 	}
 
 	@Override

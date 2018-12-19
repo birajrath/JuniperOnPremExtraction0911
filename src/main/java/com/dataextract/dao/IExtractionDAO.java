@@ -19,15 +19,18 @@ import com.dataextract.dto.ConnectionDto;
 public interface IExtractionDAO {
 	
 	
+	
+	public String testConnection(ConnectionDto dto) throws Exception;
+	public String testHiveConnection(ConnectionDto dto) throws Exception;
 	public String insertConnectionMetadata(Connection conn,ConnectionDto dto) throws SQLException, Exception;
 	public String insertFeedMetadata(Connection conn,FeedDto srcSysDto) throws SQLException;
 	public String insertTableMetadata(Connection conn,TableInfoDto tableInfoDto) throws SQLException;
 	public ConnectionDto getConnectionObject(Connection conn,String feed_name) throws SQLException;
-	public FeedDto getFeedObject(Connection conn,String src_unique_name) throws SQLException;
+	public FeedDto getFeedObject(Connection conn,String feed_name,String src_type) throws SQLException, Exception;
 	public TableInfoDto getTableInfoObject(Connection conn,String table_list) throws SQLException;
 	public  String pullData(RealTimeExtractDto rtExtractDto);
 	public String insertTargetMetadata(Connection conn, TargetDto target) throws SQLException;
-	public ArrayList<TargetDto> getTargetObject(Connection conn,String targetList) throws SQLException;
+	public ArrayList<TargetDto> getTargetObject(Connection conn,String targetList) throws SQLException, Exception;
 	public String createDag(Connection conn,String feed_name,String project,String cron ) throws SQLException;
 	public String updateConnectionMetadata(Connection conn, ConnectionDto connDto) throws SQLException;
 	public String deleteConnectionMetadata(Connection conn, ConnectionDto connDto)throws SQLException;

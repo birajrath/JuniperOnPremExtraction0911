@@ -9,10 +9,17 @@ public class TableInfoDto {
 	int feed_id;
 	ArrayList<TableMetadataDto> tableMetadataArr;
 	String project;
-	String incr_flag="";
+	String incr_flag;
+	String load_type;
 	
 	
 	
+	public String getLoad_type() {
+		return load_type;
+	}
+	public void setLoad_type(String load_type) {
+		this.load_type = load_type;
+	}
 	public String getIncr_flag() {
 		return incr_flag;
 	}

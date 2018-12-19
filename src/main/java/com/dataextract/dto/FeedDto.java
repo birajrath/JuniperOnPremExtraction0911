@@ -12,11 +12,20 @@ public class FeedDto {
 	String target;
 	String tableList;
 	String fileList;
+	String dbList;
 	String filePath;
 	String encryptionStatus;
 	String project;
 	int project_sequence;
 	
+	
+	
+	public String getDbList() {
+		return dbList;
+	}
+	public void setDbList(String dbList) {
+		this.dbList = dbList;
+	}
 	public int getProject_sequence() {
 		return project_sequence;
 	}

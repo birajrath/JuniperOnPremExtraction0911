@@ -11,6 +11,9 @@ public class TableMetadataDto {
 	String view_source_schema;
 	
 	
+	
+	
+	
 	public String getView_flag() {
 		return view_flag;
 	}

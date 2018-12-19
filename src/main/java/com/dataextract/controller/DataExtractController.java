@@ -61,7 +61,8 @@ public class DataExtractController {
 
 		if(requestDto.getBody().get("data").get("connection_type").equalsIgnoreCase("ORACLE")
 				||requestDto.getBody().get("data").get("connection_type").equalsIgnoreCase("HADOOP")
-				||requestDto.getBody().get("data").get("connection_type").equalsIgnoreCase("TERADATA")) 
+				||requestDto.getBody().get("data").get("connection_type").equalsIgnoreCase("TERADATA")
+				||requestDto.getBody().get("data").get("connection_type").equalsIgnoreCase("MSSQL")) 
 		{
 			
 			connDto.setConn_name(requestDto.getBody().get("data").get("connection_name"));
@@ -293,10 +294,15 @@ public class DataExtractController {
 		if(requestDto.getBody().get("data").get("target_type").equalsIgnoreCase("hdfs")){
 			target.setTarget_unique_name(requestDto.getBody().get("data").get("target_unique_name"));
 			target.setTarget_type(requestDto.getBody().get("data").get("target_type"));
-			target.setTarget_knox_url(requestDto.getBody().get("data").get("knox_url"));
+			target.setTarget_knox_host(requestDto.getBody().get("data").get("knox_host"));
+			target.setTarget_knox_port(Integer.parseInt(requestDto.getBody().get("data").get("knox_port")));
+			target.setTarget_hdfs_gateway(requestDto.getBody().get("data").get("hdfs_gateway"));
+			target.setTarget_hdfs_path(requestDto.getBody().get("data").get("hadoop_path"));
+			target.setMaterialization_flag(requestDto.getBody().get("data").get("materialization_flag"));
+			target.setPartition_flag(requestDto.getBody().get("data").get("partition_flag"));
+			target.setHive_gateway(requestDto.getBody().get("data").get("hive_gateway"));
 			target.setTarget_user(requestDto.getBody().get("data").get("username"));
 			target.setTarget_password(requestDto.getBody().get("data").get("password"));
-			target.setTarget_hdfs_path(requestDto.getBody().get("data").get("hadoop_path"));
 			target.setSystem(requestDto.getBody().get("data").get("system"));
 			target.setJuniper_user(requestDto.getBody().get("data").get("user"));
 			target.setProject(requestDto.getBody().get("data").get("project"));
@@ -312,7 +318,7 @@ public class DataExtractController {
 			target.setJuniper_user(requestDto.getBody().get("data").get("user"));
 			target.setProject(requestDto.getBody().get("data").get("project"));
 		}
-		if(requestDto.getBody().get("data").get("target_type").equalsIgnoreCase("HIVE")) 
+		/*if(requestDto.getBody().get("data").get("target_type").equalsIgnoreCase("HIVE")) 
 		{
 			target.setSystem(requestDto.getBody().get("data").get("system"));
 			target.setTarget_unique_name(requestDto.getBody().get("data").get("target_unique_name"));
@@ -325,7 +331,7 @@ public class DataExtractController {
 			target.setTrust_store_password(requestDto.getBody().get("data").get("ts_password"));
 			target.setProject(requestDto.getBody().get("data").get("project"));
 			target.setJuniper_user(requestDto.getBody().get("data").get("user"));
-		}
+		}*/
 		response = dataExtractRepositories.addTargetDetails(target);
 		if(response.toLowerCase().contains("success")) {
 			status="Success";
@@ -377,10 +383,15 @@ public class DataExtractController {
 			target.setTarget_id(Integer.parseInt(requestDto.getBody().get("data").get("tgt")));
 			target.setTarget_unique_name(requestDto.getBody().get("data").get("target_unique_name"));
 			target.setTarget_type(requestDto.getBody().get("data").get("target_type"));
-			target.setTarget_knox_url(requestDto.getBody().get("data").get("knox_url"));
+			target.setTarget_knox_port(Integer.parseInt(requestDto.getBody().get("data").get("knox_host")));
+			target.setTarget_knox_port(Integer.parseInt(requestDto.getBody().get("data").get("knox_port")));
+			target.setTarget_hdfs_gateway(requestDto.getBody().get("data").get("hdfs_gateway"));
 			target.setTarget_user(requestDto.getBody().get("data").get("username"));
 			target.setTarget_password(requestDto.getBody().get("data").get("password"));
 			target.setTarget_hdfs_path(requestDto.getBody().get("data").get("hadoop_path"));
+			target.setMaterialization_flag(requestDto.getBody().get("data").get("materialization_flag"));
+			target.setPartition_flag(requestDto.getBody().get("data").get("partition_flag"));
+			target.setHive_gateway(requestDto.getBody().get("data").get("hive_gateway"));
 			target.setSystem(requestDto.getBody().get("data").get("system"));
 			target.setProject(requestDto.getBody().get("data").get("project"));
 			target.setJuniper_user(requestDto.getBody().get("data").get("user"));
@@ -396,7 +407,7 @@ public class DataExtractController {
 			target.setJuniper_user(requestDto.getBody().get("data").get("user"));
 		}
 		
-		if(requestDto.getBody().get("data").get("target_type").equalsIgnoreCase("HIVE")) 
+		/*if(requestDto.getBody().get("data").get("target_type").equalsIgnoreCase("HIVE")) 
 		{
 			target.setSystem(requestDto.getBody().get("data").get("system"));
 			target.setTarget_unique_name(requestDto.getBody().get("data").get("target_unique_name"));
@@ -409,7 +420,7 @@ public class DataExtractController {
 			target.setTrust_store_password(requestDto.getBody().get("data").get("ts_password"));
 			target.setProject(requestDto.getBody().get("data").get("project"));
 			target.setJuniper_user(requestDto.getBody().get("data").get("user"));
-		}
+		}*/
 
 		response = dataExtractRepositories.updateTargetDetails(target);
 		if(response.equalsIgnoreCase("success")) {
@@ -535,11 +546,23 @@ public class DataExtractController {
 
 		ArrayList<TableMetadataDto> tableMetadataArr=new ArrayList<TableMetadataDto>();
 		int counter=Integer.parseInt(requestDto.getBody().get("data").get("counter"));
+		String load_type=requestDto.getBody().get("data").get("load_type");
+		
+		
 		for(int i=1;i<=counter;i++) {
 			TableMetadataDto tableMetadata=new TableMetadataDto();
+			
 			tableMetadata.setTable_name(requestDto.getBody().get("data").get("table_name"+i).toUpperCase());
-			tableMetadata.setView_flag(requestDto.getBody().get("data").get("view_flag"+i));
-			tableMetadata.setView_source_schema(requestDto.getBody().get("data").get("view_src_schema"+i));
+			String view_flag=requestDto.getBody().get("data").get("view_flag"+i);
+			if(view_flag==null|| view_flag.isEmpty()) {
+				tableMetadata.setView_flag("N");
+			}
+			else {
+				tableMetadata.setView_flag(view_flag);
+				tableMetadata.setView_source_schema(requestDto.getBody().get("data").get("view_src_schema"+i));
+			}
+			
+			
 			tableMetadata.setColumns(requestDto.getBody().get("data").get("columns_name"+i).toUpperCase());
 			tableMetadata.setWhere_clause(requestDto.getBody().get("data").get("where_clause"+i));
 			tableMetadata.setFetch_type(requestDto.getBody().get("data").get("fetch_type"+i));
@@ -547,8 +570,14 @@ public class DataExtractController {
 			tableMetadataArr.add(tableMetadata);
 
 		}
-
-
+		
+		if(load_type ==null || load_type.isEmpty()) {
+			tableInfoDto.setLoad_type("ind");
+		}
+		else {
+			tableInfoDto.setLoad_type(load_type);
+		}
+		
 		tableInfoDto.setTableMetadataArr(tableMetadataArr);
 		tableInfoDto.setJuniper_user(requestDto.getBody().get("data").get("user"));
 		tableInfoDto.setProject(requestDto.getBody().get("data").get("project"));
@@ -726,41 +755,53 @@ public class DataExtractController {
 		String message="";
 		RealTimeExtractDto rtExtractDto = new RealTimeExtractDto();
 		String feed_name=requestDto.getBody().get("data").get("feed_name");
-
-		rtExtractDto.setConnDto(dataExtractRepositories.getConnectionObject(feed_name));
-		rtExtractDto.setFeedDto(dataExtractRepositories.getFeedObject(feed_name));
-		String targetList=rtExtractDto.getFeedDto().getTarget();
-		rtExtractDto.setTargetArr(dataExtractRepositories.getTargetObject(targetList));
-		if(!(rtExtractDto.getFeedDto().getTableList()==null||rtExtractDto.getFeedDto().getTableList().isEmpty())) {
-			if(rtExtractDto.getConnDto().getConn_type().equalsIgnoreCase("HIVE")) {
-				String dbList=rtExtractDto.getFeedDto().getTableList();
-				rtExtractDto.setHiveInfoDto(dataExtractRepositories.getHivePropagateInfoObject(dbList));
-			}
-			else {
+		String encryption=requestDto.getBody().get("data").get("encryption");
+		try {
+			
+			rtExtractDto.setConnDto(dataExtractRepositories.getConnectionObject(feed_name));
+			System.out.println("connection details retrieved");
+			rtExtractDto.setFeedDto(dataExtractRepositories.getFeedObject(feed_name,rtExtractDto.getConnDto().getConn_type()));
+			String targetList=rtExtractDto.getFeedDto().getTarget();
+			rtExtractDto.setTargetArr(dataExtractRepositories.getTargetObject(targetList));
+			if(!(rtExtractDto.getFeedDto().getTableList()==null||rtExtractDto.getFeedDto().getTableList().isEmpty())) {
+				
 				String tableList=rtExtractDto.getFeedDto().getTableList();
 				rtExtractDto.setTableInfoDto(dataExtractRepositories.getTableInfoObject(tableList));
+				
 			}
+			
+			if(!(rtExtractDto.getFeedDto().getDbList()==null||rtExtractDto.getFeedDto().getDbList().isEmpty())) {
+				
+				String dbList=rtExtractDto.getFeedDto().getDbList();
+				rtExtractDto.setHiveInfoDto(dataExtractRepositories.getHivePropagateInfoObject(dbList));
+			}
+			if(!(rtExtractDto.getFeedDto().getFileList()==null||rtExtractDto.getFeedDto().getFileList().isEmpty())) {
+				
+					String fileList=rtExtractDto.getFeedDto().getFileList();
+					rtExtractDto.setFileInfoDto(dataExtractRepositories.getFileInfoObject(fileList));
+				
+			}
+			
+		}catch(Exception e) {
+			status="failed";
+			message=e.getMessage();
+			return ResponseUtil.createResponse(status, message);
 		}
-		if(!(rtExtractDto.getFeedDto().getFileList()==null||rtExtractDto.getFeedDto().getFileList().isEmpty())) {
-			if(rtExtractDto.getConnDto().getConn_type().equalsIgnoreCase("UNIX")) {
-				String fileList=rtExtractDto.getFeedDto().getFileList();
-				rtExtractDto.setFileInfoDto(dataExtractRepositories.getFileInfoObject(fileList));
-			}
-			if(rtExtractDto.getConnDto().getConn_type().equalsIgnoreCase("HADOOP")) {
-				String fileList=rtExtractDto.getFeedDto().getFileList();
-				rtExtractDto.setHdfsInfoDto(dataExtractRepositories.getHDFSInfoObject(fileList));
-			}
-		}
+		
 
 		try {
 			response=dataExtractRepositories.realTimeExtract(rtExtractDto);
 			if(response.equalsIgnoreCase("success")) {
 				status="Success";
 				message="Data Extraction Initiated Successfully";
+				return ResponseUtil.createResponse(status, message);
+
 			}
 			else {
 				status="Failed";
 				message=response;
+				return ResponseUtil.createResponse(status, message);
+
 			}
 
 		} catch (Exception e) {
@@ -768,11 +809,12 @@ public class DataExtractController {
 			e.printStackTrace();
 			status="Failed";
 			message=e.getMessage();
+			return ResponseUtil.createResponse(status, message);
+
 		}
 
 		// Parse Json to Dto Object
-		return ResponseUtil.createResponse(status, message);
-
+		
 	}
 
 	@RequestMapping(value = "/createDag", method = RequestMethod.POST)

@@ -714,7 +714,7 @@ public class ExtractNifiImpl implements IExtract {
 					
 					String password=iExtract.decyptPassword(targetDto.getEncrypted_key(), targetDto.getEncrypted_password());
 					
-					hdfsTarget.append(targetDto.getTarget_knox_url()+"~");
+					hdfsTarget.append(targetDto.getTarget_knox_host()+"~");
 					hdfsTarget.append(targetDto.getTarget_user()+"~");
 					hdfsTarget.append(password+"~");
 					hdfsTarget.append(targetDto.getTarget_hdfs_path()+",");
@@ -779,7 +779,7 @@ public class ExtractNifiImpl implements IExtract {
 					
 					String password=iExtract.decyptPassword(targetDto.getEncrypted_key(), targetDto.getEncrypted_password());
 					
-					hdfsTarget.append(targetDto.getTarget_knox_url()+"~");
+					hdfsTarget.append(targetDto.getTarget_knox_host()+"~");
 					hdfsTarget.append(targetDto.getTarget_user()+"~");
 					hdfsTarget.append(password+"~");
 					hdfsTarget.append(targetDto.getTarget_hdfs_path()+",");
@@ -838,7 +838,7 @@ public class ExtractNifiImpl implements IExtract {
 				}
 				if(tarDto.getTarget_type().equalsIgnoreCase("hdfs")) {
 					json.put("target_type"+Integer.toString(i), "hdfs");
-					json.put("knox_url"+Integer.toString(i), tarDto.getTarget_knox_url());
+					json.put("knox_url"+Integer.toString(i), tarDto.getTarget_knox_host());
 					json.put("knox_user"+Integer.toString(i), tarDto.getTarget_user());
 					json.put("knox_password"+Integer.toString(i), tarDto.getTarget_password());
 					json.put("hdfs_path"+Integer.toString(i), tarDto.getTarget_hdfs_path());
