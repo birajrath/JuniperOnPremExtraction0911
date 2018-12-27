@@ -25,6 +25,7 @@
 /Users/birajrath/Documents/GitHub/OnPrem0911/JuniperOnPremExtraction0911/src/main/java/com/dataextract/constants/KmsConstants.java
 /Users/birajrath/Documents/GitHub/OnPrem0911/JuniperOnPremExtraction0911/src/main/java/com/dataextract/dto/ConnectionDto.java
 /Users/birajrath/Documents/GitHub/OnPrem0911/JuniperOnPremExtraction0911/src/main/java/com/dataextract/constants/EncryptionConstants.java
+/Users/birajrath/Documents/GitHub/OnPrem0911/JuniperOnPremExtraction0911/src/main/java/com/dataextract/dto/ScheduleExtractDto.java
 /Users/birajrath/Documents/GitHub/OnPrem0911/JuniperOnPremExtraction0911/src/main/java/com/dataextract/driver/DataExtractionApplication.java
 /Users/birajrath/Documents/GitHub/OnPrem0911/JuniperOnPremExtraction0911/src/main/java/com/dataextract/dto/TableInfoDto.java
 /Users/birajrath/Documents/GitHub/OnPrem0911/JuniperOnPremExtraction0911/src/main/java/com/dataextract/dto/RealTimeExtractDto.java

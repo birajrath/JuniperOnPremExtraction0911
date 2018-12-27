@@ -4,6 +4,7 @@ public class FileMetadataDto {
 	
 	
 	int file_sequence;
+	String file_path;
 	String file_name;
 	String file_type;
 	String file_delimiter;
@@ -24,6 +25,14 @@ public class FileMetadataDto {
 	
 	
 	
+	public String getFile_path() {
+		return file_path;
+	}
+
+	public void setFile_path(String file_path) {
+		this.file_path = file_path;
+	}
+
 	public int getFile_sequence() {
 		return file_sequence;
 	}

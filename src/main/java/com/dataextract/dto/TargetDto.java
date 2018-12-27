@@ -30,10 +30,19 @@ public class TargetDto {
 	String trust_store_path;
 	String trust_store_password;
 	byte[] encrypted_trust_store_password;
+	String service_account_key;
 	
 	
 	
 	
+	
+	
+	public String getService_account_key() {
+		return service_account_key;
+	}
+	public void setService_account_key(String service_account_key) {
+		this.service_account_key = service_account_key;
+	}
 	public String getTarget_knox_host() {
 		return target_knox_host;
 	}

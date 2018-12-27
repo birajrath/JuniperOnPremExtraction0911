@@ -15,6 +15,7 @@ com/dataextract/dto/TableInfoDto.class
 com/dataextract/dao/ExtractionDaoImpl.class
 com/dataextract/util/AuthUtils.class
 com/dataextract/util/ResponseUtil.class
+com/dataextract/dto/ScheduleExtractDto.class
 com/dataextract/util/EncryptUtils.class
 com/dataextract/dto/TableMetadataDto.class
 com/dataextract/dto/ExtractStatusDto.class

@@ -26,6 +26,7 @@ import com.dataextract.dto.HDFSMetadataDto;
 import com.dataextract.dto.HiveDbMetadataDto;
 import com.dataextract.dto.RealTimeExtractDto;
 import com.dataextract.dto.RequestDto;
+import com.dataextract.dto.ScheduleExtractDto;
 import com.dataextract.dto.TableInfoDto;
 import com.dataextract.dto.TableMetadataDto;
 import com.dataextract.dto.TargetDto;
@@ -285,6 +286,7 @@ public class DataExtractController {
 			target.setTarget_type(requestDto.getBody().get("data").get("target_type"));
 			target.setTarget_project(requestDto.getBody().get("data").get("target_project"));
 			target.setService_account(requestDto.getBody().get("data").get("service_account"));
+			target.setService_account_key(requestDto.getBody().get("data").get("service_account_key"));
 			target.setTarget_bucket(requestDto.getBody().get("data").get("target_bucket"));
 			target.setSystem(requestDto.getBody().get("data").get("system"));
 			target.setJuniper_user(requestDto.getBody().get("data").get("user"));
@@ -294,7 +296,11 @@ public class DataExtractController {
 		if(requestDto.getBody().get("data").get("target_type").equalsIgnoreCase("hdfs")){
 			target.setTarget_unique_name(requestDto.getBody().get("data").get("target_unique_name"));
 			target.setTarget_type(requestDto.getBody().get("data").get("target_type"));
-			target.setTarget_knox_host(requestDto.getBody().get("data").get("knox_host"));
+			String knox_host=requestDto.getBody().get("data").get("knox_host").trim();
+			if(!(knox_host.contains("https://"))) {
+				knox_host="https://"+knox_host;
+			}
+			target.setTarget_knox_host(knox_host);
 			target.setTarget_knox_port(Integer.parseInt(requestDto.getBody().get("data").get("knox_port")));
 			target.setTarget_hdfs_gateway(requestDto.getBody().get("data").get("hdfs_gateway"));
 			target.setTarget_hdfs_path(requestDto.getBody().get("data").get("hadoop_path"));
@@ -357,16 +363,6 @@ public class DataExtractController {
 		TargetDto target=new TargetDto();
 
 
-			response = dataExtractRepositories.updateTargetDetails(target);
-			if(response.equalsIgnoreCase("success")) {
-				status="success";
-				message="Target Details updated successfully";
-				
-			}
-			else {
-				status="failed";
-				message=response;
-			}
 
 		if(requestDto.getBody().get("data").get("target_type").equalsIgnoreCase("gcs")){
 			target.setTarget_id(Integer.parseInt(requestDto.getBody().get("data").get("tgt")));
@@ -383,7 +379,7 @@ public class DataExtractController {
 			target.setTarget_id(Integer.parseInt(requestDto.getBody().get("data").get("tgt")));
 			target.setTarget_unique_name(requestDto.getBody().get("data").get("target_unique_name"));
 			target.setTarget_type(requestDto.getBody().get("data").get("target_type"));
-			target.setTarget_knox_port(Integer.parseInt(requestDto.getBody().get("data").get("knox_host")));
+			target.setTarget_knox_host(requestDto.getBody().get("data").get("knox_host"));
 			target.setTarget_knox_port(Integer.parseInt(requestDto.getBody().get("data").get("knox_port")));
 			target.setTarget_hdfs_gateway(requestDto.getBody().get("data").get("hdfs_gateway"));
 			target.setTarget_user(requestDto.getBody().get("data").get("username"));
@@ -756,6 +752,9 @@ public class DataExtractController {
 		RealTimeExtractDto rtExtractDto = new RealTimeExtractDto();
 		String feed_name=requestDto.getBody().get("data").get("feed_name");
 		String encryption=requestDto.getBody().get("data").get("encryption");
+		if(!(encryption==null||encryption.isEmpty())) {
+			rtExtractDto.setEncryption_flag("Y");
+		}
 		try {
 			
 			rtExtractDto.setConnDto(dataExtractRepositories.getConnectionObject(feed_name));
@@ -823,16 +822,32 @@ public class DataExtractController {
 		String response="";
 		String status="";
 		String message="";
-
-		String feed_name=requestDto.getBody().get("data").get("feed_name");
-		String project=requestDto.getBody().get("data").get("project");
-		String cron=requestDto.getBody().get("data").get("cron");
-
-
-
+		ScheduleExtractDto schDto=new ScheduleExtractDto();
+		schDto.setFeed_name(requestDto.getBody().get("data").get("feed_name"));
+		schDto.setSch_flag(requestDto.getBody().get("data").get("sch_flag"));
+		
+		if(schDto.getSch_flag().equalsIgnoreCase("R")) {
+			schDto.setCron(requestDto.getBody().get("data").get("cron"));
+		}
+		if(schDto.getSch_flag().equalsIgnoreCase("F")) {
+			schDto.setFile_path(requestDto.getBody().get("data").get("file_path"));
+			schDto.setFile_pattern(requestDto.getBody().get("data").get("file_pattern"));
+		}
+		
+		if(schDto.getSch_flag().equalsIgnoreCase("K")) {
+			
+			schDto.setKafka_topic(requestDto.getBody().get("data").get("kafka_topic"));
+			
+		}
+		if(schDto.getSch_flag().equalsIgnoreCase("A")) {
+			
+			
+			schDto.setApi_unique_key(requestDto.getBody().get("data").get("api_unique_key"));
+			
+		}
 
 		try {
-			response=dataExtractRepositories.batchExtract(feed_name,project,cron);
+			response=dataExtractRepositories.batchExtract(schDto);
 			if(response.equalsIgnoreCase("success")) {
 				status="Success";
 				message="Batch Scheduled Successfully";

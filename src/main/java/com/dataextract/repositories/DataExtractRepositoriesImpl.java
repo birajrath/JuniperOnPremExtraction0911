@@ -25,6 +25,7 @@ import com.dataextract.dto.FileInfoDto;
 import com.dataextract.dto.HDFSMetadataDto;
 import com.dataextract.dto.HiveDbMetadataDto;
 import com.dataextract.dto.RealTimeExtractDto;
+import com.dataextract.dto.ScheduleExtractDto;
 import com.dataextract.dto.TableInfoDto;
 import com.dataextract.dto.TargetDto;
 import com.dataextract.util.ConnectionUtils;
@@ -198,12 +199,12 @@ public class DataExtractRepositoriesImpl implements DataExtractRepositories {
 	}
 
 	@Override
-	public String batchExtract(String feed_name ,String project,String cron) throws SQLException{
+	public String batchExtract(ScheduleExtractDto schDto) throws Exception{
 
 		Connection conn=null;
 		conn=ConnectionUtils.connectToOracle(OracleConstants.ORACLE_IP_PORT_SID, OracleConstants.ORACLE_USER_NAME, OracleConstants.ORACLE_PASSWORD);
 		//conn= ConnectionUtils.connectToMySql(MySQLConstants.MYSQLIP, MySQLConstants.MYSQLPORT, MySQLConstants.DB,MySQLConstants.USER , MySQLConstants.PASSWORD);
-		return extractionDao.createDag(conn,feed_name,project,cron);
+		return extractionDao.createDag(conn,schDto);
 	}
 
 

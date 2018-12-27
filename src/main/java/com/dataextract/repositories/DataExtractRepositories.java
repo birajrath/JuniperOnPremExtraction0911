@@ -14,6 +14,7 @@ import com.dataextract.dto.FileInfoDto;
 import com.dataextract.dto.HDFSMetadataDto;
 import com.dataextract.dto.HiveDbMetadataDto;
 import com.dataextract.dto.RealTimeExtractDto;
+import com.dataextract.dto.ScheduleExtractDto;
 import com.dataextract.dto.TableInfoDto;
 import com.dataextract.dto.TargetDto;
 
@@ -34,7 +35,7 @@ public String testConnection(ConnectionDto dto) throws SQLException, Exception;
 public String testHiveConnection(ConnectionDto dto) throws SQLException, Exception;
 public String addTargetDetails(TargetDto target) throws SQLException;
 public ArrayList<TargetDto> getTargetObject(String targetList) throws SQLException, Exception;
-public String batchExtract(String feed_name,String project,String cron) throws SQLException;
+public String batchExtract(ScheduleExtractDto schDto) throws SQLException, Exception;
 public String updateConnectionDetails(ConnectionDto connDto) throws SQLException;
 public String deleteConnectionDetails(ConnectionDto connDto) throws SQLException ;
 public String updateFeed(FeedDto feedDto)throws SQLException ;

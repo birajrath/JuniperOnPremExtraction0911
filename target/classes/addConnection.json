@@ -8,12 +8,7 @@
 	"run_id":"78865575759",
 	"date":"17122018",
 	"project_sequence":"1",
-	"gcsTarget":"juniperonprem~sa1~extraction-bucket1",
+	"hdfsTarget":"https://35.196.122.106:8443~admin~admin-password~/apps/hive/warehouse/juniper_ingest",
 	"path":"uk/newFeed/17122018/78865575759"	
 	
-	
-
-
-
-
 }

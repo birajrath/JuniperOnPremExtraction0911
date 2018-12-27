@@ -231,12 +231,15 @@ public class ExtractNifiImpl implements IExtract {
 		
 		JSONArray arr = new JSONArray();
 		for(String dbList: rtExtractDto.getHiveInfoDto().getHiveDbList()) {
-			StringBuffer target=new StringBuffer();
 			JSONObject json=new JSONObject();
 			json.put("source_db_name", dbList);
 			json.put("source_knox_url", rtExtractDto.getConnDto().getHostName());
 			json.put("source_knox_port", rtExtractDto.getConnDto().getPort());
 			json.put("source_trust_store_file_path", rtExtractDto.getConnDto().getTrust_store_path());
+			json.put("country", rtExtractDto.getFeedDto().getCountry_code());
+			json.put("encryption_flag", rtExtractDto.getEncryption_flag());
+			json.put("system", rtExtractDto.getConnDto().getSys_seq());
+			json.put("project", rtExtractDto.getFeedDto().getProject_sequence());
 			
 			String sourceDecryptedTrustStorePassword=iExtract.decyptPassword(rtExtractDto.getConnDto().getEncr_key(), rtExtractDto.getConnDto().getEncrypted_trust_store_password());
 			json.put("source_trust_store_password", sourceDecryptedTrustStorePassword);
@@ -766,7 +769,7 @@ public class ExtractNifiImpl implements IExtract {
 			json.put("file_delimiter", file.getFile_delimiter());
 			json.put("feed_name", rtExtractDto.getFeedDto().getFeed_name());
 			json.put("country_code", rtExtractDto.getFeedDto().getCountry_code());
-			json.put("file_path", rtExtractDto.getFeedDto().getFilePath());
+			json.put("file_path", file.getFile_path());
 			json.put("run_id", runId);
 			json.put("date", date);
 			for(TargetDto targetDto :rtExtractDto.getTargetArr()) {
