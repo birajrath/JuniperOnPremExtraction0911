@@ -299,7 +299,7 @@ public class DataExtractRepositoriesImpl implements DataExtractRepositories {
 		Connection conn=null;
 		conn=ConnectionUtils.connectToOracle(OracleConstants.ORACLE_IP_PORT_SID, OracleConstants.ORACLE_USER_NAME, OracleConstants.ORACLE_PASSWORD);
 		//conn= ConnectionUtils.connectToMySql(MySQLConstants.MYSQLIP, MySQLConstants.MYSQLPORT, MySQLConstants.DB,MySQLConstants.USER , MySQLConstants.PASSWORD);
-		return extractionDao.deleteTempTableMetadata(conn,feed_id,src_type);
+		return extractionDao.deleteTableMetadata(conn,feed_id,src_type);
 
 	}
 

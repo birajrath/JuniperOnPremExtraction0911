@@ -4340,9 +4340,10 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 
 	}
 	
+	/*--------------------------------Geeta Delete temp table metadata block---------------------------------------*/	
 	
 	@Override
-	public String deleteTempTableMetadata(Connection conn,String feed_id,String src_type) throws SQLException{
+	public String deleteTableMetadata(Connection conn,String feed_id,String src_type) throws SQLException{
 		String result="";
 		
 					String selectTempTableMaster= "select * from "
@@ -4401,11 +4402,11 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 		}
 
 	@Override
-	public String deleteTableMetadata(Connection conn,String feed_id,String src_type) throws SQLException{
+	public String deleteTempTableMetadata(Connection conn,String feed_id,String src_type) throws SQLException{
 		String result="";
 					
 					String deleteTableMaster= "delete from "
-												+OracleConstants.TABLEDETAILSTABLE
+												+OracleConstants.TEMPTABLEDETAILSTABLE
 												+" where feed_sequence="
 												+feed_id;
 												
@@ -4501,6 +4502,9 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 					}
 					return result;	
 		}
+
+	
+	
 }
 
 
