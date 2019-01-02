@@ -17,6 +17,7 @@ import com.dataextract.dto.RealTimeExtractDto;
 import com.dataextract.dto.ScheduleExtractDto;
 import com.dataextract.dto.TableInfoDto;
 import com.dataextract.dto.TargetDto;
+import com.dataextract.dto.TempTableInfoDto;
 
 /**
  * @author sivakumar.r14
@@ -51,6 +52,10 @@ public String checkProcessGroupStatus(int index, String conn_type) throws SQLExc
 public String addHivePropagateDbDetails(HiveDbMetadataDto hivedbDto) throws SQLException;
 public HiveDbMetadataDto getHivePropagateInfoObject(String dbList) throws SQLException;
 public String addHiveConnectionDetails(ConnectionDto connDto, String testConnStatus) throws Exception;
+public String addTempTableDetails(TempTableInfoDto tempTableInfoDto) throws SQLException;
+public String editTempTableDetails(String feed_id,String src_type) throws SQLException;
+public String metaDataValidate(String feed_sequence,String project_id) throws SQLException;
+
 
 
 

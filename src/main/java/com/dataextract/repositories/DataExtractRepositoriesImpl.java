@@ -28,6 +28,7 @@ import com.dataextract.dto.RealTimeExtractDto;
 import com.dataextract.dto.ScheduleExtractDto;
 import com.dataextract.dto.TableInfoDto;
 import com.dataextract.dto.TargetDto;
+import com.dataextract.dto.TempTableInfoDto;
 import com.dataextract.util.ConnectionUtils;
 
 /**
@@ -268,6 +269,40 @@ public class DataExtractRepositoriesImpl implements DataExtractRepositories {
 		//conn= ConnectionUtils.connectToMySql(MySQLConstants.MYSQLIP, MySQLConstants.MYSQLPORT, MySQLConstants.DB,MySQLConstants.USER , MySQLConstants.PASSWORD);
 		return extractionDao.getHivePropagateInfoObject(conn,dbList);
 	}
+	
+	@Override
+	public String metaDataValidate(String feed_sequence,String project_id) throws SQLException {
+		Connection conn=null;
+		System.out.println("Reached the meta data validate 2");
+		conn=ConnectionUtils.connectToOracle(OracleConstants.ORACLE_IP_PORT_SID, OracleConstants.ORACLE_USER_NAME, OracleConstants.ORACLE_PASSWORD);
+		//conn= ConnectionUtils.connectToMySql(MySQLConstants.MYSQLIP, MySQLConstants.MYSQLPORT, MySQLConstants.DB,MySQLConstants.USER , MySQLConstants.PASSWORD);
+		try {
+			return extractionDao.metadataValidate(conn,feed_sequence,project_id);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return "Exception Occured";
+		}
+	}
+	
+	@Override
+	public String addTempTableDetails(TempTableInfoDto tempTableInfoDto) throws SQLException  {
+		Connection conn=null;
+		conn=ConnectionUtils.connectToOracle(OracleConstants.ORACLE_IP_PORT_SID, OracleConstants.ORACLE_USER_NAME, OracleConstants.ORACLE_PASSWORD);
+		//conn= ConnectionUtils.connectToMySql(MySQLConstants.MYSQLIP, MySQLConstants.MYSQLPORT, MySQLConstants.DB,MySQLConstants.USER , MySQLConstants.PASSWORD);
+		return extractionDao.insertTempTableMetadata(conn, tempTableInfoDto);
+
+	}
+	
+	@Override
+	public String editTempTableDetails(String feed_id,String src_type) throws SQLException  {
+		Connection conn=null;
+		conn=ConnectionUtils.connectToOracle(OracleConstants.ORACLE_IP_PORT_SID, OracleConstants.ORACLE_USER_NAME, OracleConstants.ORACLE_PASSWORD);
+		//conn= ConnectionUtils.connectToMySql(MySQLConstants.MYSQLIP, MySQLConstants.MYSQLPORT, MySQLConstants.DB,MySQLConstants.USER , MySQLConstants.PASSWORD);
+		return extractionDao.deleteTempTableMetadata(conn,feed_id,src_type);
+
+	}
+
 }
 
 

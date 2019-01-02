@@ -1,9 +1,11 @@
 com/dataextract/controller/DataExtractController.class
 com/dataextract/dao/IExtractionDAO.class
+com/dataextract/dto/TempTableInfoDto.class
 com/dataextract/dto/NifiRequestDto.class
 com/dataextract/repositories/DataExtractRepositories.class
 com/dataextract/dto/FeedDto.class
 com/dataextract/constants/KmsConstants.class
+com/dataextract/dto/TempTableMetadataDto.class
 com/dataextract/dto/Header.class
 com/dataextract/dto/RequestDto.class
 com/dataextract/constants/EncryptionConstants.class

@@ -14,6 +14,7 @@ import com.dataextract.dto.ScheduleExtractDto;
 import com.dataextract.dto.FeedDto;
 import com.dataextract.dto.TableInfoDto;
 import com.dataextract.dto.TargetDto;
+import com.dataextract.dto.TempTableInfoDto;
 import com.dataextract.dto.BatchExtractDto;
 import com.dataextract.dto.ConnectionDto;
 
@@ -49,6 +50,11 @@ public interface IExtractionDAO {
 	public String insertHivePropagateMetadata(Connection conn, HiveDbMetadataDto hivedbDto) throws SQLException;
 	public HiveDbMetadataDto getHivePropagateInfoObject(Connection conn, String dbList) throws SQLException;
 	public String insertHiveMetadata(Connection conn,ConnectionDto connDto, String dbTables) throws SQLException;
+	public String insertTempTableMetadata(Connection conn,TempTableInfoDto tempTableInfoDto) throws SQLException;
+	public String deleteTempTableMetadata(Connection conn,String feed_id,String src_type) throws SQLException;
+	public String metadataValidate(Connection conn,String feed_sequence,String project_id) throws Exception;
+	public String updateAfterMetadataValidate(Connection conn,String feed_sequence,String project_id) throws Exception;
+	public String deleteTableMetadata(Connection conn,String feed_id,String src_type) throws SQLException;
 	
 	
 	

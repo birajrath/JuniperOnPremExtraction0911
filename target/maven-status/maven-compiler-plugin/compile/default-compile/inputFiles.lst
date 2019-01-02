@@ -20,6 +20,8 @@
 /Users/birajrath/Documents/GitHub/OnPrem0911/JuniperOnPremExtraction0911/src/main/java/com/dataextract/dto/DataExtractDto.java
 /Users/birajrath/Documents/GitHub/OnPrem0911/JuniperOnPremExtraction0911/src/main/java/com/dataextract/repositories/DataExtractRepositoriesImpl.java
 /Users/birajrath/Documents/GitHub/OnPrem0911/JuniperOnPremExtraction0911/src/main/java/com/dataextract/dto/FieldMetadataDto.java
+/Users/birajrath/Documents/GitHub/OnPrem0911/JuniperOnPremExtraction0911/src/main/java/com/dataextract/dto/TempTableInfoDto.java
+/Users/birajrath/Documents/GitHub/OnPrem0911/JuniperOnPremExtraction0911/src/main/java/com/dataextract/dto/TempTableMetadataDto.java
 /Users/birajrath/Documents/GitHub/OnPrem0911/JuniperOnPremExtraction0911/src/main/java/com/dataextract/dto/UnixDataRequestDto.java
 /Users/birajrath/Documents/GitHub/OnPrem0911/JuniperOnPremExtraction0911/src/main/java/com/dataextract/util/ConnectionUtils.java
 /Users/birajrath/Documents/GitHub/OnPrem0911/JuniperOnPremExtraction0911/src/main/java/com/dataextract/constants/KmsConstants.java
