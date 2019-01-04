@@ -9,11 +9,17 @@ public class TableMetadataDto {
 	String incr_col;
 	String view_flag;
 	String view_source_schema;
+	String all_cols;
 	
 	
 	
 	
-	
+	public String getAll_cols() {
+		return all_cols;
+	}
+	public void setAll_cols(String all_cols) {
+		this.all_cols = all_cols;
+	}
 	public String getView_flag() {
 		return view_flag;
 	}

@@ -11,10 +11,20 @@ public class ScheduleExtractDto {
 	String api_unique_key;
 	int project_seq;
 	int feed_id;
+	String extraction_mode;
 	
 	
 	
 	
+	
+	
+	
+	public String getExtraction_mode() {
+		return extraction_mode;
+	}
+	public void setExtraction_mode(String extraction_mode) {
+		this.extraction_mode = extraction_mode;
+	}
 	public String getKafka_topic() {
 		return kafka_topic;
 	}

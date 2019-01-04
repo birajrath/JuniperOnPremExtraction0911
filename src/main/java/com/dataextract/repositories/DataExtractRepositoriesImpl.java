@@ -302,6 +302,9 @@ public class DataExtractRepositoriesImpl implements DataExtractRepositories {
 		return extractionDao.deleteTableMetadata(conn,feed_id,src_type);
 
 	}
+	
+	
+	
 
 }
 

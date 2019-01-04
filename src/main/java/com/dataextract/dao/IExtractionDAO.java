@@ -55,7 +55,7 @@ public interface IExtractionDAO {
 	public String metadataValidate(Connection conn,String feed_sequence,String project_id) throws Exception;
 	public String updateAfterMetadataValidate(Connection conn,String feed_sequence,String project_id) throws Exception;
 	public String deleteTableMetadata(Connection conn,String feed_id,String src_type) throws SQLException;
-	
+		
 	
 	
 	

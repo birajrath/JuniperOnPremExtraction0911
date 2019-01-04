@@ -1393,7 +1393,7 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 						columns=tableMetadata.getColumns();
 					}
 					String insertTableMaster= OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.TABLEDETAILSTABLE)
-							.replace("{$columns}","feed_sequence,table_name,columns,fetch_type,where_clause,incr_col,view_flag,view_source_schema,project_sequence,created_by" )
+							.replace("{$columns}","feed_sequence,table_name,columns,fetch_type,where_clause,incr_col,view_flag,view_source_schema,all_cols,project_sequence,created_by" )
 							.replace("{$data}",tableInfoDto.getFeed_id() +OracleConstants.COMMA
 									+OracleConstants.QUOTE+tableMetadata.getTable_name()+OracleConstants.QUOTE+OracleConstants.COMMA
 									+OracleConstants.QUOTE+columns+OracleConstants.QUOTE+OracleConstants.COMMA
@@ -1402,6 +1402,7 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 									+OracleConstants.QUOTE+tableMetadata.getIncr_col()+OracleConstants.QUOTE+OracleConstants.COMMA
 									+OracleConstants.QUOTE+tableMetadata.getView_flag()+OracleConstants.QUOTE+OracleConstants.COMMA
 									+OracleConstants.QUOTE+tableMetadata.getView_source_schema()+OracleConstants.QUOTE+OracleConstants.COMMA
+									+OracleConstants.QUOTE+tableMetadata.getAll_cols()+OracleConstants.QUOTE+OracleConstants.COMMA
 									+project_sequence+OracleConstants.COMMA
 									+OracleConstants.QUOTE+tableInfoDto.getJuniper_user()+OracleConstants.QUOTE
 									);
@@ -2251,8 +2252,8 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 		}
 		if(schDto.getSch_flag().equalsIgnoreCase("R")) {
 			
-			//return insertScheduleMetadata(conn,schDto.getFeed_name(),schDto.getProject_seq(),schDto.getCron());
-			return null;
+			return insertScheduleMetadata(conn,schDto,tarArr);
+			
 		}
 		
 		if(schDto.getSch_flag().equalsIgnoreCase("F")) {
@@ -2279,16 +2280,19 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 	
 	private String scheduleEventBasedFeedApi(Connection conn, ScheduleExtractDto schDto, ArrayList<String> tarArr) throws Exception {
 		String insertReadJob=OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.SCHEDULETABLE)
-				.replace("{$columns}", "job_id,job_name,batch_id,feed_id,command,argument_1,argument_3,argument_4,schedule_type,job_schedule_time,project_id")
+				.replace("{$columns}", "job_id,job_name,batch_id,feed_id,command,argument_1,argument_3,argument_4,argument_5,schedule_type,job_schedule_time,daily_flag,project_id")
 				.replace("{$data}",OracleConstants.QUOTE+schDto.getFeed_name()+"_read"+OracleConstants.QUOTE+OracleConstants.COMMA
 						+OracleConstants.QUOTE+schDto.getFeed_name()+"_read"+OracleConstants.QUOTE+OracleConstants.COMMA
 						+OracleConstants.QUOTE+schDto.getFeed_name()+OracleConstants.QUOTE+OracleConstants.COMMA
 						+OracleConstants.QUOTE+schDto.getFeed_id()+OracleConstants.QUOTE+OracleConstants.COMMA
 						+OracleConstants.QUOTE+SchedulerConstants.read_script+OracleConstants.QUOTE+OracleConstants.COMMA
 						+OracleConstants.QUOTE+schDto.getFeed_name()+OracleConstants.QUOTE+OracleConstants.COMMA
+						+OracleConstants.QUOTE+"$RUN_ID$"+OracleConstants.QUOTE+OracleConstants.COMMA
 						+OracleConstants.QUOTE+schDto.getApi_unique_key()+OracleConstants.QUOTE+OracleConstants.COMMA
+						+OracleConstants.QUOTE+schDto.getExtraction_mode()+OracleConstants.QUOTE+OracleConstants.COMMA
 						+OracleConstants.QUOTE+"A"+OracleConstants.QUOTE+OracleConstants.COMMA
 						+OracleConstants.QUOTE+"00:00:00"+OracleConstants.QUOTE+OracleConstants.COMMA
+						+OracleConstants.QUOTE+"Y"+OracleConstants.QUOTE+OracleConstants.COMMA
 						+schDto.getProject_seq());
 		try {
 			Statement statement=conn.createStatement();
@@ -2302,7 +2306,7 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 		for(String target:tarArr) {
 			
 			String insertWriteJob=OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.SCHEDULETABLE)
-					.replace("{$columns}", "job_id,job_name,batch_id,feed_id,command,argument_1,argument_2,PREDESSOR_JOB_ID_1,schedule_type,job_schedule_time,project_id")
+					.replace("{$columns}", "job_id,job_name,batch_id,feed_id,command,argument_1,argument_2,argument_3,PREDESSOR_JOB_ID_1,schedule_type,job_schedule_time,daily_flag,project_id")
 					.replace("{$data}",OracleConstants.QUOTE+schDto.getFeed_name()+"_"+target.split("~")[0]+"_write"+OracleConstants.QUOTE+OracleConstants.COMMA
 							+OracleConstants.QUOTE+schDto.getFeed_name()+"_"+target.split("~")[0]+"_write"+OracleConstants.QUOTE+OracleConstants.COMMA
 							+OracleConstants.QUOTE+schDto.getFeed_name()+OracleConstants.QUOTE+OracleConstants.COMMA
@@ -2310,9 +2314,11 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 							+OracleConstants.QUOTE+SchedulerConstants.write_script+OracleConstants.QUOTE+OracleConstants.COMMA
 							+OracleConstants.QUOTE+schDto.getFeed_name()+OracleConstants.QUOTE+OracleConstants.COMMA
 							+OracleConstants.QUOTE+target.split("~")[0]+OracleConstants.QUOTE+OracleConstants.COMMA
+							+OracleConstants.QUOTE+"$RUN_ID$"+OracleConstants.QUOTE+OracleConstants.COMMA
 							+OracleConstants.QUOTE+schDto.getFeed_name()+"_read"+OracleConstants.QUOTE+OracleConstants.COMMA
 							+OracleConstants.QUOTE+"A"+OracleConstants.QUOTE+OracleConstants.COMMA
 							+OracleConstants.QUOTE+"00:00:00"+OracleConstants.QUOTE+OracleConstants.COMMA
+							+OracleConstants.QUOTE+"Y"+OracleConstants.QUOTE+OracleConstants.COMMA
 							+schDto.getProject_seq());
 			
 			try {
@@ -2326,16 +2332,18 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 			}
 			if(target.split("~")[1].equalsIgnoreCase("Y")) {
 				String insertMatJob=OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.SCHEDULETABLE)
-						.replace("{$columns}", "job_id,job_name,batch_id,feed_id,command,argument_1,PREDESSOR_JOB_ID_1,schedule_type,job_schedule_time,project_id")
+						.replace("{$columns}", "job_id,job_name,batch_id,feed_id,command,argument_1,argument_3,PREDESSOR_JOB_ID_1,schedule_type,job_schedule_time,daily_flag,project_id")
 						.replace("{$data}",OracleConstants.QUOTE+schDto.getFeed_name()+"_"+target.split("~")[0]+"_materialize"+OracleConstants.QUOTE+OracleConstants.COMMA
 								+OracleConstants.QUOTE+schDto.getFeed_name()+"_"+target.split("~")[0]+"_materialize"+OracleConstants.QUOTE+OracleConstants.COMMA
 								+OracleConstants.QUOTE+schDto.getFeed_name()+OracleConstants.QUOTE+OracleConstants.COMMA
 								+OracleConstants.QUOTE+schDto.getFeed_id()+OracleConstants.QUOTE+OracleConstants.COMMA
-								+OracleConstants.QUOTE+SchedulerConstants.write_script+OracleConstants.QUOTE+OracleConstants.COMMA
+								+OracleConstants.QUOTE+SchedulerConstants.mat_script+OracleConstants.QUOTE+OracleConstants.COMMA
 								+OracleConstants.QUOTE+schDto.getFeed_name()+OracleConstants.QUOTE+OracleConstants.COMMA
+								+OracleConstants.QUOTE+"$RUN_ID$"+OracleConstants.QUOTE+OracleConstants.COMMA
 								+OracleConstants.QUOTE+schDto.getFeed_name()+"_"+target.split("~")[0]+"_write"+OracleConstants.QUOTE+OracleConstants.COMMA
 								+OracleConstants.QUOTE+"A"+OracleConstants.QUOTE+OracleConstants.COMMA
 								+OracleConstants.QUOTE+"00:00:00"+OracleConstants.QUOTE+OracleConstants.COMMA
+								+OracleConstants.QUOTE+"Y"+OracleConstants.QUOTE+OracleConstants.COMMA
 								+schDto.getProject_seq());
 				try {
 					Statement statement=conn.createStatement();
@@ -2352,7 +2360,7 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 
 	private String scheduleEventBasedFeedKafka(Connection conn, ScheduleExtractDto schDto, ArrayList<String> tarArr) throws Exception {
 		String insertReadJob=OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.SCHEDULETABLE)
-				.replace("{$columns}", "job_id,job_name,batch_id,feed_id,command,argument_1,argument_3,argument_4,schedule_type,job_schedule_time,project_id")
+				.replace("{$columns}", "job_id,job_name,batch_id,feed_id,command,argument_1,argument_3,argument_4,argument_5,schedule_type,job_schedule_time,daily_flag,project_id")
 				.replace("{$data}",OracleConstants.QUOTE+schDto.getFeed_name()+"_read"+OracleConstants.QUOTE+OracleConstants.COMMA
 						+OracleConstants.QUOTE+schDto.getFeed_name()+"_read"+OracleConstants.QUOTE+OracleConstants.COMMA
 						+OracleConstants.QUOTE+schDto.getFeed_name()+OracleConstants.QUOTE+OracleConstants.COMMA
@@ -2361,8 +2369,10 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 						+OracleConstants.QUOTE+schDto.getFeed_name()+OracleConstants.QUOTE+OracleConstants.COMMA
 						+OracleConstants.QUOTE+"$RUN_ID$"+OracleConstants.QUOTE+OracleConstants.COMMA
 						+OracleConstants.QUOTE+schDto.getKafka_topic()+OracleConstants.QUOTE+OracleConstants.COMMA
+						+OracleConstants.QUOTE+schDto.getExtraction_mode()+OracleConstants.QUOTE+OracleConstants.COMMA
 						+OracleConstants.QUOTE+"K"+OracleConstants.QUOTE+OracleConstants.COMMA
 						+OracleConstants.QUOTE+"00:00:00"+OracleConstants.QUOTE+OracleConstants.COMMA
+						+OracleConstants.QUOTE+"Y"+OracleConstants.QUOTE+OracleConstants.COMMA
 						+schDto.getProject_seq());
 		try {
 			Statement statement=conn.createStatement();
@@ -2376,7 +2386,7 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 		for(String target:tarArr) {
 			
 			String insertWriteJob=OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.SCHEDULETABLE)
-					.replace("{$columns}", "job_id,job_name,batch_id,feed_id,command,argument_1,argument_2,argument_3,PREDESSOR_JOB_ID_1,schedule_type,job_schedule_time,project_id")
+					.replace("{$columns}", "job_id,job_name,batch_id,feed_id,command,argument_1,argument_2,argument_3,PREDESSOR_JOB_ID_1,schedule_type,job_schedule_time,daily_flag,project_id")
 					.replace("{$data}",OracleConstants.QUOTE+schDto.getFeed_name()+"_"+target.split("~")[0]+"_write"+OracleConstants.QUOTE+OracleConstants.COMMA
 							+OracleConstants.QUOTE+schDto.getFeed_name()+"_"+target.split("~")[0]+"_write"+OracleConstants.QUOTE+OracleConstants.COMMA
 							+OracleConstants.QUOTE+schDto.getFeed_name()+OracleConstants.QUOTE+OracleConstants.COMMA
@@ -2388,6 +2398,7 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 							+OracleConstants.QUOTE+schDto.getFeed_name()+"_read"+OracleConstants.QUOTE+OracleConstants.COMMA
 							+OracleConstants.QUOTE+"K"+OracleConstants.QUOTE+OracleConstants.COMMA
 							+OracleConstants.QUOTE+"00:00:00"+OracleConstants.QUOTE+OracleConstants.COMMA
+							+OracleConstants.QUOTE+"Y"+OracleConstants.QUOTE+OracleConstants.COMMA
 							+schDto.getProject_seq());
 			
 			try {
@@ -2401,17 +2412,18 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 			}
 			if(target.split("~")[1].equalsIgnoreCase("Y")) {
 				String insertMatJob=OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.SCHEDULETABLE)
-						.replace("{$columns}", "job_id,job_name,batch_id,feed_id,command,argument_1,argument_3,PREDESSOR_JOB_ID_1,schedule_type,job_schedule_time,project_id")
+						.replace("{$columns}", "job_id,job_name,batch_id,feed_id,command,argument_1,argument_3,PREDESSOR_JOB_ID_1,schedule_type,job_schedule_time,daily_flag,project_id")
 						.replace("{$data}",OracleConstants.QUOTE+schDto.getFeed_name()+"_"+target.split("~")[0]+"_materialize"+OracleConstants.QUOTE+OracleConstants.COMMA
 								+OracleConstants.QUOTE+schDto.getFeed_name()+"_"+target.split("~")[0]+"_materialize"+OracleConstants.QUOTE+OracleConstants.COMMA
 								+OracleConstants.QUOTE+schDto.getFeed_name()+OracleConstants.QUOTE+OracleConstants.COMMA
 								+OracleConstants.QUOTE+schDto.getFeed_id()+OracleConstants.QUOTE+OracleConstants.COMMA
-								+OracleConstants.QUOTE+SchedulerConstants.write_script+OracleConstants.QUOTE+OracleConstants.COMMA
+								+OracleConstants.QUOTE+SchedulerConstants.mat_script+OracleConstants.QUOTE+OracleConstants.COMMA
 								+OracleConstants.QUOTE+schDto.getFeed_name()+OracleConstants.QUOTE+OracleConstants.COMMA
 								+OracleConstants.QUOTE+"$RUN_ID$"+OracleConstants.QUOTE+OracleConstants.COMMA
 								+OracleConstants.QUOTE+schDto.getFeed_name()+"_"+target.split("~")[0]+"_write"+OracleConstants.QUOTE+OracleConstants.COMMA
 								+OracleConstants.QUOTE+"K"+OracleConstants.QUOTE+OracleConstants.COMMA
 								+OracleConstants.QUOTE+"00:00:00"+OracleConstants.QUOTE+OracleConstants.COMMA
+								+OracleConstants.QUOTE+"Y"+OracleConstants.QUOTE+OracleConstants.COMMA
 								+schDto.getProject_seq());
 				try {
 					Statement statement=conn.createStatement();
@@ -2429,7 +2441,7 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 	private String scheduleEventBasedFeedFile(Connection conn, ScheduleExtractDto schDto, ArrayList<String> tarArr) throws Exception {
 		
 		String insertReadJob=OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.SCHEDULETABLE)
-				.replace("{$columns}", "job_id,job_name,batch_id,feed_id,command,argument_1,argument_3,argument_4,schedule_type,job_schedule_time,project_id")
+				.replace("{$columns}", "job_id,job_name,batch_id,feed_id,command,argument_1,argument_3,argument_4,argument_5,schedule_type,job_schedule_time,daily_flag,project_id")
 				.replace("{$data}",OracleConstants.QUOTE+schDto.getFeed_name()+"_read"+OracleConstants.QUOTE+OracleConstants.COMMA
 						+OracleConstants.QUOTE+schDto.getFeed_name()+"_read"+OracleConstants.QUOTE+OracleConstants.COMMA
 						+OracleConstants.QUOTE+schDto.getFeed_name()+OracleConstants.QUOTE+OracleConstants.COMMA
@@ -2438,8 +2450,10 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 						+OracleConstants.QUOTE+schDto.getFeed_name()+OracleConstants.QUOTE+OracleConstants.COMMA
 						+OracleConstants.QUOTE+"$RUN_ID$"+OracleConstants.QUOTE+OracleConstants.COMMA
 						+OracleConstants.QUOTE+schDto.getFile_path()+"/"+schDto.getFile_pattern()+OracleConstants.QUOTE+OracleConstants.COMMA
+						+OracleConstants.QUOTE+schDto.getExtraction_mode()+OracleConstants.QUOTE+OracleConstants.COMMA
 						+OracleConstants.QUOTE+"F"+OracleConstants.QUOTE+OracleConstants.COMMA
 						+OracleConstants.QUOTE+"00:00:00"+OracleConstants.QUOTE+OracleConstants.COMMA
+						+OracleConstants.QUOTE+"Y"+OracleConstants.QUOTE+OracleConstants.COMMA
 						+schDto.getProject_seq());
 		try {
 			Statement statement=conn.createStatement();
@@ -2453,7 +2467,7 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 		for(String target:tarArr) {
 			
 			String insertWriteJob=OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.SCHEDULETABLE)
-					.replace("{$columns}", "job_id,job_name,batch_id,feed_id,command,argument_1,argument_2,argument_3,PREDESSOR_JOB_ID_1,schedule_type,job_schedule_time,project_id")
+					.replace("{$columns}", "job_id,job_name,batch_id,feed_id,command,argument_1,argument_2,argument_3,PREDESSOR_JOB_ID_1,schedule_type,job_schedule_time,daily_flag,project_id")
 					.replace("{$data}",OracleConstants.QUOTE+schDto.getFeed_name()+"_"+target.split("~")[0]+"_write"+OracleConstants.QUOTE+OracleConstants.COMMA
 							+OracleConstants.QUOTE+schDto.getFeed_name()+"_"+target.split("~")[0]+"_write"+OracleConstants.QUOTE+OracleConstants.COMMA
 							+OracleConstants.QUOTE+schDto.getFeed_name()+OracleConstants.QUOTE+OracleConstants.COMMA
@@ -2465,6 +2479,7 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 							+OracleConstants.QUOTE+schDto.getFeed_name()+"_read"+OracleConstants.QUOTE+OracleConstants.COMMA
 							+OracleConstants.QUOTE+"F"+OracleConstants.QUOTE+OracleConstants.COMMA
 							+OracleConstants.QUOTE+"00:00:00"+OracleConstants.QUOTE+OracleConstants.COMMA
+							+OracleConstants.QUOTE+"Y"+OracleConstants.QUOTE+OracleConstants.COMMA
 							+schDto.getProject_seq());
 			
 			try {
@@ -2478,17 +2493,18 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 			}
 			if(target.split("~")[1].equalsIgnoreCase("Y")) {
 				String insertMatJob=OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.SCHEDULETABLE)
-						.replace("{$columns}", "job_id,job_name,batch_id,feed_id,command,argument_1,argument_3,PREDESSOR_JOB_ID_1,schedule_type,job_schedule_time,project_id")
+						.replace("{$columns}", "job_id,job_name,batch_id,feed_id,command,argument_1,argument_3,PREDESSOR_JOB_ID_1,schedule_type,job_schedule_time,daily_flag,project_id")
 						.replace("{$data}",OracleConstants.QUOTE+schDto.getFeed_name()+"_"+target.split("~")[0]+"_materialize"+OracleConstants.QUOTE+OracleConstants.COMMA
 								+OracleConstants.QUOTE+schDto.getFeed_name()+"_"+target.split("~")[0]+"_materialize"+OracleConstants.QUOTE+OracleConstants.COMMA
 								+OracleConstants.QUOTE+schDto.getFeed_name()+OracleConstants.QUOTE+OracleConstants.COMMA
 								+OracleConstants.QUOTE+schDto.getFeed_id()+OracleConstants.QUOTE+OracleConstants.COMMA
-								+OracleConstants.QUOTE+SchedulerConstants.write_script+OracleConstants.QUOTE+OracleConstants.COMMA
+								+OracleConstants.QUOTE+SchedulerConstants.mat_script+OracleConstants.QUOTE+OracleConstants.COMMA
 								+OracleConstants.QUOTE+schDto.getFeed_name()+OracleConstants.QUOTE+OracleConstants.COMMA
 								+OracleConstants.QUOTE+"$RUN_ID$"+OracleConstants.QUOTE+OracleConstants.COMMA
 								+OracleConstants.QUOTE+schDto.getFeed_name()+"_"+target.split("~")[0]+"_write"+OracleConstants.QUOTE+OracleConstants.COMMA
 								+OracleConstants.QUOTE+"F"+OracleConstants.QUOTE+OracleConstants.COMMA
 								+OracleConstants.QUOTE+"00:00:00"+OracleConstants.QUOTE+OracleConstants.COMMA
+								+OracleConstants.QUOTE+"Y"+OracleConstants.QUOTE+OracleConstants.COMMA
 								+schDto.getProject_seq());
 				try {
 					Statement statement=conn.createStatement();
@@ -2552,7 +2568,7 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 	private String scheduleOnDemandFeed(Connection conn,ScheduleExtractDto schDto,ArrayList<String> tarArr) throws Exception {
 		
 		String insertReadJob=OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.SCHEDULETABLE)
-				.replace("{$columns}", "job_id,job_name,batch_id,feed_id,command,argument_1,argument_3,schedule_type,daily_flag,project_id")
+				.replace("{$columns}", "job_id,job_name,batch_id,feed_id,command,argument_1,argument_3,argument_5,schedule_type,job_schedule_time,daily_flag,project_id")
 				.replace("{$data}",OracleConstants.QUOTE+schDto.getFeed_name()+"_read"+OracleConstants.QUOTE+OracleConstants.COMMA
 						+OracleConstants.QUOTE+schDto.getFeed_name()+"_read"+OracleConstants.QUOTE+OracleConstants.COMMA
 						+OracleConstants.QUOTE+schDto.getFeed_name()+OracleConstants.QUOTE+OracleConstants.COMMA
@@ -2560,7 +2576,9 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 						+OracleConstants.QUOTE+SchedulerConstants.read_script+OracleConstants.QUOTE+OracleConstants.COMMA
 						+OracleConstants.QUOTE+schDto.getFeed_name()+OracleConstants.QUOTE+OracleConstants.COMMA
 						+OracleConstants.QUOTE+"$RUN_ID$"+OracleConstants.QUOTE+OracleConstants.COMMA
+						+OracleConstants.QUOTE+schDto.getExtraction_mode()+OracleConstants.QUOTE+OracleConstants.COMMA
 						+OracleConstants.QUOTE+"O"+OracleConstants.QUOTE+OracleConstants.COMMA
+						+OracleConstants.QUOTE+"00:00:00"+OracleConstants.QUOTE+OracleConstants.COMMA
 						+OracleConstants.QUOTE+"Y"+OracleConstants.QUOTE+OracleConstants.COMMA
 						+schDto.getProject_seq());
 		
@@ -2576,7 +2594,7 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 		for(String target:tarArr) {
 			
 			String insertWriteJob=OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.SCHEDULETABLE)
-					.replace("{$columns}", "job_id,job_name,batch_id,feed_id,command,argument_1,argument_2,argument_3,PREDESSOR_JOB_ID_1,schedule_type,daily_flag,project_id")
+					.replace("{$columns}", "job_id,job_name,batch_id,feed_id,command,argument_1,argument_2,argument_3,PREDESSOR_JOB_ID_1,schedule_type,job_schedule_time,daily_flag,project_id")
 					.replace("{$data}",OracleConstants.QUOTE+schDto.getFeed_name()+"_"+target.split("~")[0]+"_write"+OracleConstants.QUOTE+OracleConstants.COMMA
 							+OracleConstants.QUOTE+schDto.getFeed_name()+"_"+target.split("~")[0]+"_write"+OracleConstants.QUOTE+OracleConstants.COMMA
 							+OracleConstants.QUOTE+schDto.getFeed_name()+OracleConstants.QUOTE+OracleConstants.COMMA
@@ -2587,6 +2605,7 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 							+OracleConstants.QUOTE+"$RUN_ID$"+OracleConstants.QUOTE+OracleConstants.COMMA
 							+OracleConstants.QUOTE+schDto.getFeed_name()+"_read"+OracleConstants.QUOTE+OracleConstants.COMMA
 							+OracleConstants.QUOTE+"O"+OracleConstants.QUOTE+OracleConstants.COMMA
+							+OracleConstants.QUOTE+"00:00:00"+OracleConstants.QUOTE+OracleConstants.COMMA
 							+OracleConstants.QUOTE+"Y"+OracleConstants.QUOTE+OracleConstants.COMMA
 							+schDto.getProject_seq());
 			
@@ -2601,16 +2620,17 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 			}
 			if(target.split("~")[1].equalsIgnoreCase("Y")) {
 				String insertMatJob=OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.SCHEDULETABLE)
-						.replace("{$columns}", "job_id,job_name,batch_id,feed_id,command,argument_1,argument_3,PREDESSOR_JOB_ID_1,schedule_type,daily_flag,project_id")
+						.replace("{$columns}", "job_id,job_name,batch_id,feed_id,command,argument_1,argument_3,PREDESSOR_JOB_ID_1,schedule_type,job_schedule_time,daily_flag,project_id")
 						.replace("{$data}",OracleConstants.QUOTE+schDto.getFeed_name()+"_"+target.split("~")[0]+"_materialize"+OracleConstants.QUOTE+OracleConstants.COMMA
 								+OracleConstants.QUOTE+schDto.getFeed_name()+"_"+target.split("~")[0]+"_materialize"+OracleConstants.QUOTE+OracleConstants.COMMA
 								+OracleConstants.QUOTE+schDto.getFeed_name()+OracleConstants.QUOTE+OracleConstants.COMMA
 								+OracleConstants.QUOTE+schDto.getFeed_id()+OracleConstants.QUOTE+OracleConstants.COMMA
-								+OracleConstants.QUOTE+SchedulerConstants.write_script+OracleConstants.QUOTE+OracleConstants.COMMA
+								+OracleConstants.QUOTE+SchedulerConstants.mat_script+OracleConstants.QUOTE+OracleConstants.COMMA
 								+OracleConstants.QUOTE+schDto.getFeed_name()+OracleConstants.QUOTE+OracleConstants.COMMA
 								+OracleConstants.QUOTE+"$RUN_ID$"+OracleConstants.QUOTE+OracleConstants.COMMA
 								+OracleConstants.QUOTE+schDto.getFeed_name()+"_"+target.split("~")[0]+"_write"+OracleConstants.QUOTE+OracleConstants.COMMA
 								+OracleConstants.QUOTE+"O"+OracleConstants.QUOTE+OracleConstants.COMMA
+								+OracleConstants.QUOTE+"00:00:00"+OracleConstants.QUOTE+OracleConstants.COMMA
 								+OracleConstants.QUOTE+"Y"+OracleConstants.QUOTE+OracleConstants.COMMA
 								+schDto.getProject_seq());
 				try {
@@ -2718,7 +2738,7 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 						if(minutes.contains(",")) {
 							for(String minute:minutes.split(",")) {
 								insertQuery=OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.SCHEDULETABLE)
-										.replace("{$columns}", "job_id,job_name,batch_id,feed_id,command,argument_1,argument_3,daily_flag,job_schedule_time,schedule_type,project_id")
+										.replace("{$columns}", "job_id,job_name,batch_id,feed_id,command,argument_1,argument_3,argument_5,daily_flag,job_schedule_time,schedule_type,project_id")
 										.replace("{$data}",OracleConstants.QUOTE+schDto.getFeed_name()+"_read"+OracleConstants.QUOTE+OracleConstants.COMMA
 												+OracleConstants.QUOTE+schDto.getFeed_name()+"_read"+OracleConstants.QUOTE+OracleConstants.COMMA
 												+OracleConstants.QUOTE+schDto.getFeed_name()+OracleConstants.QUOTE+OracleConstants.COMMA
@@ -2726,10 +2746,11 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 												+OracleConstants.QUOTE+SchedulerConstants.read_script+OracleConstants.QUOTE+OracleConstants.COMMA
 												+OracleConstants.QUOTE+schDto.getFeed_name()+OracleConstants.QUOTE+OracleConstants.COMMA
 												+OracleConstants.QUOTE+"$RUN_ID$"+OracleConstants.QUOTE+OracleConstants.COMMA
+												+OracleConstants.QUOTE+schDto.getExtraction_mode()+OracleConstants.QUOTE+OracleConstants.COMMA
 												+OracleConstants.QUOTE+"Y"+OracleConstants.QUOTE+OracleConstants.COMMA
-												+OracleConstants.QUOTE+hour+":"+minute+":00"+OracleConstants.QUOTE
+												+OracleConstants.QUOTE+hour+":"+minute+":00"+OracleConstants.QUOTE+OracleConstants.COMMA
 												+OracleConstants.QUOTE+"R"+OracleConstants.QUOTE+OracleConstants.COMMA
-												+OracleConstants.COMMA+schDto.getProject_seq());
+												+schDto.getProject_seq());
 								System.out.println(insertQuery);
 								statement.execute(insertQuery);
 								for(String target:tarArr) {
@@ -2746,9 +2767,9 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 													+OracleConstants.QUOTE+"$RUN_ID$"+OracleConstants.QUOTE+OracleConstants.COMMA
 													+OracleConstants.QUOTE+schDto.getFeed_name()+"_read"+OracleConstants.QUOTE+OracleConstants.COMMA
 													+OracleConstants.QUOTE+"Y"+OracleConstants.QUOTE+OracleConstants.COMMA
-													+OracleConstants.QUOTE+hour+":"+minute+":00"+OracleConstants.QUOTE
+													+OracleConstants.QUOTE+hour+":"+minute+":00"+OracleConstants.QUOTE+OracleConstants.COMMA
 													+OracleConstants.QUOTE+"R"+OracleConstants.QUOTE+OracleConstants.COMMA
-													+OracleConstants.COMMA+schDto.getProject_seq());
+													+schDto.getProject_seq());
 									
 									statement.execute(insertWriteJob);
 									
@@ -2764,9 +2785,9 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 														+OracleConstants.QUOTE+"$RUN_ID$"+OracleConstants.QUOTE+OracleConstants.COMMA
 														+OracleConstants.QUOTE+schDto.getFeed_name()+"_write"+OracleConstants.QUOTE+OracleConstants.COMMA
 														+OracleConstants.QUOTE+"Y"+OracleConstants.QUOTE+OracleConstants.COMMA
-														+OracleConstants.QUOTE+hour+":"+minute+":00"+OracleConstants.QUOTE
+														+OracleConstants.QUOTE+hour+":"+minute+":00"+OracleConstants.QUOTE+OracleConstants.COMMA
 														+OracleConstants.QUOTE+"R"+OracleConstants.QUOTE+OracleConstants.COMMA
-														+OracleConstants.COMMA+schDto.getProject_seq());
+														+schDto.getProject_seq());
 										
 										statement.execute(insertMatJob);
 									}
@@ -2779,7 +2800,7 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 							}
 						}else {
 							insertQuery=OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.SCHEDULETABLE)
-									.replace("{$columns}", "job_id,job_name,batch_id,feed_id,command,argument_1,argument_3,daily_flag,job_schedule_time,schedule_type,project_id")
+									.replace("{$columns}", "job_id,job_name,batch_id,feed_id,command,argument_1,argument_3,argument_5,daily_flag,job_schedule_time,schedule_type,project_id")
 									.replace("{$data}",OracleConstants.QUOTE+schDto.getFeed_name()+"_read"+OracleConstants.QUOTE+OracleConstants.COMMA
 											+OracleConstants.QUOTE+schDto.getFeed_name()+"_read"+OracleConstants.QUOTE+OracleConstants.COMMA
 											+OracleConstants.QUOTE+schDto.getFeed_name()+OracleConstants.QUOTE+OracleConstants.COMMA
@@ -2787,10 +2808,11 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 											+OracleConstants.QUOTE+SchedulerConstants.read_script+OracleConstants.QUOTE+OracleConstants.COMMA
 											+OracleConstants.QUOTE+schDto.getFeed_name()+OracleConstants.QUOTE+OracleConstants.COMMA
 											+OracleConstants.QUOTE+"$RUN_ID$"+OracleConstants.QUOTE+OracleConstants.COMMA
+											+OracleConstants.QUOTE+schDto.getExtraction_mode()+OracleConstants.QUOTE+OracleConstants.COMMA
 											+OracleConstants.QUOTE+"Y"+OracleConstants.QUOTE+OracleConstants.COMMA
-											+OracleConstants.QUOTE+hour+":"+minutes+":00"+OracleConstants.QUOTE
+											+OracleConstants.QUOTE+hour+":"+minutes+":00"+OracleConstants.QUOTE+OracleConstants.COMMA
 											+OracleConstants.QUOTE+"R"+OracleConstants.QUOTE+OracleConstants.COMMA
-											+OracleConstants.COMMA+schDto.getProject_seq());
+											+schDto.getProject_seq());
 											System.out.println(insertQuery);
 											statement.execute(insertQuery);
 											for(String target:tarArr) {
@@ -2807,9 +2829,9 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 																+OracleConstants.QUOTE+"$RUN_ID$"+OracleConstants.QUOTE+OracleConstants.COMMA
 																+OracleConstants.QUOTE+schDto.getFeed_name()+"_read"+OracleConstants.QUOTE+OracleConstants.COMMA
 																+OracleConstants.QUOTE+"Y"+OracleConstants.QUOTE+OracleConstants.COMMA
-																+OracleConstants.QUOTE+hour+":"+minutes+":00"+OracleConstants.QUOTE
+																+OracleConstants.QUOTE+hour+":"+minutes+":00"+OracleConstants.QUOTE+OracleConstants.COMMA
 																+OracleConstants.QUOTE+"R"+OracleConstants.QUOTE+OracleConstants.COMMA
-																+OracleConstants.COMMA+schDto.getProject_seq());
+																+schDto.getProject_seq());
 												
 												statement.execute(insertWriteJob);
 												
@@ -2825,9 +2847,9 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 																	+OracleConstants.QUOTE+"$RUN_ID$"+OracleConstants.QUOTE+OracleConstants.COMMA
 																	+OracleConstants.QUOTE+schDto.getFeed_name()+"_write"+OracleConstants.QUOTE+OracleConstants.COMMA
 																	+OracleConstants.QUOTE+"Y"+OracleConstants.QUOTE+OracleConstants.COMMA
-																	+OracleConstants.QUOTE+hour+":"+minutes+":00"+OracleConstants.QUOTE
+																	+OracleConstants.QUOTE+hour+":"+minutes+":00"+OracleConstants.QUOTE+OracleConstants.COMMA
 																	+OracleConstants.QUOTE+"R"+OracleConstants.QUOTE+OracleConstants.COMMA
-																	+OracleConstants.COMMA+schDto.getProject_seq());
+																	+schDto.getProject_seq());
 													
 													statement.execute(insertMatJob);
 												}
@@ -2839,7 +2861,7 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 					if(minutes.contains(",")) {
 						for(String minute:minutes.split(",")) {
 							insertQuery=OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.SCHEDULETABLE)
-									.replace("{$columns}", "job_id,job_name,batch_id,feed_id,command,argument_1,argument_3,daily_flag,job_schedule_time,schedule_type,project_id")
+									.replace("{$columns}", "job_id,job_name,batch_id,feed_id,command,argument_1,argument_3,argument_5,daily_flag,job_schedule_time,schedule_type,project_id")
 									.replace("{$data}",OracleConstants.QUOTE+schDto.getFeed_name()+"_read"+OracleConstants.QUOTE+OracleConstants.COMMA
 											+OracleConstants.QUOTE+schDto.getFeed_name()+"_read"+OracleConstants.QUOTE+OracleConstants.COMMA
 											+OracleConstants.QUOTE+schDto.getFeed_name()+OracleConstants.QUOTE+OracleConstants.COMMA
@@ -2847,10 +2869,11 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 											+OracleConstants.QUOTE+SchedulerConstants.read_script+OracleConstants.QUOTE+OracleConstants.COMMA
 											+OracleConstants.QUOTE+schDto.getFeed_name()+OracleConstants.QUOTE+OracleConstants.COMMA
 											+OracleConstants.QUOTE+"$RUN_ID$"+OracleConstants.QUOTE+OracleConstants.COMMA
+											+OracleConstants.QUOTE+schDto.getExtraction_mode()+OracleConstants.QUOTE+OracleConstants.COMMA
 											+OracleConstants.QUOTE+"Y"+OracleConstants.QUOTE+OracleConstants.COMMA
-											+OracleConstants.QUOTE+hours+":"+minute+":00"+OracleConstants.QUOTE
+											+OracleConstants.QUOTE+hours+":"+minute+":00"+OracleConstants.QUOTE+OracleConstants.COMMA
 											+OracleConstants.QUOTE+"R"+OracleConstants.QUOTE+OracleConstants.COMMA
-											+OracleConstants.COMMA+schDto.getProject_seq());
+											+schDto.getProject_seq());
 							System.out.println(insertQuery);
 							statement.execute(insertQuery);
 							for(String target:tarArr) {
@@ -2867,9 +2890,9 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 												+OracleConstants.QUOTE+"$RUN_ID$"+OracleConstants.QUOTE+OracleConstants.COMMA
 												+OracleConstants.QUOTE+schDto.getFeed_name()+"_read"+OracleConstants.QUOTE+OracleConstants.COMMA
 												+OracleConstants.QUOTE+"Y"+OracleConstants.QUOTE+OracleConstants.COMMA
-												+OracleConstants.QUOTE+hours+":"+minute+":00"+OracleConstants.QUOTE
+												+OracleConstants.QUOTE+hours+":"+minute+":00"+OracleConstants.QUOTE+OracleConstants.COMMA
 												+OracleConstants.QUOTE+"R"+OracleConstants.QUOTE+OracleConstants.COMMA
-												+OracleConstants.COMMA+schDto.getProject_seq());
+												+schDto.getProject_seq());
 								
 								statement.execute(insertWriteJob);
 								
@@ -2885,9 +2908,9 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 													+OracleConstants.QUOTE+"$RUN_ID$"+OracleConstants.QUOTE+OracleConstants.COMMA
 													+OracleConstants.QUOTE+schDto.getFeed_name()+"_write"+OracleConstants.QUOTE+OracleConstants.COMMA
 													+OracleConstants.QUOTE+"Y"+OracleConstants.QUOTE+OracleConstants.COMMA
-													+OracleConstants.QUOTE+hours+":"+minute+":00"+OracleConstants.QUOTE
+													+OracleConstants.QUOTE+hours+":"+minute+":00"+OracleConstants.QUOTE+OracleConstants.COMMA
 													+OracleConstants.QUOTE+"R"+OracleConstants.QUOTE+OracleConstants.COMMA
-													+OracleConstants.COMMA+schDto.getProject_seq());
+													+schDto.getProject_seq());
 									
 									statement.execute(insertMatJob);
 								}
@@ -2899,7 +2922,7 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 						}
 					}else {
 						insertQuery=OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.SCHEDULETABLE)
-								.replace("{$columns}", "job_id,job_name,batch_id,feed_id,command,argument_1,argument_3,daily_flag,job_schedule_time,schedule_type,project_id")
+								.replace("{$columns}", "job_id,job_name,batch_id,feed_id,command,argument_1,argument_3,argument_5,daily_flag,job_schedule_time,schedule_type,project_id")
 								.replace("{$data}",OracleConstants.QUOTE+schDto.getFeed_name()+"_read"+OracleConstants.QUOTE+OracleConstants.COMMA
 										+OracleConstants.QUOTE+schDto.getFeed_name()+"_read"+OracleConstants.QUOTE+OracleConstants.COMMA
 										+OracleConstants.QUOTE+schDto.getFeed_name()+OracleConstants.QUOTE+OracleConstants.COMMA
@@ -2907,10 +2930,11 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 										+OracleConstants.QUOTE+SchedulerConstants.read_script+OracleConstants.QUOTE+OracleConstants.COMMA
 										+OracleConstants.QUOTE+schDto.getFeed_name()+OracleConstants.QUOTE+OracleConstants.COMMA
 										+OracleConstants.QUOTE+"$RUN_ID$"+OracleConstants.QUOTE+OracleConstants.COMMA
+										+OracleConstants.QUOTE+schDto.getExtraction_mode()+OracleConstants.QUOTE+OracleConstants.COMMA
 										+OracleConstants.QUOTE+"Y"+OracleConstants.QUOTE+OracleConstants.COMMA
-										+OracleConstants.QUOTE+hours+":"+minutes+":00"+OracleConstants.QUOTE
+										+OracleConstants.QUOTE+hours+":"+minutes+":00"+OracleConstants.QUOTE+OracleConstants.COMMA
 										+OracleConstants.QUOTE+"R"+OracleConstants.QUOTE+OracleConstants.COMMA
-										+OracleConstants.COMMA+schDto.getProject_seq());
+										+schDto.getProject_seq());
 						System.out.println(insertQuery);
 						statement.execute(insertQuery);
 						
@@ -2928,9 +2952,9 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 											+OracleConstants.QUOTE+"$RUN_ID$"+OracleConstants.QUOTE+OracleConstants.COMMA
 											+OracleConstants.QUOTE+schDto.getFeed_name()+"_read"+OracleConstants.QUOTE+OracleConstants.COMMA
 											+OracleConstants.QUOTE+"Y"+OracleConstants.QUOTE+OracleConstants.COMMA
-											+OracleConstants.QUOTE+hours+":"+minutes+":00"+OracleConstants.QUOTE
+											+OracleConstants.QUOTE+hours+":"+minutes+":00"+OracleConstants.QUOTE+OracleConstants.COMMA
 											+OracleConstants.QUOTE+"R"+OracleConstants.QUOTE+OracleConstants.COMMA
-											+OracleConstants.COMMA+schDto.getProject_seq());
+											+schDto.getProject_seq());
 							
 							statement.execute(insertWriteJob);
 							
@@ -2946,9 +2970,9 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 												+OracleConstants.QUOTE+"$RUN_ID$"+OracleConstants.QUOTE+OracleConstants.COMMA
 												+OracleConstants.QUOTE+schDto.getFeed_name()+"_write"+OracleConstants.QUOTE+OracleConstants.COMMA
 												+OracleConstants.QUOTE+"Y"+OracleConstants.QUOTE+OracleConstants.COMMA
-												+OracleConstants.QUOTE+hours+":"+minutes+":00"+OracleConstants.QUOTE
+												+OracleConstants.QUOTE+hours+":"+minutes+":00"+OracleConstants.QUOTE+OracleConstants.COMMA
 												+OracleConstants.QUOTE+"R"+OracleConstants.QUOTE+OracleConstants.COMMA
-												+OracleConstants.COMMA+schDto.getProject_seq());
+												+schDto.getProject_seq());
 								
 								statement.execute(insertMatJob);
 							}
@@ -2965,7 +2989,7 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 								if(minutes.contains(",")) {
 									for(String minute:minutes.split(",")) {
 										insertQuery=OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.SCHEDULETABLE)
-												.replace("{$columns}", "job_id,job_name,batch_id,feed_id,command,argument_1,argument_3,monthly_flag,month_run_day,job_schedule_time,schedule_type,project_id")
+												.replace("{$columns}", "job_id,job_name,batch_id,feed_id,command,argument_1,argument_3,argument_5,monthly_flag,month_run_day,job_schedule_time,schedule_type,project_id")
 												.replace("{$data}",OracleConstants.QUOTE+schDto.getFeed_name()+"_read"+OracleConstants.QUOTE+OracleConstants.COMMA
 														+OracleConstants.QUOTE+schDto.getFeed_name()+"_read"+OracleConstants.QUOTE+OracleConstants.COMMA
 														+OracleConstants.QUOTE+schDto.getFeed_name()+OracleConstants.QUOTE+OracleConstants.COMMA
@@ -2973,6 +2997,7 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 														+OracleConstants.QUOTE+SchedulerConstants.read_script+OracleConstants.QUOTE+OracleConstants.COMMA
 														+OracleConstants.QUOTE+schDto.getFeed_name()+OracleConstants.QUOTE+OracleConstants.COMMA
 														+OracleConstants.QUOTE+"$RUN_ID$"+OracleConstants.QUOTE+OracleConstants.COMMA
+														+OracleConstants.QUOTE+schDto.getExtraction_mode()+OracleConstants.QUOTE+OracleConstants.COMMA
 														+OracleConstants.QUOTE+"Y"+OracleConstants.QUOTE+OracleConstants.COMMA
 														+OracleConstants.QUOTE+date+OracleConstants.QUOTE+OracleConstants.COMMA
 														+OracleConstants.QUOTE+hour+":"+minute+":00"+OracleConstants.QUOTE
@@ -3028,7 +3053,7 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 								}
 								else {
 									insertQuery=OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.SCHEDULETABLE)
-											.replace("{$columns}", "job_id,job_name,batch_id,feed_id,command,argument_1,argument_3,monthly_flag,month_run_day,job_schedule_time,schedule_type,project_id")
+											.replace("{$columns}", "job_id,job_name,batch_id,feed_id,command,argument_1,argument_3,argument_5,monthly_flag,month_run_day,job_schedule_time,schedule_type,project_id")
 											.replace("{$data}",OracleConstants.QUOTE+schDto.getFeed_name()+"_read"+OracleConstants.QUOTE+OracleConstants.COMMA
 													+OracleConstants.QUOTE+schDto.getFeed_name()+"_read"+OracleConstants.QUOTE+OracleConstants.COMMA
 													+OracleConstants.QUOTE+schDto.getFeed_name()+OracleConstants.QUOTE+OracleConstants.COMMA
@@ -3036,6 +3061,7 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 													+OracleConstants.QUOTE+SchedulerConstants.read_script+OracleConstants.QUOTE+OracleConstants.COMMA
 													+OracleConstants.QUOTE+schDto.getFeed_name()+OracleConstants.QUOTE+OracleConstants.COMMA
 													+OracleConstants.QUOTE+"$RUN_ID$"+OracleConstants.QUOTE+OracleConstants.COMMA
+													+OracleConstants.QUOTE+schDto.getExtraction_mode()+OracleConstants.QUOTE+OracleConstants.COMMA
 													+OracleConstants.QUOTE+"Y"+OracleConstants.QUOTE+OracleConstants.COMMA
 													+OracleConstants.QUOTE+date+OracleConstants.QUOTE+OracleConstants.COMMA
 													+OracleConstants.QUOTE+date+OracleConstants.QUOTE+OracleConstants.COMMA
@@ -3098,7 +3124,7 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 							if(minutes.contains(",")) {
 								for(String minute:minutes.split(",")) {
 									insertQuery=OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.SCHEDULETABLE)
-											.replace("{$columns}", "job_id,job_name,batch_id,feed_id,command,argument_1,argument_3,monthly_flag,month_run_day,job_schedule_time,schedule_type,project_id")
+											.replace("{$columns}", "job_id,job_name,batch_id,feed_id,command,argument_1,argument_3,argument_5,monthly_flag,month_run_day,job_schedule_time,schedule_type,project_id")
 											.replace("{$data}",OracleConstants.QUOTE+schDto.getFeed_name()+"_read"+OracleConstants.QUOTE+OracleConstants.COMMA
 													+OracleConstants.QUOTE+schDto.getFeed_name()+"_read"+OracleConstants.QUOTE+OracleConstants.COMMA
 													+OracleConstants.QUOTE+schDto.getFeed_name()+OracleConstants.QUOTE+OracleConstants.COMMA
@@ -3106,6 +3132,7 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 													+OracleConstants.QUOTE+SchedulerConstants.read_script+OracleConstants.QUOTE+OracleConstants.COMMA
 													+OracleConstants.QUOTE+schDto.getFeed_name()+OracleConstants.QUOTE+OracleConstants.COMMA
 													+OracleConstants.QUOTE+"$RUN_ID$"+OracleConstants.QUOTE+OracleConstants.COMMA
+													+OracleConstants.QUOTE+schDto.getExtraction_mode()+OracleConstants.QUOTE+OracleConstants.COMMA
 													+OracleConstants.QUOTE+"Y"+OracleConstants.QUOTE+OracleConstants.COMMA
 													+OracleConstants.QUOTE+date+OracleConstants.QUOTE+OracleConstants.COMMA
 													+OracleConstants.QUOTE+hours+":"+minute+":00"+OracleConstants.QUOTE
@@ -3159,7 +3186,7 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 
 							} 			else {
 								insertQuery=OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.SCHEDULETABLE)
-										.replace("{$columns}", "job_id,job_name,batch_id,feed_id,command,argument_1,argument_3,monthly_flag,month_run_day,job_schedule_time,schedule_type,project_id")
+										.replace("{$columns}", "job_id,job_name,batch_id,feed_id,command,argument_1,argument_3,argument_5,monthly_flag,month_run_day,job_schedule_time,schedule_type,project_id")
 										.replace("{$data}",OracleConstants.QUOTE+schDto.getFeed_name()+"_read"+OracleConstants.QUOTE+OracleConstants.COMMA
 												+OracleConstants.QUOTE+schDto.getFeed_name()+"_read"+OracleConstants.QUOTE+OracleConstants.COMMA
 												+OracleConstants.QUOTE+schDto.getFeed_name()+OracleConstants.QUOTE+OracleConstants.COMMA
@@ -3167,6 +3194,7 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 												+OracleConstants.QUOTE+SchedulerConstants.read_script+OracleConstants.QUOTE+OracleConstants.COMMA
 												+OracleConstants.QUOTE+schDto.getFeed_name()+OracleConstants.QUOTE+OracleConstants.COMMA
 												+OracleConstants.QUOTE+"$RUN_ID$"+OracleConstants.QUOTE+OracleConstants.COMMA
+												+OracleConstants.QUOTE+schDto.getExtraction_mode()+OracleConstants.QUOTE+OracleConstants.COMMA
 												+OracleConstants.QUOTE+"Y"+OracleConstants.QUOTE+OracleConstants.COMMA
 												+OracleConstants.QUOTE+date+OracleConstants.QUOTE+OracleConstants.COMMA
 												+OracleConstants.QUOTE+hours+":"+minutes+":00"+OracleConstants.QUOTE
@@ -3226,7 +3254,7 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 							if(minutes.contains(",")) {
 								for(String minute:minutes.split(",")) {
 									insertQuery=OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.SCHEDULETABLE)
-											.replace("{$columns}", "job_id,job_name,batch_id,feed_id,command,argument_1,argument_3,monthly_flag,month_run_day,job_schedule_time,schedule_type,project_id")
+											.replace("{$columns}", "job_id,job_name,batch_id,feed_id,command,argument_1,argument_3,argument_5,monthly_flag,month_run_day,job_schedule_time,schedule_type,project_id")
 											.replace("{$data}",OracleConstants.QUOTE+schDto.getFeed_name()+"_read"+OracleConstants.QUOTE+OracleConstants.COMMA
 													+OracleConstants.QUOTE+schDto.getFeed_name()+"_read"+OracleConstants.QUOTE+OracleConstants.COMMA
 													+OracleConstants.QUOTE+schDto.getFeed_name()+OracleConstants.QUOTE+OracleConstants.COMMA
@@ -3234,6 +3262,7 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 													+OracleConstants.QUOTE+SchedulerConstants.read_script+OracleConstants.QUOTE+OracleConstants.COMMA
 													+OracleConstants.QUOTE+schDto.getFeed_name()+OracleConstants.QUOTE+OracleConstants.COMMA
 													+OracleConstants.QUOTE+"$RUN_ID$"+OracleConstants.QUOTE+OracleConstants.COMMA
+													+OracleConstants.QUOTE+schDto.getExtraction_mode()+OracleConstants.QUOTE+OracleConstants.COMMA
 													+OracleConstants.QUOTE+"Y"+OracleConstants.QUOTE+OracleConstants.COMMA
 													+OracleConstants.QUOTE+dates+OracleConstants.QUOTE+OracleConstants.COMMA
 													+OracleConstants.QUOTE+hour+":"+minute+":00"+OracleConstants.QUOTE
@@ -3289,7 +3318,7 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 							}
 							else {
 								insertQuery=OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.SCHEDULETABLE)
-										.replace("{$columns}", "job_id,job_name,batch_id,feed_id,command,argument_1,argument_3,monthly_flag,month_run_day,job_schedule_time,schedule_type,project_id")
+										.replace("{$columns}", "job_id,job_name,batch_id,feed_id,command,argument_1,argument_3,argument_5,monthly_flag,month_run_day,job_schedule_time,schedule_type,project_id")
 										.replace("{$data}",OracleConstants.QUOTE+schDto.getFeed_name()+"_read"+OracleConstants.QUOTE+OracleConstants.COMMA
 												+OracleConstants.QUOTE+schDto.getFeed_name()+"_read"+OracleConstants.QUOTE+OracleConstants.COMMA
 												+OracleConstants.QUOTE+schDto.getFeed_name()+OracleConstants.QUOTE+OracleConstants.COMMA
@@ -3297,6 +3326,7 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 												+OracleConstants.QUOTE+SchedulerConstants.read_script+OracleConstants.QUOTE+OracleConstants.COMMA
 												+OracleConstants.QUOTE+schDto.getFeed_name()+OracleConstants.QUOTE+OracleConstants.COMMA
 												+OracleConstants.QUOTE+"$RUN_ID$"+OracleConstants.QUOTE+OracleConstants.COMMA
+												+OracleConstants.QUOTE+schDto.getExtraction_mode()+OracleConstants.QUOTE+OracleConstants.COMMA
 												+OracleConstants.QUOTE+"Y"+OracleConstants.QUOTE+OracleConstants.COMMA
 												+OracleConstants.QUOTE+dates+OracleConstants.QUOTE+OracleConstants.COMMA
 												+OracleConstants.QUOTE+hour+":"+minutes+":00"+OracleConstants.QUOTE
@@ -3356,7 +3386,7 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 						if(minutes.contains(",")) {
 							for(String minute:minutes.split(",")) {
 								insertQuery=OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.SCHEDULETABLE)
-										.replace("{$columns}", "job_id,job_name,batch_id,feed_id,command,argument_1,argument_3,monthly_flag,month_run_day,job_schedule_time,schedule_type,project_id")
+										.replace("{$columns}", "job_id,job_name,batch_id,feed_id,command,argument_1,argument_3,argument_5,monthly_flag,month_run_day,job_schedule_time,schedule_type,project_id")
 										.replace("{$data}",OracleConstants.QUOTE+schDto.getFeed_name()+"_read"+OracleConstants.QUOTE+OracleConstants.COMMA
 												+OracleConstants.QUOTE+schDto.getFeed_name()+"_read"+OracleConstants.QUOTE+OracleConstants.COMMA
 												+OracleConstants.QUOTE+schDto.getFeed_name()+OracleConstants.QUOTE+OracleConstants.COMMA
@@ -3364,6 +3394,7 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 												+OracleConstants.QUOTE+SchedulerConstants.read_script+OracleConstants.QUOTE+OracleConstants.COMMA
 												+OracleConstants.QUOTE+schDto.getFeed_name()+OracleConstants.QUOTE+OracleConstants.COMMA
 												+OracleConstants.QUOTE+"$RUN_ID$"+OracleConstants.QUOTE+OracleConstants.COMMA
+												+OracleConstants.QUOTE+schDto.getExtraction_mode()+OracleConstants.QUOTE+OracleConstants.COMMA
 												+OracleConstants.QUOTE+"Y"+OracleConstants.QUOTE+OracleConstants.COMMA
 												+OracleConstants.QUOTE+dates+OracleConstants.QUOTE+OracleConstants.COMMA
 												+OracleConstants.QUOTE+hours+":"+minute+":00"+OracleConstants.QUOTE
@@ -3417,7 +3448,7 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 
 						}else {
 							insertQuery=OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.SCHEDULETABLE)
-									.replace("{$columns}", "job_id,job_name,batch_id,feed_id,command,argument_1,argument_3,monthly_flag,month_run_day,job_schedule_time,schedule_type,project_id")
+									.replace("{$columns}", "job_id,job_name,batch_id,feed_id,command,argument_1,argument_3,argument_5,monthly_flag,month_run_day,job_schedule_time,schedule_type,project_id")
 									.replace("{$data}",OracleConstants.QUOTE+schDto.getFeed_name()+"_read"+OracleConstants.QUOTE+OracleConstants.COMMA
 											+OracleConstants.QUOTE+schDto.getFeed_name()+"_read"+OracleConstants.QUOTE+OracleConstants.COMMA
 											+OracleConstants.QUOTE+schDto.getFeed_name()+OracleConstants.QUOTE+OracleConstants.COMMA
@@ -3425,6 +3456,7 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 											+OracleConstants.QUOTE+SchedulerConstants.read_script+OracleConstants.QUOTE+OracleConstants.COMMA
 											+OracleConstants.QUOTE+schDto.getFeed_name()+OracleConstants.QUOTE+OracleConstants.COMMA
 											+OracleConstants.QUOTE+"$RUN_ID$"+OracleConstants.QUOTE+OracleConstants.COMMA
+											+OracleConstants.QUOTE+schDto.getExtraction_mode()+OracleConstants.QUOTE+OracleConstants.COMMA
 											+OracleConstants.QUOTE+"Y"+OracleConstants.QUOTE+OracleConstants.COMMA
 											+OracleConstants.QUOTE+dates+OracleConstants.QUOTE+OracleConstants.COMMA
 											+OracleConstants.QUOTE+hours+":"+minutes+":00"+OracleConstants.QUOTE
@@ -3485,7 +3517,7 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 								if(minutes.contains(",")) {
 									for(String minute:minutes.split(",")) {
 										insertQuery=OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.SCHEDULETABLE)
-												.replace("{$columns}", "job_id,job_name,batch_id,feed_id,command,argument_1,argument_3,weekly_flag,week_run_day,job_schedule_time,schedule_type,project_id")
+												.replace("{$columns}", "job_id,job_name,batch_id,feed_id,command,argument_1,argument_3,argument_5,weekly_flag,week_run_day,job_schedule_time,schedule_type,project_id")
 												.replace("{$data}",OracleConstants.QUOTE+schDto.getFeed_name()+"_read"+OracleConstants.QUOTE+OracleConstants.COMMA
 														+OracleConstants.QUOTE+schDto.getFeed_name()+"_read"+OracleConstants.QUOTE+OracleConstants.COMMA
 														+OracleConstants.QUOTE+schDto.getFeed_name()+OracleConstants.QUOTE+OracleConstants.COMMA
@@ -3493,6 +3525,7 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 														+OracleConstants.QUOTE+SchedulerConstants.read_script+OracleConstants.QUOTE+OracleConstants.COMMA
 														+OracleConstants.QUOTE+schDto.getFeed_name()+OracleConstants.QUOTE+OracleConstants.COMMA
 														+OracleConstants.QUOTE+"$RUN_ID$"+OracleConstants.QUOTE+OracleConstants.COMMA
+														+OracleConstants.QUOTE+schDto.getExtraction_mode()+OracleConstants.QUOTE+OracleConstants.COMMA
 														+OracleConstants.QUOTE+"Y"+OracleConstants.QUOTE+OracleConstants.COMMA
 														+OracleConstants.QUOTE+day+OracleConstants.QUOTE+OracleConstants.COMMA
 														+OracleConstants.QUOTE+hour+":"+minute+":00"+OracleConstants.QUOTE
@@ -3545,7 +3578,7 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 									}
 								}else {
 									insertQuery=OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.SCHEDULETABLE)
-											.replace("{$columns}", "job_id,job_name,batch_id,feed_id,command,argument_1,argument_3,weekly_flag,week_run_day,job_schedule_time,schedule_type,project_id")
+											.replace("{$columns}", "job_id,job_name,batch_id,feed_id,command,argument_1,argument_3,argument_5,weekly_flag,week_run_day,job_schedule_time,schedule_type,project_id")
 											.replace("{$data}",OracleConstants.QUOTE+schDto.getFeed_name()+"_read"+OracleConstants.QUOTE+OracleConstants.COMMA
 													+OracleConstants.QUOTE+schDto.getFeed_name()+"_read"+OracleConstants.QUOTE+OracleConstants.COMMA
 													+OracleConstants.QUOTE+schDto.getFeed_name()+OracleConstants.QUOTE+OracleConstants.COMMA
@@ -3553,6 +3586,7 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 													+OracleConstants.QUOTE+SchedulerConstants.read_script+OracleConstants.QUOTE+OracleConstants.COMMA
 													+OracleConstants.QUOTE+schDto.getFeed_name()+OracleConstants.QUOTE+OracleConstants.COMMA
 													+OracleConstants.QUOTE+"$RUN_ID$"+OracleConstants.QUOTE+OracleConstants.COMMA
+													+OracleConstants.QUOTE+schDto.getExtraction_mode()+OracleConstants.QUOTE+OracleConstants.COMMA
 													+OracleConstants.QUOTE+"Y"+OracleConstants.QUOTE+OracleConstants.COMMA
 													+OracleConstants.QUOTE+day+OracleConstants.QUOTE+OracleConstants.COMMA
 													+OracleConstants.QUOTE+hour+":"+minutes+":00"+OracleConstants.QUOTE
@@ -3608,7 +3642,7 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 							if(minutes.contains(",")) {
 								for(String minute:minutes.split(",")) {
 									insertQuery=OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.SCHEDULETABLE)
-											.replace("{$columns}", "job_id,job_name,batch_id,feed_id,command,argument_1,argument_3,weekly_flag,week_run_day,job_schedule_time,schedule_type,project_id")
+											.replace("{$columns}", "job_id,job_name,batch_id,feed_id,command,argument_1,argument_3,argument_5,weekly_flag,week_run_day,job_schedule_time,schedule_type,project_id")
 											.replace("{$data}",OracleConstants.QUOTE+schDto.getFeed_name()+"_read"+OracleConstants.QUOTE+OracleConstants.COMMA
 													+OracleConstants.QUOTE+schDto.getFeed_name()+"_read"+OracleConstants.QUOTE+OracleConstants.COMMA
 													+OracleConstants.QUOTE+schDto.getFeed_name()+OracleConstants.QUOTE+OracleConstants.COMMA
@@ -3616,6 +3650,7 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 													+OracleConstants.QUOTE+SchedulerConstants.read_script+OracleConstants.QUOTE+OracleConstants.COMMA
 													+OracleConstants.QUOTE+schDto.getFeed_name()+OracleConstants.QUOTE+OracleConstants.COMMA
 													+OracleConstants.QUOTE+"$RUN_ID$"+OracleConstants.QUOTE+OracleConstants.COMMA
+													+OracleConstants.QUOTE+schDto.getExtraction_mode()+OracleConstants.QUOTE+OracleConstants.COMMA
 													+OracleConstants.QUOTE+"Y"+OracleConstants.QUOTE+OracleConstants.COMMA
 													+OracleConstants.QUOTE+day+OracleConstants.QUOTE+OracleConstants.COMMA
 													+OracleConstants.QUOTE+hours+":"+minute+":00"+OracleConstants.QUOTE
@@ -3667,7 +3702,7 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 								}
 							}else {
 								insertQuery=OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.SCHEDULETABLE)
-										.replace("{$columns}", "job_id,job_name,batch_id,feed_id,command,argument_1,argument_3,weekly_flag,week_run_day,job_schedule_time,schedule_type,project_id")
+										.replace("{$columns}", "job_id,job_name,batch_id,feed_id,command,argument_1,argument_3,argument_5,weekly_flag,week_run_day,job_schedule_time,schedule_type,project_id")
 										.replace("{$data}",OracleConstants.QUOTE+schDto.getFeed_name()+"_read"+OracleConstants.QUOTE+OracleConstants.COMMA
 												+OracleConstants.QUOTE+schDto.getFeed_name()+"_read"+OracleConstants.QUOTE+OracleConstants.COMMA
 												+OracleConstants.QUOTE+schDto.getFeed_name()+OracleConstants.QUOTE+OracleConstants.COMMA
@@ -3675,6 +3710,7 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 												+OracleConstants.QUOTE+SchedulerConstants.read_script+OracleConstants.QUOTE+OracleConstants.COMMA
 												+OracleConstants.QUOTE+schDto.getFeed_name()+OracleConstants.QUOTE+OracleConstants.COMMA
 												+OracleConstants.QUOTE+"$RUN_ID$"+OracleConstants.QUOTE+OracleConstants.COMMA
+												+OracleConstants.QUOTE+schDto.getExtraction_mode()+OracleConstants.QUOTE+OracleConstants.COMMA
 												+OracleConstants.QUOTE+"Y"+OracleConstants.QUOTE+OracleConstants.COMMA
 												+OracleConstants.QUOTE+day+OracleConstants.QUOTE+OracleConstants.COMMA
 												+OracleConstants.QUOTE+hours+":"+minutes+":00"+OracleConstants.QUOTE
@@ -3732,7 +3768,7 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 							if(minutes.contains(",")) {
 								for(String minute:minutes.split(",")) {
 									insertQuery=OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.SCHEDULETABLE)
-											.replace("{$columns}", "job_id,job_name,batch_id,feed_id,command,argument_1,argument_3,weekly_flag,week_run_day,job_schedule_time,schedule_type,project_id")
+											.replace("{$columns}", "job_id,job_name,batch_id,feed_id,command,argument_1,argument_3,argument_5,weekly_flag,week_run_day,job_schedule_time,schedule_type,project_id")
 											.replace("{$data}",OracleConstants.QUOTE+schDto.getFeed_name()+"_read"+OracleConstants.QUOTE+OracleConstants.COMMA
 													+OracleConstants.QUOTE+schDto.getFeed_name()+"_read"+OracleConstants.QUOTE+OracleConstants.COMMA
 													+OracleConstants.QUOTE+schDto.getFeed_name()+OracleConstants.QUOTE+OracleConstants.COMMA
@@ -3740,6 +3776,7 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 													+OracleConstants.QUOTE+SchedulerConstants.read_script+OracleConstants.QUOTE+OracleConstants.COMMA
 													+OracleConstants.QUOTE+schDto.getFeed_name()+OracleConstants.QUOTE+OracleConstants.COMMA
 													+OracleConstants.QUOTE+"$RUN_ID$"+OracleConstants.QUOTE+OracleConstants.COMMA
+													+OracleConstants.QUOTE+schDto.getExtraction_mode()+OracleConstants.QUOTE+OracleConstants.COMMA
 													+OracleConstants.QUOTE+"Y"+OracleConstants.QUOTE+OracleConstants.COMMA
 													+OracleConstants.QUOTE+daysOfWeek+OracleConstants.QUOTE+OracleConstants.COMMA
 													+OracleConstants.QUOTE+hour+":"+minute+":00"+OracleConstants.QUOTE
@@ -3791,7 +3828,7 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 								}
 							}else {
 								insertQuery=OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.SCHEDULETABLE)
-										.replace("{$columns}", "job_id,job_name,batch_id,feed_id,command,argument_1,argument_3,weekly_flag,week_run_day,job_schedule_time,schedule_type,project_id")
+										.replace("{$columns}", "job_id,job_name,batch_id,feed_id,command,argument_1,argument_3,argument_5,weekly_flag,week_run_day,job_schedule_time,schedule_type,project_id")
 										.replace("{$data}",OracleConstants.QUOTE+schDto.getFeed_name()+"_read"+OracleConstants.QUOTE+OracleConstants.COMMA
 												+OracleConstants.QUOTE+schDto.getFeed_name()+"_read"+OracleConstants.QUOTE+OracleConstants.COMMA
 												+OracleConstants.QUOTE+schDto.getFeed_name()+OracleConstants.QUOTE+OracleConstants.COMMA
@@ -3799,6 +3836,7 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 												+OracleConstants.QUOTE+SchedulerConstants.read_script+OracleConstants.QUOTE+OracleConstants.COMMA
 												+OracleConstants.QUOTE+schDto.getFeed_name()+OracleConstants.QUOTE+OracleConstants.COMMA
 												+OracleConstants.QUOTE+"$RUN_ID$"+OracleConstants.QUOTE+OracleConstants.COMMA
+												+OracleConstants.QUOTE+schDto.getExtraction_mode()+OracleConstants.QUOTE+OracleConstants.COMMA
 												+OracleConstants.QUOTE+"Y"+OracleConstants.QUOTE+OracleConstants.COMMA
 												+OracleConstants.QUOTE+daysOfWeek+OracleConstants.QUOTE+OracleConstants.COMMA
 												+OracleConstants.QUOTE+hour+":"+minutes+":00"+OracleConstants.QUOTE
@@ -3854,7 +3892,7 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 						if(minutes.contains(",")) {
 							for(String minute:minutes.split(",")) {
 								insertQuery=OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.SCHEDULETABLE)
-										.replace("{$columns}", "job_id,job_name,batch_id,feed_id,command,argument_1,argument_3,weekly_flag,week_run_day,job_schedule_time,schedule_type,project_id")
+										.replace("{$columns}", "job_id,job_name,batch_id,feed_id,command,argument_1,argument_3,argument_5,weekly_flag,week_run_day,job_schedule_time,schedule_type,project_id")
 										.replace("{$data}",OracleConstants.QUOTE+schDto.getFeed_name()+"_read"+OracleConstants.QUOTE+OracleConstants.COMMA
 												+OracleConstants.QUOTE+schDto.getFeed_name()+"_read"+OracleConstants.QUOTE+OracleConstants.COMMA
 												+OracleConstants.QUOTE+schDto.getFeed_name()+OracleConstants.QUOTE+OracleConstants.COMMA
@@ -3862,6 +3900,7 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 												+OracleConstants.QUOTE+SchedulerConstants.read_script+OracleConstants.QUOTE+OracleConstants.COMMA
 												+OracleConstants.QUOTE+schDto.getFeed_name()+OracleConstants.QUOTE+OracleConstants.COMMA
 												+OracleConstants.QUOTE+"$RUN_ID$"+OracleConstants.QUOTE+OracleConstants.COMMA
+												+OracleConstants.QUOTE+schDto.getExtraction_mode()+OracleConstants.QUOTE+OracleConstants.COMMA
 												+OracleConstants.QUOTE+"Y"+OracleConstants.QUOTE+OracleConstants.COMMA
 												+OracleConstants.QUOTE+daysOfWeek+OracleConstants.QUOTE+OracleConstants.COMMA
 												+OracleConstants.QUOTE+hours+":"+minute+":00"+OracleConstants.QUOTE
@@ -3913,7 +3952,7 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 							}
 						}else {
 							insertQuery=OracleConstants.INSERTQUERY.replace("{$table}", OracleConstants.SCHEDULETABLE)
-									.replace("{$columns}", "job_id,job_name,batch_id,feed_id,command,argument_1,argument_3,weekly_flag,week_run_day,job_schedule_time,schedule_type,project_id")
+									.replace("{$columns}", "job_id,job_name,batch_id,feed_id,command,argument_1,argument_3,argument_5,weekly_flag,week_run_day,job_schedule_time,schedule_type,project_id")
 									.replace("{$data}",OracleConstants.QUOTE+schDto.getFeed_name()+"_read"+OracleConstants.QUOTE+OracleConstants.COMMA
 											+OracleConstants.QUOTE+schDto.getFeed_name()+"_read"+OracleConstants.QUOTE+OracleConstants.COMMA
 											+OracleConstants.QUOTE+schDto.getFeed_name()+OracleConstants.QUOTE+OracleConstants.COMMA
@@ -3921,6 +3960,7 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 											+OracleConstants.QUOTE+SchedulerConstants.read_script+OracleConstants.QUOTE+OracleConstants.COMMA
 											+OracleConstants.QUOTE+schDto.getFeed_name()+OracleConstants.QUOTE+OracleConstants.COMMA
 											+OracleConstants.QUOTE+"$RUN_ID$"+OracleConstants.QUOTE+OracleConstants.COMMA
+											+OracleConstants.QUOTE+schDto.getExtraction_mode()+OracleConstants.QUOTE+OracleConstants.COMMA
 											+OracleConstants.QUOTE+"Y"+OracleConstants.QUOTE+OracleConstants.COMMA
 											+OracleConstants.QUOTE+daysOfWeek+OracleConstants.QUOTE+OracleConstants.COMMA
 											+OracleConstants.QUOTE+hours+":"+minutes+":00"+OracleConstants.QUOTE
@@ -4158,7 +4198,7 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 		byte[] encrypted_key=null;
 		System.out.println("Reached inside validate 3");
 		String query="select src_conn_type from "+OracleConstants.CONNECTIONTABLE+
-				" where src_conn_sequence=(select src_conn_sequence from "+OracleConstants.SRCTGTLINKTABLE
+				" where src_conn_sequence=(select distinct src_conn_sequence from "+OracleConstants.SRCTGTLINKTABLE
 				+" where feed_sequence="+feed_sequence+")";
 		
 		System.out.println(query);
@@ -4176,7 +4216,7 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 		
 		if(connection_type.equalsIgnoreCase("ORACLE")) {
 		String source_connection_details="select host_name,port_no,username,password,database_name,service_name,ENCRYPTED_ENCR_KEY from "+OracleConstants.CONNECTIONTABLE+
-					" where src_conn_sequence=(select src_conn_sequence from "+OracleConstants.SRCTGTLINKTABLE
+					" where src_conn_sequence=(select distinct src_conn_sequence from "+OracleConstants.SRCTGTLINKTABLE
 					+" where feed_sequence="+feed_sequence+")";
 		System.out.println("source_connection_details is "+source_connection_details);
 		try {
@@ -4257,21 +4297,25 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 			
 		}
 		if (counter==0) {
-			String response=updateAfterMetadataValidate(conn,feed_sequence,project_id);
-			if(response.contains("success")) {
-				String delete_response=deleteTempTableMetadata(conn,feed_sequence,project_id);
-				if(delete_response.contains("success")) {
-				conn.close();
-				return "Metadata Validation successfull";		
-				}else {
-					conn.close();
-					return "Metadata validation successfull but the records not deleted from the primary table";
-				}
-			}else {
-				conn.close();
-				return "Metadata validation successfull but data not added in the final table";
+			String delete_main_response=deleteTableMetadata(conn,feed_sequence,project_id);
+			if(delete_main_response.contains("success")) {
+					String response=updateAfterMetadataValidate(conn,feed_sequence,project_id);
+					if(response.contains("success")) {
+						String delete_temp_response=deleteTempTableMetadata(conn,feed_sequence,project_id);
+						if(delete_temp_response.contains("success")) {
+						conn.close();
+						return "Metadata Validation successfull";		
+						}else {
+							conn.close();
+							return "Metadata validation successfull but the records not deleted from the primary table";
+						}
+					}else {
+						conn.close();
+						return "Metadata validation successfull but data not added in the final table";
+					}
+			}else{
+				return "Metadata validation successfull but failed to remove the records from the juniper_ext_table_master table";
 			}
-			
 		}else {
 			conn.close();
 			return "Metadata Validation failed";
@@ -4343,32 +4387,22 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 	/*--------------------------------Geeta Delete temp table metadata block---------------------------------------*/	
 	
 	@Override
-	public String deleteTableMetadata(Connection conn,String feed_id,String src_type) throws SQLException{
-		String result="";
+	public String deleteTempTableMetadata(Connection conn,String feed_id,String src_type) throws SQLException{
+		String result="success";
 		
 					String selectTempTableMaster= "select * from "
 							+OracleConstants.TEMPTABLEDETAILSTABLE
 							+" where feed_sequence="
 							+feed_id;
-					String selectTableMaster= "select * from "
-					+OracleConstants.TABLEDETAILSTABLE
-					+" where feed_sequence="
-					+feed_id;
-					
+				
 					String deleteTempTableMaster= "delete from "
 												+OracleConstants.TEMPTABLEDETAILSTABLE
 												+" where feed_sequence="
 												+feed_id;
-					String deleteTableMaster= "delete from "
-							+OracleConstants.TABLEDETAILSTABLE
-							+" where feed_sequence="
-							+feed_id;
-												
+						
 					try {	
 						Statement statement_selectTemp = conn.createStatement();
-						Statement statement_selectMain = conn.createStatement();
 						Statement statement_deleteTemp = conn.createStatement();
-						Statement statement_deleteMain = conn.createStatement();
 						ResultSet rs_selectTemp=statement_selectTemp.executeQuery(selectTempTableMaster);
 						if(rs_selectTemp.next()) {
 							ResultSet rs_deleteTemp=statement_deleteTemp.executeQuery(deleteTempTableMaster);
@@ -4378,16 +4412,6 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 								result="Failed to delete the records from the temp table for feed_sequence"+feed_id;
 							}
 						}
-						ResultSet rs_selectMain=statement_selectMain.executeQuery(selectTableMaster);
-						if(rs_selectMain.next()) {
-							ResultSet rs_deleteMain=statement_deleteMain.executeQuery(deleteTableMaster);
-							if(rs_deleteMain.next()) {
-							result="successfully deleted the main table records for feed_sequence"+feed_id;
-							}else {
-								result="Failed to delete the records from the main table for feed_sequence"+feed_id;
-							}
-						}
-
 					}catch (SQLException e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
@@ -4402,36 +4426,48 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 		}
 
 	@Override
-	public String deleteTempTableMetadata(Connection conn,String feed_id,String src_type) throws SQLException{
+	public String deleteTableMetadata(Connection conn,String feed_id,String src_type) throws SQLException{
 		String result="";
-					
-					String deleteTableMaster= "delete from "
-												+OracleConstants.TEMPTABLEDETAILSTABLE
-												+" where feed_sequence="
-												+feed_id;
-												
-					try {	
-						Statement statement = conn.createStatement();
-						ResultSet rs=statement.executeQuery(deleteTableMaster);
-						if(rs.next()) {
-							result="successfully deleted the temp table records for feed_sequence"+feed_id;
-							System.out.println(result);
-						}
+		
+		
+		String selectTableMaster= "select * from "
+		+OracleConstants.TABLEDETAILSTABLE
+		+" where feed_sequence="
+		+feed_id;
+		String deleteTableMaster= "delete from "
+				+OracleConstants.TABLEDETAILSTABLE
+				+" where feed_sequence="
+				+feed_id;
+									
+		try {	
+			Statement statement_selectMain = conn.createStatement();
+			Statement statement_deleteMain = conn.createStatement();
+			
+			ResultSet rs_selectMain=statement_selectMain.executeQuery(selectTableMaster);
+			if(rs_selectMain.next()) {
+				ResultSet rs_deleteMain=statement_deleteMain.executeQuery(deleteTableMaster);
+				if(rs_deleteMain.next()) {
+				result="successfully deleted the main table records for feed_sequence"+feed_id;
+				}else {
+					result="Failed to delete the records from the main table for feed_sequence"+feed_id;
+				}
+			}
 
-					}catch (SQLException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-						//TODO: Log the error message
-						conn.close();
-						result=e.getMessage();
+		}catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			//TODO: Log the error message
+			conn.close();
+			result=e.getMessage();
 
 
-					}
-					conn.close();
-					return result;	
+		}
+		conn.close();
+		return result;
 		}
 
 	
+
 
 	
 	@Override
@@ -4503,6 +4539,8 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 					return result;	
 		}
 
+	
+	
 	
 	
 }

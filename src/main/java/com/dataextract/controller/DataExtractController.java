@@ -562,6 +562,7 @@ public class DataExtractController {
 			
 			
 			tableMetadata.setColumns(requestDto.getBody().get("data").get("columns_name"+i).toUpperCase());
+			tableMetadata.setAll_cols(requestDto.getBody().get("data").get("all_columns_name"+i).toUpperCase());
 			tableMetadata.setWhere_clause(requestDto.getBody().get("data").get("where_clause"+i));
 			tableMetadata.setFetch_type(requestDto.getBody().get("data").get("fetch_type"+i));
 			tableMetadata.setIncr_col(requestDto.getBody().get("data").get("incr_col"+i));
@@ -600,57 +601,67 @@ public class DataExtractController {
 		String status="";
 		String message="";
 		String response="";
-		TempTableInfoDto tempTableInfoDto=new TempTableInfoDto();
+		
+		//String load_type=requestDto.getBody().get("data").get("load_type");
+		String feed_id=requestDto.getBody().get("data").get("feed_id");
+		String src_type=requestDto.getBody().get("data").get("src_type");
+		
+		response=dataExtractRepositories.editTempTableDetails(feed_id,src_type);
+	
+		if(response.toLowerCase().contains("success")) {
+			TempTableInfoDto tempTableInfoDto=new TempTableInfoDto();
 
-		ArrayList<TempTableMetadataDto> tempTableMetadataArr=new ArrayList<TempTableMetadataDto>();
-		int counter=Integer.parseInt(requestDto.getBody().get("data").get("counter"));
-		String load_type=requestDto.getBody().get("data").get("load_type");
-		
-		
-		for(int i=1;i<=counter;i++) {
-			TempTableMetadataDto tableMetadata=new TempTableMetadataDto();
+			ArrayList<TempTableMetadataDto> tempTableMetadataArr=new ArrayList<TempTableMetadataDto>();
+			int counter=Integer.parseInt(requestDto.getBody().get("data").get("counter"));
+			String load_type=requestDto.getBody().get("data").get("load_type");
 			
-			tableMetadata.setTable_name(requestDto.getBody().get("data").get("table_name"+i).toUpperCase());
-			String view_flag=requestDto.getBody().get("data").get("view_flag"+i);
-			if(view_flag==null|| view_flag.isEmpty()) {
-				tableMetadata.setView_flag("N");
+			
+			for(int i=1;i<=counter;i++) {
+				TempTableMetadataDto tableMetadata=new TempTableMetadataDto();
+				
+				tableMetadata.setTable_name(requestDto.getBody().get("data").get("table_name"+i).toUpperCase());
+				String view_flag=requestDto.getBody().get("data").get("view_flag"+i);
+				if(view_flag==null|| view_flag.isEmpty()) {
+					tableMetadata.setView_flag("N");
+				}
+				else {
+					tableMetadata.setView_flag(view_flag);
+					tableMetadata.setView_source_schema(requestDto.getBody().get("data").get("view_src_schema"+i));
+				}
+				
+				
+				tableMetadata.setColumns(requestDto.getBody().get("data").get("columns_name"+i).toUpperCase());
+				tableMetadata.setWhere_clause(requestDto.getBody().get("data").get("where_clause"+i));
+				tableMetadata.setFetch_type(requestDto.getBody().get("data").get("fetch_type"+i));
+				tableMetadata.setIncr_col(requestDto.getBody().get("data").get("incr_col"+i));
+				tempTableMetadataArr.add(tableMetadata);
+
+			}
+			
+			if(load_type ==null || load_type.isEmpty()) {
+				tempTableInfoDto.setLoad_type("ind");
 			}
 			else {
-				tableMetadata.setView_flag(view_flag);
-				tableMetadata.setView_source_schema(requestDto.getBody().get("data").get("view_src_schema"+i));
+				tempTableInfoDto.setLoad_type(load_type);
 			}
 			
-			
-			tableMetadata.setColumns(requestDto.getBody().get("data").get("columns_name"+i).toUpperCase());
-			tableMetadata.setWhere_clause(requestDto.getBody().get("data").get("where_clause"+i));
-			tableMetadata.setFetch_type(requestDto.getBody().get("data").get("fetch_type"+i));
-			tableMetadata.setIncr_col(requestDto.getBody().get("data").get("incr_col"+i));
-			tempTableMetadataArr.add(tableMetadata);
-
-		}
-		
-		if(load_type ==null || load_type.isEmpty()) {
-			tempTableInfoDto.setLoad_type("ind");
-		}
-		else {
-			tempTableInfoDto.setLoad_type(load_type);
-		}
-		
-		tempTableInfoDto.setTableMetadataArr(tempTableMetadataArr);
-		tempTableInfoDto.setJuniper_user(requestDto.getBody().get("data").get("user"));
-		tempTableInfoDto.setProject(requestDto.getBody().get("data").get("project"));
-		tempTableInfoDto.setFeed_id(Integer.parseInt(requestDto.getBody().get("data").get("feed_id")));
-		response=dataExtractRepositories.addTempTableDetails(tempTableInfoDto);
-		if(response.toLowerCase().contains("success")) {
-			status="Success";
-			message="Table Details Added Successfully. Table IDs are "+response.split(":")[1];
-		}
-		else {
+			tempTableInfoDto.setTableMetadataArr(tempTableMetadataArr);
+			tempTableInfoDto.setJuniper_user(requestDto.getBody().get("data").get("user"));
+			tempTableInfoDto.setProject(requestDto.getBody().get("data").get("project"));
+			tempTableInfoDto.setFeed_id(Integer.parseInt(requestDto.getBody().get("data").get("feed_id")));
+			response=dataExtractRepositories.addTempTableDetails(tempTableInfoDto);
+			if(response.toLowerCase().contains("success")) {
+				status="Success";
+				message="Table Details Added Successfully. Table IDs are "+response.split(":")[1];
+			}
+			else {
+				status="Failed";
+				message=response;
+			}
+		}else {
 			status="Failed";
 			message=response;
-
 		}
-
 		return ResponseUtil.createResponse(status, message);
 	}
 	
@@ -723,7 +734,6 @@ public class DataExtractController {
 		}
 		return ResponseUtil.createResponse(status, message);
 	}
-	
 
 
 	@SuppressWarnings("unchecked")
@@ -957,6 +967,7 @@ public class DataExtractController {
 		ScheduleExtractDto schDto=new ScheduleExtractDto();
 		schDto.setFeed_name(requestDto.getBody().get("data").get("feed_name"));
 		schDto.setSch_flag(requestDto.getBody().get("data").get("sch_flag"));
+		schDto.setExtraction_mode(requestDto.getBody().get("data").get("extraction_mode"));
 		
 		if(schDto.getSch_flag().equalsIgnoreCase("R")) {
 			schDto.setCron(requestDto.getBody().get("data").get("cron"));
@@ -1026,5 +1037,7 @@ public class DataExtractController {
 		}		
 		return ResponseUtil.createResponse(status, message);
 	}
+	
+	
 	
 }
