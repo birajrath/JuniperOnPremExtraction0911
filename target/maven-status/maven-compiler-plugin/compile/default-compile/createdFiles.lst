@@ -15,7 +15,6 @@ com/dataextract/dto/FileMetadataDto.class
 com/dataextract/dto/RealTimeExtractDto.class
 com/dataextract/dto/TableInfoDto.class
 com/dataextract/dao/ExtractionDaoImpl.class
-com/dataextract/util/AuthUtils.class
 com/dataextract/util/ResponseUtil.class
 com/dataextract/dto/ScheduleExtractDto.class
 com/dataextract/util/EncryptUtils.class
@@ -31,7 +30,6 @@ com/dataextract/util/ConnectionUtils.class
 com/dataextract/constants/MySQLConstants.class
 com/dataextract/fetchdata/IExtract.class
 com/dataextract/dto/ConnectionDto.class
-com/dataextract/util/AuthUtilsImpl.class
 com/dataextract/constants/SchedulerConstants.class
 com/dataextract/dto/ExtracteRequestDto.class
 com/dataextract/dto/UnixDataRequestDto.class

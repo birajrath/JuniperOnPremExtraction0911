@@ -4307,14 +4307,14 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 						return "Metadata Validation successfull";		
 						}else {
 							conn.close();
-							return "Metadata validation successfull but the records not deleted from the primary table";
+							return "The records not deleted from the primary table";
 						}
 					}else {
 						conn.close();
-						return "Metadata validation successfull but data not added in the final table";
+						return "Data not added in the final table";
 					}
 			}else{
-				return "Metadata validation successfull but failed to remove the records from the juniper_ext_table_master table";
+				return "Failed to remove the records from the juniper_ext_table_master table";
 			}
 		}else {
 			conn.close();
@@ -4421,13 +4421,13 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 
 
 					}
-					conn.close();
+					
 					return result;	
 		}
 
 	@Override
 	public String deleteTableMetadata(Connection conn,String feed_id,String src_type) throws SQLException{
-		String result="";
+		String result="success";
 		
 		
 		String selectTableMaster= "select * from "
@@ -4462,7 +4462,7 @@ public class ExtractionDaoImpl  implements IExtractionDAO {
 
 
 		}
-		conn.close();
+		
 		return result;
 		}
 

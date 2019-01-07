@@ -13,7 +13,6 @@
 /Users/birajrath/Documents/GitHub/OnPrem0911/JuniperOnPremExtraction0911/src/main/java/com/dataextract/fetchdata/ExtractNifiImpl.java
 /Users/birajrath/Documents/GitHub/OnPrem0911/JuniperOnPremExtraction0911/src/main/java/com/dataextract/constants/SchedulerConstants.java
 /Users/birajrath/Documents/GitHub/OnPrem0911/JuniperOnPremExtraction0911/src/main/java/com/dataextract/dto/Header.java
-/Users/birajrath/Documents/GitHub/OnPrem0911/JuniperOnPremExtraction0911/src/main/java/com/dataextract/util/AuthUtilsImpl.java
 /Users/birajrath/Documents/GitHub/OnPrem0911/JuniperOnPremExtraction0911/src/main/java/com/dataextract/constants/GenericConstants.java
 /Users/birajrath/Documents/GitHub/OnPrem0911/JuniperOnPremExtraction0911/src/main/java/com/dataextract/util/ResponseUtil.java
 /Users/birajrath/Documents/GitHub/OnPrem0911/JuniperOnPremExtraction0911/src/main/java/com/dataextract/dto/RequestDto.java
@@ -41,5 +40,4 @@
 /Users/birajrath/Documents/GitHub/OnPrem0911/JuniperOnPremExtraction0911/src/main/java/com/dataextract/dto/FeedDto.java
 /Users/birajrath/Documents/GitHub/OnPrem0911/JuniperOnPremExtraction0911/src/main/java/com/dataextract/dto/FileMetadataDto.java
 /Users/birajrath/Documents/GitHub/OnPrem0911/JuniperOnPremExtraction0911/src/main/java/com/dataextract/dto/HiveDbMetadataDto.java
-/Users/birajrath/Documents/GitHub/OnPrem0911/JuniperOnPremExtraction0911/src/main/java/com/dataextract/util/AuthUtils.java
 /Users/birajrath/Documents/GitHub/OnPrem0911/JuniperOnPremExtraction0911/src/main/java/com/dataextract/dao/IExtractionDAO.java
